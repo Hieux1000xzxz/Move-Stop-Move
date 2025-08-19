@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4705533221572772038}
   - component: {fileID: -5933330912209954741}
   - component: {fileID: -8648315281238910262}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Stone_patterns_A
   m_TagString: Untagged
   m_Icon: {fileID: 0}

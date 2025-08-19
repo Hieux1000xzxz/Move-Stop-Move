@@ -77,11 +77,6 @@ Rigidbody:
   m_CorrespondingSourceObject: {fileID: 6751911775233490694, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
   m_PrefabInstance: {fileID: 7836738682889203449}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &6122575019108609175 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4050550006519317102, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
-  m_PrefabInstance: {fileID: 7836738682889203449}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7795159553526056017 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
@@ -102,8 +97,8 @@ MonoBehaviour:
   speed: 10
   lifetime: 2
   damage: 10
-  attackDelay: 0.3
+  attackDelay: 0.1
   rb: {fileID: 3562958303719707135}
-  axeModel: {fileID: 6122575019108609175}
-  rotationAxis: {x: 0, y: 0, z: 1}
-  spinSpeed: 720
+  enableRotation: 1
+  rotationSpeed: 720
+  rotationAxis: {x: 0, y: 0, z: -1}

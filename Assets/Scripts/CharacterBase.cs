@@ -124,12 +124,12 @@ public abstract class CharacterBase : MonoBehaviour
         {
             Vector3 dir = (attackTarget.position - weaponSpawnPoint.position).normalized;
             Quaternion customRot = Quaternion.LookRotation(dir) * Quaternion.Euler(weaponRotationOffset);
-
-            ProjectileManager.Instance.SpawnProjectile(
+            WeaponManager.Instance.SpawnProjectile(
                 weaponTag,
                 weaponSpawnPoint.position,
                 dir,
-                customRot);
+                customRot,
+                this.gameObject);
         }
     }
 

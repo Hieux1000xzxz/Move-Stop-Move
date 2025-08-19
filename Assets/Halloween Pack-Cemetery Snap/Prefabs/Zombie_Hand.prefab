@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8904405787989993916}
   - component: {fileID: 6662577205174050166}
   - component: {fileID: 2584473969017218347}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Zombie_Hand
   m_TagString: Untagged
   m_Icon: {fileID: 0}

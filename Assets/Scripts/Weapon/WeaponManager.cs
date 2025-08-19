@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class ProjectileManager : Singleton<ProjectileManager>
+public class WeaponManager : Singleton<WeaponManager>
 {
     [System.Serializable]
     public class WeaponEntry
@@ -17,7 +17,7 @@ public class ProjectileManager : Singleton<ProjectileManager>
 
     protected override void Awake()
     {
-        base.Awake();
+        base.Awake(); 
         foreach (var entry in weapons)
         {
             if (entry.weaponPrefab != null && !weaponDelays.ContainsKey(entry.weaponTag))
@@ -27,17 +27,17 @@ public class ProjectileManager : Singleton<ProjectileManager>
         }
     }
 
-    public void SpawnProjectile(string weaponTag, Vector3 spawnPosition, Vector3 direction, Quaternion rotation)
+    public void SpawnProjectile(string weaponTag, Vector3 spawnPosition, Vector3 direction, Quaternion rotation, GameObject owner)
     {
         if (!weaponDelays.TryGetValue(weaponTag, out float delay))
         {
             return;
         }
 
-        StartCoroutine(SpawnRoutine(weaponTag, spawnPosition, direction, rotation, delay));
+        StartCoroutine(SpawnRoutine(weaponTag, spawnPosition, direction, rotation, delay, owner));
     }
 
-    private IEnumerator SpawnRoutine(string weaponTag, Vector3 spawnPosition, Vector3 direction, Quaternion rotation, float delay)
+    private IEnumerator SpawnRoutine(string weaponTag, Vector3 spawnPosition, Vector3 direction, Quaternion rotation, float delay, GameObject owner)
     {
         yield return new WaitForSeconds(delay);
 
@@ -50,7 +50,7 @@ public class ProjectileManager : Singleton<ProjectileManager>
             WeaponBase weapon = obj.GetComponent<WeaponBase>();
             if (weapon != null)
             {
-                weapon.Launch(direction);
+                weapon.Launch(direction, owner);
             }
         }
     }

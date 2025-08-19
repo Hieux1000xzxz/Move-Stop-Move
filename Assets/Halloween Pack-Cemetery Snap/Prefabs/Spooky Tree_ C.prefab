@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1822584796656111776}
   - component: {fileID: 4517084582287762538}
   - component: {fileID: -4859228547245097385}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Spooky Tree_ C
   m_TagString: Untagged
   m_Icon: {fileID: 0}

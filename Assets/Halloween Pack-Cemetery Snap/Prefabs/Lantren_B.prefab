@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4963600094112290602}
   - component: {fileID: 7135611340046492640}
   - component: {fileID: -3986600659088602287}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Lantren_B
   m_TagString: Untagged
   m_Icon: {fileID: 0}

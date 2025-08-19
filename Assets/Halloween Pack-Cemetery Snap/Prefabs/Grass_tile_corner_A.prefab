@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5021195054990642127}
   - component: {fileID: 7208041705154359691}
   - component: {fileID: 2729971970065710984}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Grass_tile_corner_A
   m_TagString: Untagged
   m_Icon: {fileID: 0}

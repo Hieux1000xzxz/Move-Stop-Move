@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7293023755263418969}
   - component: {fileID: 4815176204311516819}
   - component: {fileID: -9121435252285808804}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Large Crypt
   m_TagString: Untagged
   m_Icon: {fileID: 0}

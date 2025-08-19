@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3523294411088893833}
   - component: {fileID: -1849429094342163735}
   - component: {fileID: 3996475387074276082}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Stone_patterns_triple cross
   m_TagString: Untagged
   m_Icon: {fileID: 0}

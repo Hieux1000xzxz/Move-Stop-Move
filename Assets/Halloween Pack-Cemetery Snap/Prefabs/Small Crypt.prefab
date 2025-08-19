@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 905604842487574908}
   - component: {fileID: 3131599914279667126}
   - component: {fileID: -4735157393539603563}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Small Crypt
   m_TagString: Untagged
   m_Icon: {fileID: 0}

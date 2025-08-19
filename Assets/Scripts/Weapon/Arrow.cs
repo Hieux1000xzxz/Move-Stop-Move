@@ -1,19 +1,10 @@
 ﻿using UnityEngine;
+using DG.Tweening;
 
 public class Arrow : WeaponBase
 {
-    [SerializeField] private Transform arrowModel;
-    [SerializeField] private float spinSpeed = 720f;
-    private void Update()
+    protected override void StartRotationAnimation()
     {
-        if (rb != null && rb.linearVelocity.sqrMagnitude > 0.01f)
-        {
-            if (arrowModel != null)
-            {
-                arrowModel.forward = rb.linearVelocity.normalized;
-
-                arrowModel.Rotate(rb.linearVelocity.normalized, spinSpeed * Time.deltaTime, Space.World);
-            }
-        }
+        base.StartRotationAnimation();
     }
 }

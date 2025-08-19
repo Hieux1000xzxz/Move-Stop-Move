@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5144819877491302592}
   - component: {fileID: 6954372710502503434}
   - component: {fileID: 1602785304100206650}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Street lamp_C
   m_TagString: Untagged
   m_Icon: {fileID: 0}

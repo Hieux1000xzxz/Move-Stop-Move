@@ -230,7 +230,6 @@ MonoBehaviour:
   damage: 10
   attackDelay: 0.4
   rb: {fileID: 3562958303719707135}
-  arrowModel: {fileID: 4960589892490912816}
-  rotationOffset: {x: -90, y: 0, z: 0}
-  spinSpeed: 900
-  rotationAxis: {x: 0, y: 1, z: 0}
+  enableRotation: 0
+  rotationSpeed: 720
+  rotationAxis: {x: 1, y: 1, z: 1}

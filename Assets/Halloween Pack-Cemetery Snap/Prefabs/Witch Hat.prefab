@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2890386763917941688}
   - component: {fileID: 1150740328228138866}
   - component: {fileID: -721912838184110075}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Witch Hat
   m_TagString: Untagged
   m_Icon: {fileID: 0}

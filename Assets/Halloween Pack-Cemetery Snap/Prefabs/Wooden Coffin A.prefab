@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5014617582771664982}
   - component: {fileID: 7094145051765804188}
   - component: {fileID: 8442418733610126782}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Wooden Coffin A
   m_TagString: Untagged
   m_Icon: {fileID: 0}

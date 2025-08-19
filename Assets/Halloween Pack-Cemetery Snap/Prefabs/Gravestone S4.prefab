@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 945084673521150140}
   - component: {fileID: 3096623631354305654}
   - component: {fileID: 4010958455793937428}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Gravestone S4
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5818253352320923814}
   - component: {fileID: 8600293989167434860}
   - component: {fileID: 3458816298826485397}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cemetery_Gate
   m_TagString: Untagged
   m_Icon: {fileID: 0}

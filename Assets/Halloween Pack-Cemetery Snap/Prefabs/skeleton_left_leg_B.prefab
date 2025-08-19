@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6792634301131393837}
   - component: {fileID: 8764215575657512935}
   - component: {fileID: -7426733370637965073}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: skeleton_left_leg_B
   m_TagString: Untagged
   m_Icon: {fileID: 0}

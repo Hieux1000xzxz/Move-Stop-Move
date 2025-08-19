@@ -387,7 +387,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 196769706720819425}
+    - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -3577197991604517564}
   m_SourcePrefab: {fileID: 100100000, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+--- !u!4 &758965031611587876 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5686919596418490897, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+  m_PrefabInstance: {fileID: 4927955671298457397}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2766019337173118189 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7061998793093092312, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
@@ -422,11 +430,33 @@ MonoBehaviour:
   attackDuration: 1
   weaponTag: Arrow
   weaponSpawnPoint: {fileID: 8529342971687822236}
-  weaponRotationOffset: {x: 0, y: 0, z: 0}
+  weaponRotationOffset: {x: -100, y: 0, z: 0}
   targetLayer:
     serializedVersion: 2
     m_Bits: 72
-  detectionRange: 500
+  detectionRange: 15
+  patrolRadius: 10
+  observeMinTime: 2
+  observeMaxTime: 5
+  rayOrigin: {fileID: 758965031611587876}
+  rayDistance: 2
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  attackChance: 0.8
+--- !u!114 &-3577197991604517564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7193694367047912757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae35314d900311c448ad04066759bc31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 10
 --- !u!4 &8529342971687822236 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3620275817624427689, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
