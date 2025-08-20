@@ -1,85 +1,89 @@
 ﻿using UnityEngine;
-using System.Collections;
-using DG.Tweening;
 
-public abstract class WeaponBase : MonoBehaviour
+public class WeaponBase : MonoBehaviour
 {
     [Header("Weapon Settings")]
-    [SerializeField] protected float speed = 10f;
-    [SerializeField] protected float lifetime = 5f;
-    [SerializeField] protected int damage = 10;
-    [SerializeField] public float attackDelay = 0.2f;
-    [SerializeField] protected Rigidbody rb;
+    [SerializeField] private float speed = 12f;
+    [SerializeField] private int damage = 1;
+    [SerializeField] private Vector3 handRotationOffset = Vector3.zero; // 👈 offset xoay khi gắn vào tay
+    [SerializeField] private float spawnDelay = 0.2f; // 👈 delay khi spawn lại
 
-    [Header("Rotation Settings")]
-    [SerializeField] protected bool enableRotation = true;
-    [SerializeField] protected float rotationSpeed = 360f;
-    [SerializeField] protected Vector3 rotationAxis = Vector3.forward;
-
-    private Coroutine launchRoutine;
-    private Tweener rotationTweener;
-    protected GameObject owner;
-
-    protected virtual void OnEnable()
+    private Rigidbody rb;
+    private CharacterBase owner;
+    private Transform spawnPoint;
+    private Vector3 originalPos;
+    private Quaternion originalRot;
+    private bool isFlying;
+    private Vector3 launchPos; // 👈 vị trí bắn ra
+    public bool IsFlying => isFlying;
+    private void Awake()
     {
-        Invoke(nameof(Despawn), lifetime);
+        rb = GetComponent<Rigidbody>();
+        rb.isKinematic = true;
+        rb.useGravity = false;
     }
 
-    public virtual void Launch(Vector3 direction, GameObject shooter)
+    public void Init(CharacterBase character, Transform hand)
     {
-        owner = shooter;
+        owner = character;
+        spawnPoint = hand;
 
-        if (launchRoutine != null)
-            StopCoroutine(launchRoutine);
+        // Lưu vị trí & rotation ban đầu
+        originalPos = transform.localPosition;
+        originalRot = transform.localRotation;
 
-        launchRoutine = StartCoroutine(LaunchRoutine(direction));
+        ReturnToHand();
     }
 
-
-    private IEnumerator LaunchRoutine(Vector3 direction)
+    public void Launch(Vector3 dir, GameObject shooter)
     {
-        yield return new WaitForSeconds(attackDelay);
+        if (isFlying) return;
 
-        if (rb != null)
-            rb.linearVelocity = direction.normalized * speed;
+        transform.SetParent(null);
+        rb.isKinematic = false;
+        rb.linearVelocity = dir * speed;
 
-        if (enableRotation)
-            StartRotationAnimation();
+        launchPos = transform.position; // lưu vị trí bắt đầu
+        isFlying = true;
     }
 
-    protected virtual void StartRotationAnimation()
+    private void Update()
     {
-        if (rotationTweener != null)
-            rotationTweener.Kill();
-
-        rotationTweener = transform.DORotate(rotationAxis.normalized * 360f, 360f / rotationSpeed, RotateMode.LocalAxisAdd)
-            .SetEase(Ease.Linear)
-            .SetLoops(-1, LoopType.Incremental);
-    }
-
-
-    protected virtual void OnTriggerEnter(Collider other)
-    {
-        if (owner != null && other.gameObject == owner)
-            return;
-        Health target = other.GetComponent<Health>();
-        if (target != null)
+        if (isFlying && owner != null)
         {
-            target.TakeDamage(damage);
+            float dist = Vector3.Distance(launchPos, transform.position);
+            if (dist >= owner.currentAttackRange)
+            {
+                ReturnToHand();
+            }
         }
-        Despawn();
     }
 
-    protected virtual void Despawn()
+    private void OnTriggerEnter(Collider other)
     {
-        CancelInvoke();
+        if (!isFlying || other.gameObject == owner.gameObject) return;
 
-        if (rotationTweener != null)
-            rotationTweener.Kill();
+        if (other.CompareTag("Enemy"))
+        {
+            Health h = other.GetComponent<Health>();
+            if (h != null) h.TakeDamage(damage);
+            owner.AddScore(1);
+            ReturnToHand();
+        }
+    }
 
-        if (rb != null)
-            rb.linearVelocity = Vector3.zero;
+    private void ReturnToHand()
+    {
+        rb.isKinematic = true;
 
-        gameObject.SetActive(false);
+        transform.SetParent(spawnPoint);
+
+        // giữ nguyên local position gốc
+        transform.localPosition = originalPos;
+        // áp dụng offset xoay
+        transform.localRotation = originalRot * Quaternion.Euler(handRotationOffset);
+
+        isFlying = false;
+        if (owner != null) owner.OnWeaponReturned();
     }
 }

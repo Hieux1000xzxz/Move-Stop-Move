@@ -4,7 +4,6 @@ public class Player : CharacterBase
 {
     [SerializeField] private FloatingJoystick joystick;
     [SerializeField] private LayerMask enemyLayer;
-
     private bool isMovingInput;
 
     protected override void Update()

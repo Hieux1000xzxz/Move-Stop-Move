@@ -17,8 +17,6 @@ public class AIController : CharacterBase
     [SerializeField] private LayerMask obstacleLayer; // <-- thêm layer obstacle
 
     [Header("Combat Settings")]
-    [SerializeField] private float attackChance = 0.7f; // 70% cơ hội tấn công khi gặp địch
-
     private Transform target;
     private Vector3 patrolPoint;
     private bool isObserving = false;
@@ -33,11 +31,22 @@ public class AIController : CharacterBase
 
         if (target != null && currentState != CharacterState.Attack)
         {
-            agent.isStopped = false;
-            agent.SetDestination(target.position);
-            if (currentState != CharacterState.Move)
+            float distance = Vector3.Distance(transform.position, target.position);
+
+            // Nếu mục tiêu ngoài tầm bắn -> di chuyển lại gần
+            if (distance > attackRange)
             {
-                ChangeState(CharacterState.Move);
+                agent.isStopped = false;
+                agent.SetDestination(target.position);
+                if (currentState != CharacterState.Move)
+                    ChangeState(CharacterState.Move);
+            }
+            else
+            {
+                // Trong tầm bắn -> dừng lại, chờ CheckForAttack xử lý
+                agent.isStopped = true;
+                if (currentState != CharacterState.Idle && !isAttacking)
+                    ChangeState(CharacterState.Idle);
             }
         }
         else if (target == null && !isObserving) // Không có mục tiêu thì patrol
@@ -69,21 +78,9 @@ public class AIController : CharacterBase
 
         if (distance <= attackRange)
         {
-            // Mỗi lần vào tầm bắn đều có cơ hội bắn
-            if (Random.value <= attackChance)
-            {
-                // ✅ Có quyết định tấn công
-                attackTarget = target;
-                agent.isStopped = true;
-                ChangeState(CharacterState.Attack);
-            }
-            else
-            {
-                // ❌ Không bắn lần này -> cứ tiếp tục Move
-                agent.isStopped = false;
-                if (currentState != CharacterState.Move)
-                    ChangeState(CharacterState.Move);
-            }
+            attackTarget = target;
+            agent.isStopped = true;
+            ChangeState(CharacterState.Attack);
         }
         else if (currentState == CharacterState.Attack && distance > attackRange)
         {
@@ -91,6 +88,7 @@ public class AIController : CharacterBase
             EndAttack();
         }
     }
+
 
 
 
@@ -180,20 +178,5 @@ public class AIController : CharacterBase
             }
         }
     }
-
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
-
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, patrolRadius);
-
-        if (rayOrigin != null)
-        {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawLine(rayOrigin.position, rayOrigin.position + transform.forward * rayDistance);
-        }
-    }
+   
 }
