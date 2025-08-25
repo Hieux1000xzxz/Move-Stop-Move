@@ -1,41 +1,42 @@
 ﻿using UnityEngine;
+using DG.Tweening;
 
 public class WeaponBase : MonoBehaviour
 {
     [Header("Weapon Settings")]
-    [SerializeField] private float speed = 12f;
-    [SerializeField] private int damage = 1;
-    [SerializeField] private Vector3 handRotationOffset = Vector3.zero; // 👈 offset xoay khi gắn vào tay
-    [SerializeField] private float spawnDelay = 0.2f; // 👈 delay khi spawn lại
+    [SerializeField] protected float speed = 12f;
+    [SerializeField] protected int damage = 1;
+    [SerializeField] protected Vector3 handRotationOffset = Vector3.zero;
 
-    private Rigidbody rb;
-    private CharacterBase owner;
-    private Transform spawnPoint;
-    private Vector3 originalPos;
-    private Quaternion originalRot;
-    private bool isFlying;
-    private Vector3 launchPos; // 👈 vị trí bắn ra
+    [Header("Rotation Settings")]
+    [SerializeField] protected Vector3 rotateAxis = new Vector3(0, 1, 0);
+    [SerializeField] protected float rotateSpeed = 360f;
+    [SerializeField] protected RotateMode rotateMode = RotateMode.FastBeyond360;
+
+    [SerializeField] protected Rigidbody rb;
+
+    protected CharacterBase owner;
+    protected Transform spawnPoint;
+    protected Vector3 originalPos;
+    protected Quaternion originalRot;
+    protected bool isFlying;
+    protected Vector3 launchPos;
+    protected Tween rotateTween;
+
     public bool IsFlying => isFlying;
-    private void Awake()
-    {
-        rb = GetComponent<Rigidbody>();
-        rb.isKinematic = true;
-        rb.useGravity = false;
-    }
 
-    public void Init(CharacterBase character, Transform hand)
+    public virtual void Init(CharacterBase character, Transform hand)
     {
         owner = character;
         spawnPoint = hand;
 
-        // Lưu vị trí & rotation ban đầu
         originalPos = transform.localPosition;
-        originalRot = transform.localRotation;
+        originalRot = transform.localRotation * Quaternion.Euler(handRotationOffset);
 
         ReturnToHand();
     }
 
-    public void Launch(Vector3 dir, GameObject shooter)
+    public virtual void Launch(Vector3 dir, GameObject shooter)
     {
         if (isFlying) return;
 
@@ -43,11 +44,13 @@ public class WeaponBase : MonoBehaviour
         rb.isKinematic = false;
         rb.linearVelocity = dir * speed;
 
-        launchPos = transform.position; // lưu vị trí bắt đầu
+        launchPos = transform.position;
         isFlying = true;
+
+        StartRotation();
     }
 
-    private void Update()
+    protected virtual void FixedUpdate()
     {
         if (isFlying && owner != null)
         {
@@ -59,7 +62,7 @@ public class WeaponBase : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    protected virtual void OnTriggerEnter(Collider other)
     {
         if (!isFlying || other.gameObject == owner.gameObject) return;
 
@@ -72,18 +75,41 @@ public class WeaponBase : MonoBehaviour
         }
     }
 
-    private void ReturnToHand()
+    protected virtual void ReturnToHand()
     {
         rb.isKinematic = true;
 
-        transform.SetParent(spawnPoint);
+        StopRotation();
 
-        // giữ nguyên local position gốc
+        transform.SetParent(spawnPoint);
         transform.localPosition = originalPos;
-        // áp dụng offset xoay
-        transform.localRotation = originalRot * Quaternion.Euler(handRotationOffset);
+        transform.localRotation = originalRot;
 
         isFlying = false;
-        if (owner != null) owner.OnWeaponReturned();
+
+        if (owner != null)
+            owner.OnWeaponReturned();
+    }
+
+    public virtual void ResetWeapon()
+    {
+        isFlying = false;
+    }
+
+    protected void StartRotation()
+    {
+        StopRotation();
+        rotateTween = transform.DOLocalRotate(rotateAxis * rotateSpeed, 1f, rotateMode)
+            .SetEase(Ease.Linear)
+            .SetLoops(-1, LoopType.Incremental);
+    }
+
+    protected void StopRotation()
+    {
+        if (rotateTween != null && rotateTween.IsActive())
+        {
+            rotateTween.Kill();
+            rotateTween = null;
+        }
     }
 }

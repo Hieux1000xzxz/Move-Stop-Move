@@ -80,6 +80,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: -2934282853103997181}
   m_SourcePrefab: {fileID: 100100000, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
+--- !u!54 &3562958303719707135 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 6751911775233490694, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
+  m_PrefabInstance: {fileID: 7836738682889203449}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7795159553526056017 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
@@ -100,3 +105,7 @@ MonoBehaviour:
   speed: 10
   damage: 10
   handRotationOffset: {x: 0, y: 0, z: 90}
+  rotateAxis: {x: 0, y: 0, z: -1}
+  rotateSpeed: 1080
+  rotateMode: 3
+  rb: {fileID: 3562958303719707135}

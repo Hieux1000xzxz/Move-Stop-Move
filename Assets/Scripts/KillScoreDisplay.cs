@@ -4,8 +4,8 @@ using TMPro;
 public class KillScoreDisplay : MonoBehaviour
 {
     [Header("UI Settings")]
-    [SerializeField] private TextMeshPro textMesh;  // Text 3D gắn trên đầu
-    [SerializeField] private int score = 0;         // Giá trị score hiển thị
+    [SerializeField] private TextMeshPro textMesh; 
+    [SerializeField] private int score = 0;
     [SerializeField] private Color textColor = Color.yellow;
     [SerializeField] private int fontSize = 4;
 
@@ -26,21 +26,15 @@ public class KillScoreDisplay : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (textMesh == null) return;
+        if (textMesh == null) 
+            return;
 
-        // Lấy scale của nhân vật
         float scaleFactor = transform.localScale.y;
-
-        // Luôn ở trên đầu (offset nhân theo scale)
         textMesh.transform.position = transform.position + offset * scaleFactor;
-
-        // Hướng về camera
         if (faceCamera && cam != null)
         {
             textMesh.transform.rotation = Quaternion.LookRotation(cam.transform.forward);
         }
-
-        // Cập nhật score mỗi frame
         UpdateScoreText();
     }
 

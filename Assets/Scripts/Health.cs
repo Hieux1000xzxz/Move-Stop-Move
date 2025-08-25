@@ -22,6 +22,6 @@ public class Health : MonoBehaviour
 
     private void Die()
     {
-        gameObject.SetActive(false);
+        gameObject.SetActive(false);       
     }
 }
