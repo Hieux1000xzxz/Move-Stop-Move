@@ -5,8 +5,6 @@ using System.Collections;
 public class AIController : CharacterBase
 {
     [Header("AI Settings")]
-    [SerializeField] private LayerMask targetLayer;
-    [SerializeField] private float detectionRange = 15f;
     [SerializeField] private float patrolRadius = 10f;
     [SerializeField] private float observeMinTime = 2f;
     [SerializeField] private float observeMaxTime = 5f;
@@ -22,7 +20,6 @@ public class AIController : CharacterBase
     [SerializeField] private float rayDistance = 2f;
     [SerializeField] private LayerMask obstacleLayer;
 
-    private Transform target;
     private Vector3 lastInterestPoint;
     private float targetFoundTime;
     private float lastDecisionTime;
@@ -30,48 +27,76 @@ public class AIController : CharacterBase
 
     protected override void Update()
     {
-        UpdateTarget();
-        if (Time.time - lastDecisionTime >= 1f) MakeDecision();
-        AvoidObstacle();
         base.Update();
+
+        if (Time.time - lastDecisionTime >= 1f)
+            MakeDecision();
+
+        AvoidObstacle();
     }
 
-    private void UpdateTarget()
+    protected override void UpdateRadar()
     {
-        Transform newTarget = FindNearestTarget();
-        if (newTarget != target)
+        Transform previousTarget = detectedTarget;
+        base.UpdateRadar();
+
+        // Cập nhật thời gian tìm thấy target (chỉ khi có target mới)
+        if (detectedTarget != null && detectedTarget != previousTarget)
         {
-            if (target != null && newTarget == null) OnTargetLost();
-            target = newTarget;
             targetFoundTime = Time.time;
         }
     }
 
-    private void OnTargetLost()
+    protected override void OnTargetLost(Transform lostTarget)
     {
+        base.OnTargetLost(lostTarget);
+
+        // AI behavior khi mất target
         if (currentState == CharacterState.Attack)
         {
             isAttacking = false;
-            attackTarget = null;
+            agent.isStopped = false;
+            ChangeState(CharacterState.Idle);
         }
-        agent.isStopped = false;
-        ChangeState(CharacterState.Idle);
+
         lastInterestPoint = transform.position;
         Invoke(nameof(SetRandomPatrolPoint), 0.5f);
+    }
+
+    protected override void OnNewTargetFound(Transform newTarget)
+    {
+        base.OnNewTargetFound(newTarget);
+        targetFoundTime = Time.time; // Reset thời gian phát hiện
+    }
+
+    protected override void OnTargetSwitched(Transform oldTarget, Transform newTarget)
+    {
+        base.OnTargetSwitched(oldTarget, newTarget);
+        targetFoundTime = Time.time; // Reset thời gian cho target mới
+
+        // Nếu đang tấn công target cũ, cân nhắc có chuyển sang target mới không
+        if (currentState == CharacterState.Attack)
+        {
+            float distanceToNew = Vector3.Distance(transform.position, newTarget.position);
+            if (distanceToNew <= attackRange && Random.value < aggressionLevel)
+            {
+                attackTarget = newTarget; // Chuyển target ngay lập tức
+            }
+        }
     }
 
     private void MakeDecision()
     {
         lastDecisionTime = Time.time;
 
-        if (target == null || !target.gameObject.activeInHierarchy)
+        if (detectedTarget == null || !detectedTarget.gameObject.activeInHierarchy)
         {
             if (!isObserving && (!agent.pathPending && agent.remainingDistance <= 0.5f))
                 DecideWhenIdle();
             return;
         }
 
-        float distance = Vector3.Distance(transform.position, target.position);
+        float distance = Vector3.Distance(transform.position, detectedTarget.position);
         float timeSinceFound = Time.time - targetFoundTime;
 
         if (distance <= attackRange)
@@ -97,7 +122,7 @@ public class AIController : CharacterBase
         {
             if (!isAttacking)
             {
-                attackTarget = target;
+                attackTarget = detectedTarget;
                 agent.isStopped = true;
                 ChangeState(CharacterState.Attack);
             }
@@ -113,7 +138,7 @@ public class AIController : CharacterBase
         float approachChance = aggressionLevel * (1f - fearLevel);
 
         if (Random.value < approachChance)
-            MoveTo(target.position);
+            MoveTo(detectedTarget.position);
         else if (Random.value < curiosityLevel)
             ObserveTarget();
         else if (Random.value < 0.3f)
@@ -134,16 +159,17 @@ public class AIController : CharacterBase
 
     private void MoveAway()
     {
-        Vector3 fleePos = transform.position + (transform.position - target.position).normalized * Random.Range(3f, 8f);
+        Vector3 fleePos = transform.position + (transform.position - detectedTarget.position).normalized * Random.Range(3f, 8f);
         if (TrySetDestination(fleePos, 10f))
         {
-            if (Random.value < fearLevel) target = null;
+            if (Random.value < fearLevel)
+                detectedTarget = null;
         }
     }
 
     private void CircleTarget()
     {
-        Vector3 perpendicular = Vector3.Cross((target.position - transform.position).normalized, Vector3.up).normalized;
+        Vector3 perpendicular = Vector3.Cross((detectedTarget.position - transform.position).normalized, Vector3.up).normalized;
         if (Random.value < 0.5f) perpendicular = -perpendicular;
         Vector3 circlePos = transform.position + perpendicular * Random.Range(2f, 5f);
         TrySetDestination(circlePos, 8f);
@@ -153,9 +179,9 @@ public class AIController : CharacterBase
     {
         agent.isStopped = true;
         ChangeState(CharacterState.Idle);
-        if (target != null)
+        if (detectedTarget != null)
         {
-            Vector3 dir = (target.position - transform.position);
+            Vector3 dir = (detectedTarget.position - transform.position);
             dir.y = 0;
             if (dir != Vector3.zero)
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir.normalized), Time.deltaTime * 2f);
@@ -165,7 +191,7 @@ public class AIController : CharacterBase
     private void StartWandering()
     {
         SetRandomPatrolPoint();
-        target = null;
+        detectedTarget = null;
     }
 
     private void MoveTo(Vector3 position)
@@ -218,42 +244,24 @@ public class AIController : CharacterBase
         return false;
     }
 
-    private Transform FindNearestTarget()
+    protected override void CheckForAttack()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position, detectionRange, targetLayer);
-        Transform nearest = null;
-        float minDist = Mathf.Infinity;
-
-        foreach (Collider hit in hits)
-        {
-            if (hit.transform == transform || !hit.gameObject.activeInHierarchy) continue;
-
-            float dist = Vector3.Distance(transform.position, hit.transform.position);
-            if (dist < minDist)
-            {
-                minDist = dist;
-                nearest = hit.transform;
-            }
-        }
-        return nearest;
+        // AI sử dụng logic quyết định riêng thay vì CheckForAttack từ base
     }
-
-    protected override void CheckForAttack() { }
-    public override Vector3 GetMovementInput() => Vector3.zero;
 
     protected override void EndAttack()
     {
         base.EndAttack();
         lastInterestPoint = transform.position;
-        if (Random.value < 0.4f) target = null;
+        if (Random.value < 0.4f) detectedTarget = null;
         agent.isStopped = false;
     }
+
+    public override Vector3 GetMovementInput() => Vector3.zero;
 
     protected override void OnDrawGizmosSelected()
     {
         base.OnDrawGizmosSelected();
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
         if (lastInterestPoint != Vector3.zero)
         {
             Gizmos.color = Color.green;

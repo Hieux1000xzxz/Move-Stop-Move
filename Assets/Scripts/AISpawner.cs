@@ -121,7 +121,7 @@ public class AISpawner : MonoBehaviour
             enemy.transform.rotation = spawnPoint.rotation;
 
             activeAIs.Add(enemy);
-            GameManager.Instance.RegisterAI(enemy); // Đây sẽ trừ quota
+            GameManager.Instance.RegisterAI(enemy);
         }
         else
         {

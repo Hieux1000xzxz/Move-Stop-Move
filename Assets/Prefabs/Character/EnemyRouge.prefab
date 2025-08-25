@@ -379,6 +379,22 @@ PrefabInstance:
       propertyPath: uiPrefab
       value: 
       objectReference: {fileID: 7612066945078981596}
+    - target: {fileID: 5515526469601032773, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: edgeScale
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5515526469601032773, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: screenOffset.x
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 5515526469601032773, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: screenOffset.y
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 5515526469601032773, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: enemyLayerMask.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.09
@@ -425,7 +441,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9109480823393303125, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_Constraints
-      value: 112
+      value: 116
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
@@ -485,24 +501,24 @@ MonoBehaviour:
   animator: {fileID: 7106091414172362111}
   attackRange: 7
   attackDuration: 0.5
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 72
+  detectionRange: 15
   weaponSpawnPoint: {fileID: 5560079348092688031}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.3
   weaponType: 1
   scoreDisplay: {fileID: 641916366777533808}
   sizePerScore: 0.05
-  rangePerScore: 0.05
+  rangePerScore: 0.1
   moveSpeedPerScore: 0.05
   maxScale: 3
-  targetLayer:
-    serializedVersion: 2
-    m_Bits: 72
-  detectionRange: 15
   patrolRadius: 10
-  observeMinTime: 2
-  observeMaxTime: 5
+  observeMinTime: 1
+  observeMaxTime: 3
   aggressionLevel: 0.2
-  curiosityLevel: 0.7
+  curiosityLevel: 0.8
   fearLevel: 0.6
   attentionSpan: 1
   rayOrigin: {fileID: 0}

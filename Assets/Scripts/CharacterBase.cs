@@ -18,15 +18,15 @@ public abstract class CharacterBase : MonoBehaviour
     [SerializeField] protected Animator animator;
     [SerializeField] protected float attackRange = 2f;
     [SerializeField] protected float attackDuration = 0.5f;
+    [SerializeField] protected LayerMask targetLayer;
+    [SerializeField] protected float detectionRange = 10f;
 
-    [Header("Weapon Settings")]
     [Header("Weapon Settings")]
     [SerializeField] protected Transform weaponSpawnPoint;
     [SerializeField] protected Vector3 weaponRotationOffset = Vector3.zero;
     [SerializeField] protected float attackDelay = 0.3f;
-    [SerializeField] protected WeaponType weaponType; // 🔥 chọn loại weapon cho nhân vật
+    [SerializeField] protected WeaponType weaponType;
     protected WeaponBase currentWeapon;
-
 
     [Header("Score Settings")]
     [SerializeField] private KillScoreDisplay scoreDisplay;
@@ -37,11 +37,14 @@ public abstract class CharacterBase : MonoBehaviour
 
     protected CharacterState currentState = CharacterState.Idle;
     protected Transform attackTarget;
+    protected Transform detectedTarget;
     protected bool isAttacking = false;
     protected bool isMoving = false;
     private Coroutine attackRoutine;
     protected bool hasWeapon = true;
+
     public float currentAttackRange => attackRange;
+
     protected virtual void Start()
     {
         InitializeAgent();
@@ -77,10 +80,11 @@ public abstract class CharacterBase : MonoBehaviour
         }
     }
 
-
     protected virtual void Update()
     {
         if (agent == null || !agent.isActiveAndEnabled) return;
+
+        UpdateRadar();
 
         switch (currentState)
         {
@@ -97,6 +101,89 @@ public abstract class CharacterBase : MonoBehaviour
         UpdateAnimator();
     }
 
+    protected virtual void UpdateRadar()
+    {
+        Transform previousTarget = detectedTarget;
+        detectedTarget = FindNearestTarget();
+
+        if (detectedTarget != previousTarget)
+        {
+            OnTargetChanged(previousTarget, detectedTarget);
+        }
+    }
+
+    protected virtual void OnTargetChanged(Transform oldTarget, Transform newTarget)
+    {
+        if (oldTarget != null && newTarget == null)
+        {
+            OnTargetLost(oldTarget);
+        }
+        else if (oldTarget == null && newTarget != null)
+        {
+            OnNewTargetFound(newTarget);
+        }
+        else if (oldTarget != null && newTarget != null && oldTarget != newTarget)
+        {
+            OnTargetSwitched(oldTarget, newTarget);
+        }
+    }
+
+    protected virtual void OnTargetLost(Transform lostTarget)
+    {
+        if (attackTarget == lostTarget)
+        {
+            attackTarget = null;
+            if (currentState == CharacterState.Attack)
+            {
+                EndAttack();
+                ChangeState(CharacterState.Idle);
+            }
+        }
+    }
+
+    protected virtual void OnNewTargetFound(Transform newTarget)
+    {
+    }
+
+    protected virtual void OnTargetSwitched(Transform oldTarget, Transform newTarget)
+    {
+        if (attackTarget == oldTarget)
+        {
+            float distanceToNew = Vector3.Distance(transform.position, newTarget.position);
+            if (distanceToNew <= attackRange)
+            {
+                attackTarget = newTarget;
+            }
+            else
+            {
+                EndAttack();
+                ChangeState(CharacterState.Idle);
+            }
+        }
+    }
+
+    protected Transform FindNearestTarget()
+    {
+        Collider[] targets = Physics.OverlapSphere(transform.position, detectionRange, targetLayer);
+        Transform nearest = null;
+        float minDistance = Mathf.Infinity;
+
+        foreach (var target in targets)
+        {
+            if (target.transform == transform || !target.gameObject.activeInHierarchy)
+                continue;
+
+            float distance = Vector3.Distance(transform.position, target.transform.position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearest = target.transform;
+            }
+        }
+
+        return nearest;
+    }
+
     protected void ChangeState(CharacterState newState)
     {
         if (currentState != newState)
@@ -105,14 +192,12 @@ public abstract class CharacterBase : MonoBehaviour
             {
                 if (animator != null)
                 {
-                    animator.SetBool("IsAttacking",false);
+                    animator.SetBool("IsAttacking", false);
                 }
                 EndAttack();
             }
             currentState = newState;
-
         }
-
     }
 
     protected virtual void HandleIdle()
@@ -154,6 +239,29 @@ public abstract class CharacterBase : MonoBehaviour
         }
     }
 
+    protected virtual void CheckForAttack()
+    {
+        if (attackTarget != null && attackTarget != detectedTarget)
+        {
+            float distanceToAttackTarget = Vector3.Distance(transform.position, attackTarget.position);
+            if (distanceToAttackTarget > attackRange || !attackTarget.gameObject.activeInHierarchy)
+            {
+                attackTarget = null;
+                EndAttack();
+                ChangeState(CharacterState.Idle);
+            }
+        }
+
+        if (detectedTarget != null && Vector3.Distance(transform.position, detectedTarget.position) <= attackRange)
+        {
+            if (currentState != CharacterState.Attack || attackTarget != detectedTarget)
+            {
+                attackTarget = detectedTarget;
+                ChangeState(CharacterState.Attack);
+            }
+        }
+    }
+
     protected virtual void FaceTarget(Vector3 targetPosition)
     {
         Vector3 direction = (targetPosition - transform.position).normalized;
@@ -161,7 +269,7 @@ public abstract class CharacterBase : MonoBehaviour
         if (direction != Vector3.zero)
         {
             Quaternion targetRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 30f);
         }
     }
 
@@ -195,8 +303,6 @@ public abstract class CharacterBase : MonoBehaviour
             ThrowWeapon();
     }
 
-
-
     public virtual void OnWeaponReturned()
     {
         isAttacking = false;
@@ -224,19 +330,10 @@ public abstract class CharacterBase : MonoBehaviour
         isAttacking = false;
         if (currentWeapon != null && !currentWeapon.IsFlying)
         {
-            currentWeapon.transform.SetParent(weaponSpawnPoint);
-            currentWeapon.transform.localPosition = Vector3.zero;
-            currentWeapon.transform.localRotation = Quaternion.identity;
-            currentWeapon.gameObject.SetActive(true);
+            currentWeapon.ResetWeapon();
         }
-
-        hasWeapon = true; // Cho phép atta
-    }
-
-
-    protected virtual void CheckForAttack()
-    {
-        // Implement ở lớp con (Player, Enemy)
+        isAttacking = false;
+        hasWeapon = true;
     }
 
     protected virtual void Move(Vector3 direction)
@@ -291,10 +388,12 @@ public abstract class CharacterBase : MonoBehaviour
             agent.speed = moveSpeed;
         }
     }
+
     public virtual void ResetState()
     {
         currentState = CharacterState.Idle;
         attackTarget = null;
+        detectedTarget = null;
         isAttacking = false;
         isMoving = false;
 
@@ -303,9 +402,8 @@ public abstract class CharacterBase : MonoBehaviour
             currentWeapon.transform.SetParent(weaponSpawnPoint);
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.identity;
-            currentWeapon.gameObject.SetActive(true); // bật lại weapon nếu bị tắt
+            currentWeapon.gameObject.SetActive(true);
         }
-
 
         hasWeapon = true;
 
@@ -335,11 +433,14 @@ public abstract class CharacterBase : MonoBehaviour
             currentWeapon.gameObject.SetActive(false);
         }
         attackTarget = null;
+        detectedTarget = null;
     }
 
     protected virtual void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
     }
 }

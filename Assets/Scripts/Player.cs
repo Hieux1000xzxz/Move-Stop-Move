@@ -3,7 +3,6 @@
 public class Player : CharacterBase
 {
     [SerializeField] private FloatingJoystick joystick;
-    [SerializeField] private LayerMask enemyLayer;
     private bool isMovingInput;
 
     protected override void Update()
@@ -20,35 +19,31 @@ public class Player : CharacterBase
         base.Update();
     }
 
-    protected override void CheckForAttack()
+    protected override void OnTargetLost(Transform lostTarget)
     {
-        if (!isMovingInput && currentState != CharacterState.Attack && !isAttacking)
+        base.OnTargetLost(lostTarget);
+
+        // Player có thể tiếp tục di chuyển sau khi mất target
+        if (isMovingInput && currentState == CharacterState.Attack)
         {
-            Collider[] enemies = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
-            if (enemies.Length > 0)
-            {
-                attackTarget = GetNearestEnemy(enemies);
-                ChangeState(CharacterState.Attack);
-            }
+            ChangeState(CharacterState.Move);
         }
     }
 
-    private Transform GetNearestEnemy(Collider[] enemies)
+    protected override void OnNewTargetFound(Transform newTarget)
     {
-        Transform nearest = null;
-        float minDistance = Mathf.Infinity;
+        base.OnNewTargetFound(newTarget);
 
-        foreach (var enemy in enemies)
+        // Player chỉ tấn công khi không di chuyển
+        if (!isMovingInput)
         {
-            float distance = Vector3.Distance(transform.position, enemy.transform.position);
-            if (distance < minDistance)
+            float distance = Vector3.Distance(transform.position, newTarget.position);
+            if (distance <= attackRange)
             {
-                minDistance = distance;
-                nearest = enemy.transform;
+                attackTarget = newTarget;
+                ChangeState(CharacterState.Attack);
             }
         }
-
-        return nearest;
     }
 
     public override Vector3 GetMovementInput()

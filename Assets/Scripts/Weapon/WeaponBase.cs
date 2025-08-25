@@ -93,7 +93,7 @@ public class WeaponBase : MonoBehaviour
 
     public virtual void ResetWeapon()
     {
-        isFlying = false;
+        ReturnToHand();
     }
 
     protected void StartRotation()
