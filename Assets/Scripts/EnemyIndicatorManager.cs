@@ -11,7 +11,9 @@ public class EnemyIndicatorManager : MonoBehaviour
 
     private List<Transform> enemies = new List<Transform>();
     private Dictionary<Transform, RectTransform> indicators = new Dictionary<Transform, RectTransform>();
+
     public static EnemyIndicatorManager Instance;
+
     private void Awake()
     {
         Instance = this;
@@ -22,21 +24,33 @@ public class EnemyIndicatorManager : MonoBehaviour
         if (!enemies.Contains(enemy))
         {
             enemies.Add(enemy);
-            RectTransform indicator = Instantiate(indicatorPrefab, canvasRect);
-            indicator.gameObject.SetActive(true);
-            indicators[enemy] = indicator;
+
+            // nếu enemy chưa có indicator thì tạo mới
+            if (!indicators.ContainsKey(enemy))
+            {
+                RectTransform indicator = Instantiate(indicatorPrefab, canvasRect);
+                indicator.gameObject.SetActive(true);
+                indicators[enemy] = indicator;
+            }
+            else
+            {
+                // tái sử dụng indicator cũ
+                indicators[enemy].gameObject.SetActive(true);
+            }
         }
     }
 
     public void UnregisterEnemy(Transform enemy)
     {
-        if (enemies.Contains(enemy))
+        if (enemies.Remove(enemy))
         {
-            enemies.Remove(enemy);
             if (indicators.TryGetValue(enemy, out RectTransform indicator))
             {
-                Destroy(indicator.gameObject);
-                indicators.Remove(enemy);
+                if (indicator != null)
+                {
+                    // thay vì Destroy, chỉ disable
+                    indicator.gameObject.SetActive(false);
+                }
             }
         }
     }
@@ -46,41 +60,49 @@ public class EnemyIndicatorManager : MonoBehaviour
         for (int i = enemies.Count - 1; i >= 0; i--)
         {
             Transform enemy = enemies[i];
+
+            // nếu enemy null thì disable indicator
             if (enemy == null)
             {
-                UnregisterEnemy(enemy);
+                if (indicators.TryGetValue(enemy, out RectTransform ind) && ind != null)
+                    ind.gameObject.SetActive(false);
+
+                enemies.RemoveAt(i);
                 continue;
             }
+
+            if (!indicators.TryGetValue(enemy, out RectTransform indicator) || indicator == null)
+                continue;
 
             Vector3 screenPos = mainCamera.WorldToScreenPoint(enemy.position);
             bool isBehind = screenPos.z < 0;
             if (isBehind) screenPos *= -1;
 
-            bool onScreen = screenPos.x > 0 && screenPos.x < Screen.width && screenPos.y > 0 && screenPos.y < Screen.height && !isBehind;
-            if (indicators.TryGetValue(enemy, out RectTransform indicator))
+            bool onScreen = screenPos.x > 0 && screenPos.x < Screen.width &&
+                            screenPos.y > 0 && screenPos.y < Screen.height && !isBehind;
+
+            if (Vector3.Distance(mainCamera.transform.position, enemy.position) > detectionRange)
             {
-                if (Vector3.Distance(mainCamera.transform.position, enemy.position) > detectionRange)
-                {
-                    indicator.gameObject.SetActive(false);
-                    continue;
-                }
+                indicator.gameObject.SetActive(false);
+                continue;
+            }
 
-                indicator.gameObject.SetActive(!onScreen);
-                if (!onScreen)
-                {
-                    Vector3 screenCenter = new Vector3(Screen.width / 2f, Screen.height / 2f, 0);
-                    Vector3 fromCenter = (screenPos - screenCenter).normalized;
+            indicator.gameObject.SetActive(!onScreen);
+            if (!onScreen)
+            {
+                Vector3 screenCenter = new Vector3(Screen.width / 2f, Screen.height / 2f, 0);
+                Vector3 fromCenter = (screenPos - screenCenter).normalized;
 
-                    float clampedX = Mathf.Clamp(screenPos.x, edgeOffset, Screen.width - edgeOffset);
-                    float clampedY = Mathf.Clamp(screenPos.y, edgeOffset, Screen.height - edgeOffset);
+                float clampedX = Mathf.Clamp(screenPos.x, edgeOffset, Screen.width - edgeOffset);
+                float clampedY = Mathf.Clamp(screenPos.y, edgeOffset, Screen.height - edgeOffset);
 
-                    Vector3 edgePos = new Vector3(clampedX, clampedY, 0);
-                    indicator.position = edgePos;
+                Vector3 edgePos = new Vector3(clampedX, clampedY, 0);
+                indicator.position = edgePos;
 
-                    float angle = Mathf.Atan2(fromCenter.y, fromCenter.x) * Mathf.Rad2Deg;
-                    indicator.rotation = Quaternion.Euler(0, 0, angle + 90f);
-                }
+                float angle = Mathf.Atan2(fromCenter.y, fromCenter.x) * Mathf.Rad2Deg;
+                indicator.rotation = Quaternion.Euler(0, 0, angle + 90f);
             }
         }
     }
 }
+

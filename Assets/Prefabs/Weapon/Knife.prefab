@@ -213,7 +213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c08240cfeaf4924c80fca49ffe7ba75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 13
+  speed: 16
   damage: 10
   handRotationOffset: {x: 90, y: 0, z: 90}
   rotateAxis: {x: 1, y: 0, z: 0}

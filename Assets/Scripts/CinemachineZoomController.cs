@@ -5,13 +5,13 @@ public class CinemachineZoomController : MonoBehaviour
 {
     [SerializeField] private CinemachineCamera virtualCamera;
     [SerializeField] private KillScoreDisplay scoreDisplay;
-    [SerializeField] private float baseFOV = 60f;
+    [SerializeField] public float baseFOV = 60f;
     [SerializeField] private float fovPerScore = 2f;
     [SerializeField] private float maxFOV = 90f;
     [SerializeField] private float zoomSpeed = 2f;
 
     [Header("Follow Offset Settings")]
-    [SerializeField] private float baseFollowY = 5f;
+    [SerializeField] public float baseFollowY = 5f;
     [SerializeField] private float followYPerScore = 0.5f;
     [SerializeField] private float maxFollowY = 15f;
     [SerializeField] private CinemachineFollow transposer;

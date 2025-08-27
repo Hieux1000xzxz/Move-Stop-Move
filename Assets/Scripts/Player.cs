@@ -3,6 +3,7 @@
 public class Player : CharacterBase
 {
     [SerializeField] private FloatingJoystick joystick;
+    public FloatingJoystick Joystick => joystick;
     private bool isMovingInput;
 
     protected override void Update()
@@ -33,7 +34,6 @@ public class Player : CharacterBase
     {
         base.OnNewTargetFound(newTarget);
 
-        // Player chỉ tấn công khi không di chuyển
         if (!isMovingInput)
         {
             float distance = Vector3.Distance(transform.position, newTarget.position);

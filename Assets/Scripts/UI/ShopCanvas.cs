@@ -84,7 +84,6 @@ public class ShopCanvas : BaseCanvas
     {
         WeaponData weapon = weapons[currentIndex];
 
-        // Lưu weapon đã chọn
         PlayerPrefs.SetString("SelectedWeapon", weapon.weaponName);
         PlayerPrefs.Save();
         Debug.Log("Selected weapon: " + weapon.weaponName);

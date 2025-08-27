@@ -101,7 +101,7 @@ public class AIController : CharacterBase
 
         if (distance <= attackRange)
             DecideInCombat();
-        else if (distance <= detectionRange && timeSinceFound <= attentionSpan)
+        else if (timeSinceFound <= attentionSpan)
             DecideNearTarget();
         else
             StartWandering();

@@ -16,5 +16,6 @@ MonoBehaviour:
   weaponName: Axe
   weaponIcon: {fileID: 21300000, guid: adcde282b4c1b9445a3421cf589b2e19, type: 3}
   price: 0
+  description: 'Speed: 13,   Wide AoE'
   speed: 12
   damage: 1

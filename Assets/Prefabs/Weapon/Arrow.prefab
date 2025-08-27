@@ -225,7 +225,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01790206b826e8740874ba5403b70943, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 15
+  speed: 14
   damage: 10
   handRotationOffset: {x: 0, y: 0, z: -90}
   rotateAxis: {x: 0, y: 1, z: 0}

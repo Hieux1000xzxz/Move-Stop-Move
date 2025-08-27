@@ -19,7 +19,6 @@ public abstract class CharacterBase : MonoBehaviour
     [SerializeField] protected float attackRange = 2f;
     [SerializeField] protected float attackDuration = 0.5f;
     [SerializeField] protected LayerMask targetLayer;
-    [SerializeField] protected float detectionRange = 10f;
 
     [Header("Weapon Settings")]
     [SerializeField] protected Transform weaponSpawnPoint;
@@ -166,7 +165,7 @@ public abstract class CharacterBase : MonoBehaviour
 
     protected Transform FindNearestTarget()
     {
-        Collider[] targets = Physics.OverlapSphere(transform.position, detectionRange, targetLayer);
+        Collider[] targets = Physics.OverlapSphere(transform.position, attackRange, targetLayer);
         Transform nearest = null;
         float minDistance = Mathf.Infinity;
 
@@ -482,6 +481,5 @@ public abstract class CharacterBase : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
     }
 }

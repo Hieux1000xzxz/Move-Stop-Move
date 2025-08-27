@@ -15,14 +15,12 @@ public class MainMenuCanvas : BaseCanvas
     private void OnPlayClicked()
     {
         Debug.Log("Play game!");
-        // Ở đây bạn load scene gameplay
-        // SceneManager.LoadScene("GameScene");
+        UIManager.Instance.StartGame();
     }
 
     private void OnShopClicked()
     {
         Debug.Log("Open Shop!");
-        UIManager.Instance.OpenShop();  // Gọi UIManager thay vì chỉ Hide()
+        UIManager.Instance.OpenShop();
     }
-
 }

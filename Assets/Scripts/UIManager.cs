@@ -36,7 +36,6 @@ public class UIManager : Singleton<UIManager>
         }
     }
 
-    // Mở UI và đóng các UI khác
     public void OpenUI(BaseCanvas canvas)
     {
         if (canvas == null) return;
@@ -45,20 +44,23 @@ public class UIManager : Singleton<UIManager>
         canvas.Show();
     }
 
-    // Đóng UI cụ thể
     public void CloseUI(BaseCanvas canvas)
     {
         if (canvas != null) canvas.Hide();
     }
 
-    // Đóng tất cả UI
     public void CloseAllUI()
     {
         if (mainMenuCanvas != null) mainMenuCanvas.Hide();
         if (shopCanvas != null) shopCanvas.Hide();
     }
+    public void StartGame()
+    {
+        mainMenuCanvas.Hide();
+        shopCanvas.Hide();
+        GameManager.Instance.StartGame();
+    }
 
-    // Các hàm cụ thể cho từng UI
     public void OpenMainMenu() => OpenUI(mainMenuCanvas);
     public void OpenShop() => OpenUI(shopCanvas);
 

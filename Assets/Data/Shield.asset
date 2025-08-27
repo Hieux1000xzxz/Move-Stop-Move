@@ -16,5 +16,6 @@ MonoBehaviour:
   weaponName: Shield
   weaponIcon: {fileID: 21300000, guid: ff5955e4a9197b44e939da1ee80c210f, type: 3}
   price: 0
+  description: 'Speed: 14,   Medium Aoe,   Return '
   speed: 12
   damage: 1
