@@ -23,7 +23,6 @@ public class Player : CharacterBase
     {
         base.OnTargetLost(lostTarget);
 
-        // Player có thể tiếp tục di chuyển sau khi mất target
         if (isMovingInput && currentState == CharacterState.Attack)
         {
             ChangeState(CharacterState.Move);

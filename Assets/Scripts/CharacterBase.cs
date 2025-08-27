@@ -44,12 +44,14 @@ public abstract class CharacterBase : MonoBehaviour
     protected bool hasWeapon = true;
 
     public float currentAttackRange => attackRange;
+    public WeaponBase currentWeaponPublic => currentWeapon;
 
     protected virtual void Start()
     {
         InitializeAgent();
         InitializeWeapon();
         OnWeaponReturned();
+        LoadWeapon();
     }
 
     private void InitializeAgent()
@@ -425,6 +427,31 @@ public abstract class CharacterBase : MonoBehaviour
             agent.velocity = Vector3.zero;
         }
     }
+    public void ChangeWeapon(WeaponType newWeaponType)
+    {
+        // Xóa weapon cũ
+        if (currentWeapon != null)
+        {
+            currentWeapon.gameObject.SetActive(false);
+        }
+
+        // Spawn weapon mới từ pool
+        GameObject newWeaponObj = ObjectPool.Instance.SpawnWeaponByType(newWeaponType);
+        if (newWeaponObj != null)
+        {
+            newWeaponObj.transform.SetParent(weaponSpawnPoint);
+            newWeaponObj.transform.localPosition = Vector3.zero;
+            newWeaponObj.transform.localRotation = Quaternion.identity;
+
+            currentWeapon = newWeaponObj.GetComponent<WeaponBase>();
+            if (currentWeapon != null)
+            {
+                currentWeapon.Init(this, weaponSpawnPoint);
+            }
+        }
+
+        weaponType = newWeaponType;
+    }
 
     protected virtual void OnDisable()
     {
@@ -435,7 +462,21 @@ public abstract class CharacterBase : MonoBehaviour
         attackTarget = null;
         detectedTarget = null;
     }
-
+    protected virtual void LoadWeapon()
+    {
+        string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
+        if (!string.IsNullOrEmpty(selectedWeaponName))
+        {
+            foreach (WeaponData weapon in Resources.LoadAll<WeaponData>("")) // hoặc gắn list weapons
+            {
+                if (weapon.weaponName == selectedWeaponName)
+                {
+                    ChangeWeapon(weapon.weaponType);
+                    break;
+                }
+            }
+        }
+    }
     protected virtual void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

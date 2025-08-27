@@ -112,4 +112,12 @@ public class WeaponBase : MonoBehaviour
             rotateTween = null;
         }
     }
+
+    public virtual void ApplyData(WeaponData data)
+    {
+        if (data == null) return;
+        speed = data.speed;
+        damage = data.damage;
+    }
+
 }
