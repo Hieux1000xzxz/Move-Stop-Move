@@ -317,31 +317,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 8.56
+      value: 10.3
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.7
+      value: -1.5
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -3.87
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.0005355926
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 0.9999999
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -349,7 +349,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 179.939
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -509,11 +509,10 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 64
-  detectionRange: 10
   weaponSpawnPoint: {fileID: 7101475273743860029}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
-  attackDelay: 0.3
-  weaponType: 4
+  attackDelay: 0.4
+  weaponType: 1
   scoreDisplay: {fileID: 487039092764447502}
   sizePerScore: 0.05
   rangePerScore: 0.05
@@ -557,7 +556,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: 749b9069dc4742c5bfa5c74644049926, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

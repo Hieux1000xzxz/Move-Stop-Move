@@ -11,7 +11,9 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private CinemachineZoomController zoomController;
     [SerializeField] private EnemyIndicatorManager enemyIndicatorManager;
     [SerializeField] private PlayerAttackRange playerAttackRange;
+    [SerializeField] private GamePlayCanvas gamePlayCanvas;
     [SerializeField] private Player player;
+
     private List<GameObject> activeAIs = new List<GameObject>();
     private int totalSpawned = 0;
     private int totalKilled = 0;
@@ -22,6 +24,11 @@ public class GameManager : Singleton<GameManager>
         base.Awake();
         isGameStarted = false;
         currentAIQuota = totalAIQuota;
+        DisableGamePlaySystem();
+    }
+
+    private void DisableGamePlaySystem()
+    {
         aiSpawner.enabled = false;
         player.Joystick.gameObject.SetActive(false);
         enemyIndicatorManager.enabled = false;
@@ -51,7 +58,6 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
-    // Data cho UI
     public int GetActiveAICount() { return activeAIs.Count; }
     public int GetRemainingQuota() { return currentAIQuota; }
     public int GetTotalKilled() { return totalKilled; }
@@ -74,6 +80,13 @@ public class GameManager : Singleton<GameManager>
         isGameStarted = true;
         EnableGamePlaySystem();
         ResetGame();
+    }
+    public void GameOver()
+    {
+        isGameStarted = false;
+
+        DisableGamePlaySystem();
+        gamePlayCanvas.OnGameOver();
     }
 
     private void EnableGamePlaySystem()

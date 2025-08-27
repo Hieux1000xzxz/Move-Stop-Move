@@ -73,6 +73,13 @@ public class WeaponBase : MonoBehaviour
             owner.AddScore(1);
             ReturnToHand();
         }
+        if(other.CompareTag("Player"))
+        {
+            Health h = other.GetComponent<Health>();
+            if (h != null) h.TakeDamage(damage);
+            GameManager.Instance.GameOver();
+            ReturnToHand();
+        }
     }
 
     protected virtual void ReturnToHand()

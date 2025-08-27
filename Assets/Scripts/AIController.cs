@@ -234,6 +234,9 @@ public class AIController : CharacterBase
 
     private bool TrySetDestination(Vector3 targetPos, float sampleDistance)
     {
+        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+            return false;
+
         if (NavMesh.SamplePosition(targetPos, out NavMeshHit hit, sampleDistance, NavMesh.AllAreas))
         {
             agent.isStopped = false;

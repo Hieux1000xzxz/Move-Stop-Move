@@ -41,6 +41,7 @@ public abstract class CharacterBase : MonoBehaviour
     protected bool isMoving = false;
     private Coroutine attackRoutine;
     protected bool hasWeapon = true;
+    protected float nextAttackTime = 0f;
 
     public float currentAttackRange => attackRange;
     public WeaponBase currentWeaponPublic => currentWeapon;
@@ -279,8 +280,12 @@ public abstract class CharacterBase : MonoBehaviour
         if (currentWeapon == null || !hasWeapon) return;
         if (currentWeapon.IsFlying) return;
 
+        // Check cooldown
+        if (Time.time < nextAttackTime) return;
+
         isAttacking = true;
         hasWeapon = false;
+        nextAttackTime = Time.time + attackDelay; // set cooldown
 
         if (animator != null)
             animator.SetBool("IsAttacking", true);
@@ -289,6 +294,7 @@ public abstract class CharacterBase : MonoBehaviour
             StopCoroutine(attackRoutine);
 
         attackRoutine = StartCoroutine(AttackRoutine());
+
         DOVirtual.DelayedCall(attackDuration, () =>
         {
             if (animator != null)

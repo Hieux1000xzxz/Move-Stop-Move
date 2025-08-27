@@ -504,11 +504,10 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 72
-  detectionRange: 15
   weaponSpawnPoint: {fileID: 5560079348092688031}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.3
-  weaponType: 1
+  weaponType: 4
   scoreDisplay: {fileID: 641916366777533808}
   sizePerScore: 0.05
   rangePerScore: 0.1
