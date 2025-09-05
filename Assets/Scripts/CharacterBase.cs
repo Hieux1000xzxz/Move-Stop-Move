@@ -3,12 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
-public enum CharacterState
-{
-    Idle,
-    Move,
-    Attack
-}
+public enum CharacterState { Idle, Move, Attack }
 
 public abstract class CharacterBase : MonoBehaviour
 {
@@ -16,9 +11,11 @@ public abstract class CharacterBase : MonoBehaviour
     [SerializeField] protected float moveSpeed = 5f;
     [SerializeField] protected NavMeshAgent agent;
     [SerializeField] protected Animator animator;
+    [SerializeField] protected Health health;
     [SerializeField] protected float attackRange = 2f;
     [SerializeField] protected float attackDuration = 0.5f;
     [SerializeField] protected LayerMask targetLayer;
+    [SerializeField] protected Collider characterCollider;
 
     [Header("Weapon Settings")]
     [SerializeField] protected Transform weaponSpawnPoint;
@@ -38,53 +35,57 @@ public abstract class CharacterBase : MonoBehaviour
     protected Transform attackTarget;
     protected Transform detectedTarget;
     protected bool isAttacking = false;
-    protected bool isMoving = false;
-    private Coroutine attackRoutine;
     protected bool hasWeapon = true;
     protected float nextAttackTime = 0f;
+    protected bool isDead = false;
+    private Vector3 lastPosition;
+    private Coroutine attackRoutine;
 
     public float currentAttackRange => attackRange;
     public WeaponBase currentWeaponPublic => currentWeapon;
 
     protected virtual void Start()
     {
-        InitializeAgent();
+        if (agent != null)
+        {
+            agent.speed = moveSpeed;
+            lastPosition = transform.position;
+        }
         InitializeWeapon();
         OnWeaponReturned();
         LoadWeapon();
     }
 
-    private void InitializeAgent()
-    {
-        if (agent != null)
-        {
-            agent.speed = moveSpeed;
-        }
-    }
-
     private void InitializeWeapon()
     {
-        if (weaponSpawnPoint != null)
-        {
-            GameObject weaponObj = ObjectPool.Instance.SpawnWeaponByType(weaponType);
-            if (weaponObj != null)
-            {
-                weaponObj.transform.SetParent(weaponSpawnPoint);
-                weaponObj.transform.localPosition = Vector3.zero;
-                weaponObj.transform.localRotation = Quaternion.identity;
+        if (weaponSpawnPoint == null) return;
 
-                currentWeapon = weaponObj.GetComponent<WeaponBase>();
-                if (currentWeapon != null)
-                {
-                    currentWeapon.Init(this, weaponSpawnPoint);
-                }
+        GameObject weaponObj = ObjectPool.Instance.SpawnWeaponByType(weaponType);
+        if (weaponObj != null)
+        {
+            weaponObj.transform.SetParent(weaponSpawnPoint);
+            weaponObj.transform.localPosition = Vector3.zero;
+            weaponObj.transform.localRotation = Quaternion.identity;
+
+            currentWeapon = weaponObj.GetComponent<WeaponBase>();
+            if (currentWeapon != null)
+            {
+                currentWeapon.Init(this, weaponSpawnPoint);
             }
         }
     }
 
     protected virtual void Update()
     {
-        if (agent == null || !agent.isActiveAndEnabled) return;
+        CheckForDead();
+        if (isDead || health.isDead)
+        {
+            return;
+        }
+        if (agent == null || !agent.isActiveAndEnabled)
+        {
+            return;
+        }
 
         UpdateRadar();
 
@@ -100,6 +101,7 @@ public abstract class CharacterBase : MonoBehaviour
                 HandleAttack();
                 break;
         }
+
         UpdateAnimator();
     }
 
@@ -143,9 +145,7 @@ public abstract class CharacterBase : MonoBehaviour
         }
     }
 
-    protected virtual void OnNewTargetFound(Transform newTarget)
-    {
-    }
+    protected virtual void OnNewTargetFound(Transform newTarget) { }
 
     protected virtual void OnTargetSwitched(Transform oldTarget, Transform newTarget)
     {
@@ -182,30 +182,28 @@ public abstract class CharacterBase : MonoBehaviour
                 nearest = target.transform;
             }
         }
-
         return nearest;
     }
 
     protected void ChangeState(CharacterState newState)
     {
-        if (currentState != newState)
+        if (currentState == newState) return;
+
+        if (currentState == CharacterState.Attack)
         {
-            if (currentState == CharacterState.Attack && newState == CharacterState.Move)
+            if (animator != null)
             {
-                if (animator != null)
-                {
-                    animator.SetBool("IsAttacking", false);
-                }
-                EndAttack();
+                animator.SetBool("IsAttacking", false);
             }
-            currentState = newState;
+            EndAttack();
         }
+        currentState = newState;
     }
 
     protected virtual void HandleIdle()
     {
         Vector3 input = GetMovementInput();
-        if (input.magnitude > 0.1f)
+        if (input.magnitude > 0.01f)
         {
             ChangeState(CharacterState.Move);
         }
@@ -215,7 +213,7 @@ public abstract class CharacterBase : MonoBehaviour
     protected virtual void HandleMove()
     {
         Vector3 input = GetMovementInput();
-        if (input.magnitude > 0.1f)
+        if (input.magnitude > 0.01f)
         {
             Move(input);
         }
@@ -233,8 +231,8 @@ public abstract class CharacterBase : MonoBehaviour
             EndAttack();
             return;
         }
-        FaceTarget(attackTarget.position);
 
+        FaceTarget(attackTarget.position);
         if (!isAttacking)
         {
             PerformAttack();
@@ -277,37 +275,50 @@ public abstract class CharacterBase : MonoBehaviour
 
     protected virtual void PerformAttack()
     {
+        if (!hasWeapon)
+        {
+            DOVirtual.DelayedCall(attackDuration, () =>
+            {
+                if (animator != null)
+                {
+                    animator.SetBool("IsAttacking", false);
+                }
+            });
+        }
         if (currentWeapon == null || !hasWeapon) return;
         if (currentWeapon.IsFlying) return;
-
-        // Check cooldown
         if (Time.time < nextAttackTime) return;
 
         isAttacking = true;
         hasWeapon = false;
-        nextAttackTime = Time.time + attackDelay; // set cooldown
+        nextAttackTime = Time.time + attackDelay;
 
         if (animator != null)
+        {
             animator.SetBool("IsAttacking", true);
+        }
 
         if (attackRoutine != null)
-            StopCoroutine(attackRoutine);
-
-        attackRoutine = StartCoroutine(AttackRoutine());
-
-        DOVirtual.DelayedCall(attackDuration, () =>
         {
-            if (animator != null)
-                animator.SetBool("IsAttacking", false);
-        });
+            StopCoroutine(attackRoutine);
+        }
+        attackRoutine = StartCoroutine(AttackRoutine());
+        
+       
     }
 
     private IEnumerator AttackRoutine()
     {
         yield return new WaitForSeconds(attackDelay);
-
         if (currentWeapon != null && attackTarget != null)
+        {
             ThrowWeapon();
+        }
+        yield return new WaitForSeconds(0.1f);
+        if (animator != null)
+        {
+            animator.SetBool("IsAttacking", false);
+        }
     }
 
     public virtual void OnWeaponReturned()
@@ -334,41 +345,43 @@ public abstract class CharacterBase : MonoBehaviour
             StopCoroutine(attackRoutine);
             attackRoutine = null;
         }
+
         isAttacking = false;
+        hasWeapon = true;
+
         if (currentWeapon != null && !currentWeapon.IsFlying)
         {
             currentWeapon.ResetWeapon();
         }
-        isAttacking = false;
-        hasWeapon = true;
+
+        nextAttackTime = Time.time;
     }
 
     protected virtual void Move(Vector3 direction)
     {
-        if (isAttacking || agent == null || !agent.isActiveAndEnabled) return;
-        direction = direction.normalized;
-        Vector3 targetPos = transform.position + direction * 2f;
+        if (agent == null || !agent.isActiveAndEnabled) return;
+        if (isDead) return;
 
-        if (NavMesh.SamplePosition(targetPos, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+        if (direction.magnitude > 0.01f)
         {
-            agent.SetDestination(hit.position);
+            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+            agent.Move(direction.normalized * moveSpeed * Time.deltaTime);
+        }
+        else
+        {
+            agent.ResetPath();
         }
     }
 
     protected virtual void UpdateAnimator()
     {
-        if (animator == null)
-            return;
+        if (animator == null || agent == null || !agent.isActiveAndEnabled) return;
 
-        bool agentIsMoving = agent != null && agent.isActiveAndEnabled && agent.velocity.magnitude > 0.1f;
-        isMoving = agentIsMoving && !isAttacking;
-
-        animator.SetBool("IsMoving", isMoving);
-        if (isMoving)
-        {
-            animator.SetBool(("IsAttacking"), false);
-        }
+        bool isMovingNow = agent.velocity.sqrMagnitude > 0.01f && !isAttacking;
+        animator.SetBool("IsMoving", isMovingNow);
     }
+
 
     public abstract Vector3 GetMovementInput();
 
@@ -383,13 +396,14 @@ public abstract class CharacterBase : MonoBehaviour
 
     private void UpdateCharacterStats()
     {
-        if (scoreDisplay == null)
-            return;
+        if (scoreDisplay == null) return;
+
         float newScale = Mathf.Min(1f + scoreDisplay.CurrentScore * sizePerScore, maxScale);
         transform.localScale = Vector3.one * newScale;
         currentWeapon.transform.localScale = Vector3.one * newScale;
         attackRange += scoreDisplay.CurrentScore * rangePerScore;
         moveSpeed += moveSpeedPerScore;
+
         if (agent != null && agent.isActiveAndEnabled)
         {
             agent.speed = moveSpeed;
@@ -402,8 +416,12 @@ public abstract class CharacterBase : MonoBehaviour
         attackTarget = null;
         detectedTarget = null;
         isAttacking = false;
-        isMoving = false;
-
+        isDead = false;
+        health.isDead = false;
+        hasWeapon = true;
+        scoreDisplay.gameObject.SetActive(true);
+        this.gameObject.layer = LayerMask.NameToLayer("Enemy");
+        characterCollider.enabled = true;
         if (currentWeapon != null)
         {
             currentWeapon.transform.SetParent(weaponSpawnPoint);
@@ -411,8 +429,6 @@ public abstract class CharacterBase : MonoBehaviour
             currentWeapon.transform.localRotation = Quaternion.identity;
             currentWeapon.gameObject.SetActive(true);
         }
-
-        hasWeapon = true;
 
         if (animator != null)
         {
@@ -431,16 +447,16 @@ public abstract class CharacterBase : MonoBehaviour
             agent.ResetPath();
             agent.velocity = Vector3.zero;
         }
+       
     }
+
     public void ChangeWeapon(WeaponType newWeaponType)
     {
-        // Xóa weapon cũ
         if (currentWeapon != null)
         {
             currentWeapon.gameObject.SetActive(false);
         }
 
-        // Spawn weapon mới từ pool
         GameObject newWeaponObj = ObjectPool.Instance.SpawnWeaponByType(newWeaponType);
         if (newWeaponObj != null)
         {
@@ -467,12 +483,13 @@ public abstract class CharacterBase : MonoBehaviour
         attackTarget = null;
         detectedTarget = null;
     }
+
     protected virtual void LoadWeapon()
     {
         string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
         if (!string.IsNullOrEmpty(selectedWeaponName))
         {
-            foreach (WeaponData weapon in Resources.LoadAll<WeaponData>("")) // hoặc gắn list weapons
+            foreach (WeaponData weapon in Resources.LoadAll<WeaponData>(""))
             {
                 if (weapon.weaponName == selectedWeaponName)
                 {
@@ -482,10 +499,27 @@ public abstract class CharacterBase : MonoBehaviour
             }
         }
     }
+
+    protected virtual void CheckForDead()
+    {
+        if (health.isDead == true)
+        {
+            StopAllCoroutines();
+            scoreDisplay.gameObject.SetActive(false);
+            characterCollider.enabled = false;
+            if (agent != null && agent.isActiveAndEnabled)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+                agent.ResetPath();
+            }
+            isDead = true;
+        }
+    }
+
     protected virtual void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
-        Gizmos.color = Color.yellow;
     }
 }
