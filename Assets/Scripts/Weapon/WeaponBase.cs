@@ -50,7 +50,7 @@ public class WeaponBase : MonoBehaviour
         StartRotation();
     }
 
-    protected virtual void FixedUpdate()
+    protected virtual void Update()
     {
         if (isFlying && owner != null)
         {
@@ -77,7 +77,11 @@ public class WeaponBase : MonoBehaviour
         {
             Health h = other.GetComponent<Health>();
             if (h != null) h.TakeDamage(damage);
-            GameManager.Instance.GameOver();
+            DOVirtual.DelayedCall(0.5f, () =>
+            {
+                GameManager.Instance.GameOver();
+            });
+            owner.AddScore(1);
             ReturnToHand();
         }
     }
