@@ -55,6 +55,14 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Enemy
       objectReference: {fileID: 0}
+    - target: {fileID: 3007233565322787536, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3533048899575648288, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: offset.y
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 5515526469601032773, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: fontSize
       value: 7
@@ -127,6 +135,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 7440673920428685400, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9109480823393303125, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_Constraints
       value: 116
@@ -146,17 +158,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: -3577197991604517564}
   m_SourcePrefab: {fileID: 100100000, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
---- !u!114 &641916366777533808 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5515526469601032773, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
-  m_PrefabInstance: {fileID: 4927955671298457397}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7193694367047912757}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ad32ab8d172a68446819e0472fd5454e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &2766019337173118189 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7061998793093092312, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
@@ -187,20 +188,22 @@ MonoBehaviour:
   moveSpeed: 6
   agent: {fileID: 4550715733078292569}
   animator: {fileID: 1563028792438856956}
+  health: {fileID: -3577197991604517564}
   attackRange: 7
   attackDuration: 0.5
   targetLayer:
     serializedVersion: 2
     m_Bits: 72
+  characterCollider: {fileID: 7915159274365355493}
   weaponSpawnPoint: {fileID: 3690810974785102709}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.3
   weaponType: 2
-  scoreDisplay: {fileID: 641916366777533808}
+  scoreDisplay: {fileID: 8459014451873918741}
   sizePerScore: 0.05
   rangePerScore: 0.1
   moveSpeedPerScore: 0.05
-  maxScale: 3
+  maxScale: 2.5
   patrolRadius: 10
   observeMinTime: 1
   observeMaxTime: 3
@@ -225,12 +228,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae35314d900311c448ad04066759bc31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  animator: {fileID: 1563028792438856956}
   maxHealth: 10
+  deadLayerName: Dead
+  isDead: 0
 --- !u!1 &7612066945078981596 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3296884638839033065, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
   m_PrefabInstance: {fileID: 4927955671298457397}
   m_PrefabAsset: {fileID: 0}
+--- !u!136 &7915159274365355493 stripped
+CapsuleCollider:
+  m_CorrespondingSourceObject: {fileID: 3007233565322787536, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+  m_PrefabInstance: {fileID: 4927955671298457397}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8459014451873918741 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3533048899575648288, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+  m_PrefabInstance: {fileID: 4927955671298457397}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7612066945078981596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad32ab8d172a68446819e0472fd5454e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &5933687587751172402
 PrefabInstance:
   m_ObjectHideFlags: 0

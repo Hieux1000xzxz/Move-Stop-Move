@@ -161,7 +161,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_TagString
-      value: Enemy
+      value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 3326613699113651698, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_Layer
@@ -170,6 +170,10 @@ PrefabInstance:
     - target: {fileID: 3486179494288776533, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_Layer
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3533048899575648288, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: offset.y
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 3620275817624427689, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalRotation.w
@@ -317,15 +321,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 10.3
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -3.87
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalRotation.w
@@ -433,6 +437,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 8869308464238499499, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+    - {fileID: 2908569094068700116, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
     m_RemovedGameObjects:
     - {fileID: 559341027974710063, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
     m_AddedGameObjects:
@@ -453,17 +458,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 4874386498056903534}
   m_SourcePrefab: {fileID: 100100000, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
---- !u!114 &487039092764447502 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5515526469601032773, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
-  m_PrefabInstance: {fileID: 5352907915757971787}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7926306860219652939}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ad32ab8d172a68446819e0472fd5454e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!95 &1840719375837626499 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 6035621636560546248, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
@@ -504,20 +498,22 @@ MonoBehaviour:
   moveSpeed: 8
   agent: {fileID: 3534665075435859495}
   animator: {fileID: 1840719375837626499}
+  health: {fileID: 1186641312026304189}
   attackRange: 7
   attackDuration: 0.5
   targetLayer:
     serializedVersion: 2
     m_Bits: 64
+  characterCollider: {fileID: 0}
   weaponSpawnPoint: {fileID: 7101475273743860029}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.4
   weaponType: 1
-  scoreDisplay: {fileID: 487039092764447502}
+  scoreDisplay: {fileID: 8885232775652440427}
   sizePerScore: 0.05
-  rangePerScore: 0.05
+  rangePerScore: 0.01
   moveSpeedPerScore: 0.05
-  maxScale: 3
+  maxScale: 2.5
   joystick: {fileID: 0}
 --- !u!114 &1186641312026304189
 MonoBehaviour:
@@ -531,7 +527,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae35314d900311c448ad04066759bc31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  animator: {fileID: 1840719375837626499}
   maxHealth: 10
+  deadLayerName: Dead
+  isDead: 0
 --- !u!120 &7545416753985370068
 LineRenderer:
   serializedVersion: 2
@@ -654,3 +653,14 @@ MonoBehaviour:
   character: {fileID: 3008413264066109357}
   segments: 50
   line: {fileID: 7545416753985370068}
+--- !u!114 &8885232775652440427 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3533048899575648288, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+  m_PrefabInstance: {fileID: 5352907915757971787}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7460699316388111778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad32ab8d172a68446819e0472fd5454e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
