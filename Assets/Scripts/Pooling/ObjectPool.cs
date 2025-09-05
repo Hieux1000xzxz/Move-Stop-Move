@@ -70,10 +70,8 @@ public class ObjectPool : Singleton<ObjectPool>
         return null;
     }
 
-    // Hàm mới: Spawn random enemy từ pool
     public GameObject SpawnRandomEnemy()
     {
-        // Lấy danh sách tất cả enemy có sẵn trong pool
         List<GameObject> availableEnemies = new List<GameObject>();
 
         foreach (var obj in pooledGobjects)
@@ -91,7 +89,6 @@ public class ObjectPool : Singleton<ObjectPool>
             }
         }
 
-        // Nếu có enemy available, chọn ngẫu nhiên
         if (availableEnemies.Count > 0)
         {
             GameObject randomEnemy = availableEnemies[Random.Range(0, availableEnemies.Count)];
@@ -99,7 +96,6 @@ public class ObjectPool : Singleton<ObjectPool>
             return randomEnemy;
         }
 
-        // Nếu không có enemy available nhưng có thể expand, tạo enemy mới
         foreach (var pre in preAllocations)
         {
             if (pre.type == ObjectType.Enemy && pre.expandable)
@@ -111,7 +107,7 @@ public class ObjectPool : Singleton<ObjectPool>
             }
         }
 
-        return null; // Không thể spawn enemy
+        return null;
     }
 
     public List<GameObject> GetAllObjects()
@@ -138,7 +134,6 @@ public class ObjectPool : Singleton<ObjectPool>
 
     public GameObject SpawnRandom(ObjectType type)
     {
-        // Lọc danh sách prefab có type mong muốn
         List<Preallocation> candidates = new List<Preallocation>();
         foreach (var pre in preAllocations)
         {
@@ -150,15 +145,12 @@ public class ObjectPool : Singleton<ObjectPool>
 
         if (candidates.Count == 0) return null;
 
-        // Chọn ngẫu nhiên 1 prefab trong list
         Preallocation randomPre = candidates[Random.Range(0, candidates.Count)];
 
-        // Spawn từ pool (theo tag để tái sử dụng object có sẵn)
         return Spawn(randomPre.gameObject.tag);
     }
     public GameObject SpawnWeaponByType(WeaponType type)
     {
-        // Tìm trong pool object có weaponType đúng
         foreach (var obj in pooledGobjects)
         {
             if (!obj.activeSelf)
@@ -175,7 +167,6 @@ public class ObjectPool : Singleton<ObjectPool>
             }
         }
 
-        // Nếu chưa có sẵn thì expand
         foreach (var pre in preAllocations)
         {
             if (pre.type == ObjectType.Weapon && pre.weaponType == type && pre.expandable)

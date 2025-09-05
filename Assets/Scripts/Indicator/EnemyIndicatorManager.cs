@@ -25,7 +25,6 @@ public class EnemyIndicatorManager : MonoBehaviour
         {
             enemies.Add(enemy);
 
-            // nếu enemy chưa có indicator thì tạo mới
             if (!indicators.ContainsKey(enemy))
             {
                 RectTransform indicator = Instantiate(indicatorPrefab, canvasRect);
@@ -34,7 +33,6 @@ public class EnemyIndicatorManager : MonoBehaviour
             }
             else
             {
-                // tái sử dụng indicator cũ
                 indicators[enemy].gameObject.SetActive(true);
             }
         }
@@ -48,7 +46,6 @@ public class EnemyIndicatorManager : MonoBehaviour
             {
                 if (indicator != null)
                 {
-                    // thay vì Destroy, chỉ disable
                     indicator.gameObject.SetActive(false);
                 }
             }
@@ -61,7 +58,6 @@ public class EnemyIndicatorManager : MonoBehaviour
         {
             Transform enemy = enemies[i];
 
-            // nếu enemy null thì disable indicator
             if (enemy == null)
             {
                 if (indicators.TryGetValue(enemy, out RectTransform ind) && ind != null)

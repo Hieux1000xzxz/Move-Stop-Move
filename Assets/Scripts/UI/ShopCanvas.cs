@@ -41,7 +41,7 @@ public class ShopCanvas : BaseCanvas
 
         weaponImage.sprite = weapon.weaponIcon;
         weaponNameText.text = weapon.weaponName;
-        weaponPriceText.text = "Price: " + weapon.price;
+        weaponPriceText.text = "" + weapon.price;
         weaponDescriptionText.text = weapon.description;
 
         if (PlayerPrefs.GetInt("WeaponBought_" + weapon.weaponName, 0) == 1)
