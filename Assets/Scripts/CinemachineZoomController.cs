@@ -21,7 +21,6 @@ public class CinemachineZoomController : MonoBehaviour
     {
         if (scoreDisplay == null || virtualCamera == null || transposer == null) return;
 
-        // --- FOV ---
         float targetFOV = baseFOV + (scoreDisplay.CurrentScore * fovPerScore);
         targetFOV = Mathf.Min(targetFOV, maxFOV);
 
@@ -31,7 +30,6 @@ public class CinemachineZoomController : MonoBehaviour
             Time.deltaTime * zoomSpeed
         );
 
-        // --- Follow Offset Y ---
         float targetFollowY = baseFollowY + (scoreDisplay.CurrentScore * followYPerScore);
         targetFollowY = Mathf.Min(targetFollowY, maxFollowY);
 

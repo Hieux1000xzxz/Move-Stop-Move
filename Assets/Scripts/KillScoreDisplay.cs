@@ -30,7 +30,7 @@ public class KillScoreDisplay : MonoBehaviour
             return;
 
         float scaleFactor = transform.localScale.y;
-        textMesh.transform.position = transform.position + offset * scaleFactor;
+        textMesh.transform.localPosition = offset * scaleFactor;
         if (faceCamera && cam != null)
         {
             textMesh.transform.rotation = Quaternion.LookRotation(cam.transform.forward);

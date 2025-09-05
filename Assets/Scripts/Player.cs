@@ -8,22 +8,28 @@ public class Player : CharacterBase
 
     protected override void Update()
     {
+        base.Update();
         Vector3 input = GetMovementInput();
-        isMovingInput = input.magnitude > 0.05f;
+        isMovingInput = input.magnitude > 0.01f;
 
         if (isMovingInput && currentState == CharacterState.Attack)
         {
             EndAttack();
             ChangeState(CharacterState.Move);
         }
+    }
 
-        base.Update();
+    protected override void UpdateAnimator()
+    {
+        if (animator == null) return;
+
+        bool isMovingNow = isMovingInput && !isAttacking;
+        animator.SetBool("IsMoving", isMovingNow);
     }
 
     protected override void OnTargetLost(Transform lostTarget)
     {
         base.OnTargetLost(lostTarget);
-
         if (isMovingInput && currentState == CharacterState.Attack)
         {
             ChangeState(CharacterState.Move);
@@ -33,7 +39,6 @@ public class Player : CharacterBase
     protected override void OnNewTargetFound(Transform newTarget)
     {
         base.OnNewTargetFound(newTarget);
-
         if (!isMovingInput)
         {
             float distance = Vector3.Distance(transform.position, newTarget.position);

@@ -13,26 +13,18 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private PlayerAttackRange playerAttackRange;
     [SerializeField] private GamePlayCanvas gamePlayCanvas;
     [SerializeField] private Player player;
-
+    [SerializeField] private KillScoreDisplay killScoreDisplay;
     private List<GameObject> activeAIs = new List<GameObject>();
     private int totalSpawned = 0;
     private int totalKilled = 0;
     private bool isGameStarted = false;
     public bool IsGameStarted => isGameStarted;
-    private void Awake()
+    protected override void Awake()
     {
         base.Awake();
         isGameStarted = false;
         currentAIQuota = totalAIQuota;
         DisableGamePlaySystem();
-    }
-
-    private void DisableGamePlaySystem()
-    {
-        aiSpawner.enabled = false;
-        player.Joystick.gameObject.SetActive(false);
-        enemyIndicatorManager.enabled = false;
-        playerAttackRange.enabled = false;
     }
 
     public bool CanSpawnAI()
@@ -88,6 +80,14 @@ public class GameManager : Singleton<GameManager>
         DisableGamePlaySystem();
         gamePlayCanvas.OnGameOver();
     }
+    private void DisableGamePlaySystem()
+    {
+        aiSpawner.enabled = false;
+        player.Joystick.gameObject.SetActive(false);
+        enemyIndicatorManager.enabled = false;
+        playerAttackRange.enabled = false;
+        killScoreDisplay.gameObject.SetActive(false);
+    }
 
     private void EnableGamePlaySystem()
     {
@@ -97,5 +97,6 @@ public class GameManager : Singleton<GameManager>
         player.Joystick.gameObject.SetActive(true);
         enemyIndicatorManager.enabled = true;
         playerAttackRange.enabled = true;
+        killScoreDisplay.gameObject.SetActive(true);
     }
 }

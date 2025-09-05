@@ -40,7 +40,6 @@ public class AIController : CharacterBase
         Transform previousTarget = detectedTarget;
         base.UpdateRadar();
 
-        // Cập nhật thời gian tìm thấy target (chỉ khi có target mới)
         if (detectedTarget != null && detectedTarget != previousTarget)
         {
             targetFoundTime = Time.time;
@@ -51,7 +50,6 @@ public class AIController : CharacterBase
     {
         base.OnTargetLost(lostTarget);
 
-        // AI behavior khi mất target
         if (currentState == CharacterState.Attack)
         {
             isAttacking = false;
@@ -66,21 +64,20 @@ public class AIController : CharacterBase
     protected override void OnNewTargetFound(Transform newTarget)
     {
         base.OnNewTargetFound(newTarget);
-        targetFoundTime = Time.time; // Reset thời gian phát hiện
+        targetFoundTime = Time.time; 
     }
 
     protected override void OnTargetSwitched(Transform oldTarget, Transform newTarget)
     {
         base.OnTargetSwitched(oldTarget, newTarget);
-        targetFoundTime = Time.time; // Reset thời gian cho target mới
+        targetFoundTime = Time.time;
 
-        // Nếu đang tấn công target cũ, cân nhắc có chuyển sang target mới không
         if (currentState == CharacterState.Attack)
         {
             float distanceToNew = Vector3.Distance(transform.position, newTarget.position);
             if (distanceToNew <= attackRange && Random.value < aggressionLevel)
             {
-                attackTarget = newTarget; // Chuyển target ngay lập tức
+                attackTarget = newTarget;
             }
         }
     }
@@ -109,7 +106,6 @@ public class AIController : CharacterBase
 
     private void DecideInCombat()
     {
-        // Fear check
         if (currentState == CharacterState.Attack && Random.value < fearLevel * 0.3f)
         {
             if (Random.value < 0.5f) MoveAway();
@@ -117,7 +113,6 @@ public class AIController : CharacterBase
             return;
         }
 
-        // Attack or observe
         if (Random.value < aggressionLevel || currentState == CharacterState.Attack)
         {
             if (!isAttacking)
@@ -236,7 +231,7 @@ public class AIController : CharacterBase
     {
         if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
             return false;
-
+        
         if (NavMesh.SamplePosition(targetPos, out NavMeshHit hit, sampleDistance, NavMesh.AllAreas))
         {
             agent.isStopped = false;
@@ -249,7 +244,6 @@ public class AIController : CharacterBase
 
     protected override void CheckForAttack()
     {
-        // AI sử dụng logic quyết định riêng thay vì CheckForAttack từ base
     }
 
     protected override void EndAttack()
