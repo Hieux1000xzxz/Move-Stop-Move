@@ -18,8 +18,6 @@ public abstract class BaseCanvas : MonoBehaviour
 
     public void Show() => Open();
     public void Hide() => Close();
-
-    // Các phương thức ảo để override trong lớp con
     protected virtual void OnOpen() { }
     protected virtual void OnClose() { }
 

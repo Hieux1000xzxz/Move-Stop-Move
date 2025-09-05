@@ -73,7 +73,6 @@ public class ShopCanvas : BaseCanvas
     private void OnBuyWeapon()
     {
         WeaponData weapon = weapons[currentIndex];
-        // Tạm thời chỉ lưu trạng thái đã mua
         PlayerPrefs.SetInt("WeaponBought_" + weapon.weaponName, 1);
         PlayerPrefs.Save();
 
