@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class GameManager : Singleton<GameManager>
 {
-
     [Header("AI Settings")]
     [SerializeField] private int totalAIQuota = 100;
     [SerializeField] private int currentAIQuota;

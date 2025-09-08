@@ -3002,8 +3002,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 105.07811, y: -21.015636}
-  m_SizeDelta: {x: 1000, y: 200}
+  m_AnchoredPosition: {x: 116.5589, y: -29.62622}
+  m_SizeDelta: {x: 1109.2593, y: 281.9444}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &755656860
 MonoBehaviour:
@@ -3027,8 +3027,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0161d805a3764c089bef00bfe00793f5, type: 2}
+  m_sharedMaterial: {fileID: 2147374, guid: 0161d805a3764c089bef00bfe00793f5, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3052,8 +3052,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 100
-  m_fontSizeBase: 100
+  m_fontSize: 120
+  m_fontSizeBase: 120
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -3471,7 +3471,8 @@ MonoBehaviour:
   enemyIndicatorManager: {fileID: 1847730157}
   playerAttackRange: {fileID: 2341299549349049944}
   gamePlayCanvas: {fileID: 1406031923}
-  interactionCanvas: {fileID: 0}
+  playerKillScoreDisplay: {fileID: 253801988}
+  interactionCanvas: {fileID: 58942454}
 --- !u!1 &963365900
 GameObject:
   m_ObjectHideFlags: 0
