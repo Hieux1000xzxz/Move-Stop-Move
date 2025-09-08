@@ -24,7 +24,12 @@ public class AIController : CharacterBase
     private float targetFoundTime;
     private float lastDecisionTime;
     private bool isObserving;
-
+    
+    protected override void Start()
+    {
+        base.Start();
+        ChangeWeapon(weaponType);
+    }
     protected override void Update()
     {
         base.Update();

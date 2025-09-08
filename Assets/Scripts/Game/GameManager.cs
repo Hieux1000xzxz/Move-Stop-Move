@@ -13,6 +13,7 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private GamePlayCanvas gamePlayCanvas;
     [SerializeField] private KillScoreDisplay playerKillScoreDisplay;
     [SerializeField] private InteractionCanvas interactionCanvas;
+    [SerializeField] private ShopCanvas shopCanvas;
     private List<GameObject> activeAIs = new List<GameObject>();
     private int totalSpawned = 0;
     private int totalKilled = 0;
@@ -23,6 +24,7 @@ public class GameManager : Singleton<GameManager>
         base.Awake();
         isGameStarted = false;
         currentAIQuota = totalAIQuota;
+        shopCanvas.LoadSelectedWeapon();
         DisableGamePlaySystem();
     }
 

@@ -51,28 +51,8 @@ public abstract class CharacterBase : MonoBehaviour
             agent.speed = moveSpeed;
             lastPosition = transform.position;
         }
-        InitializeWeapon();
         OnWeaponReturned();
         LoadWeapon();
-    }
-
-    private void InitializeWeapon()
-    {
-        if (weaponSpawnPoint == null) return;
-
-        GameObject weaponObj = ObjectPool.Instance.SpawnWeaponByType(weaponType);
-        if (weaponObj != null)
-        {
-            weaponObj.transform.SetParent(weaponSpawnPoint);
-            weaponObj.transform.localPosition = Vector3.zero;
-            weaponObj.transform.localRotation = Quaternion.identity;
-
-            currentWeapon = weaponObj.GetComponent<WeaponBase>();
-            if (currentWeapon != null)
-            {
-                currentWeapon.Init(this, weaponSpawnPoint);
-            }
-        }
     }
 
     protected virtual void Update()

@@ -29,8 +29,8 @@ public class ShopCanvas : BaseCanvas
         leftArrowButton.onClick.AddListener(ShowPreviousWeapon);
         rightArrowButton.onClick.AddListener(ShowNextWeapon);
         closeButton.onClick.AddListener(CloseShop);
-
         UpdateUI();
+
     }
 
     private void UpdateUI()
@@ -44,10 +44,21 @@ public class ShopCanvas : BaseCanvas
         weaponPriceText.text = "" + weapon.price;
         weaponDescriptionText.text = weapon.description;
 
-        if (PlayerPrefs.GetInt("WeaponBought_" + weapon.weaponName, 0) == 1)
+        bool isBought = PlayerPrefs.GetInt("WeaponBought_" + weapon.weaponName, 0) == 1;
+        string selectedWeapon = PlayerPrefs.GetString("SelectedWeapon", "");
+
+        if (isBought)
         {
             buyButton.interactable = false;
-            selectButton.interactable = true;
+
+            if (selectedWeapon == weapon.weaponName)
+            {
+                selectButton.interactable = false;
+            }
+            else
+            {
+                selectButton.interactable = true;
+            }
         }
         else
         {
@@ -55,6 +66,7 @@ public class ShopCanvas : BaseCanvas
             selectButton.interactable = false;
         }
     }
+
 
     private void ShowPreviousWeapon()
     {
@@ -97,10 +109,35 @@ public class ShopCanvas : BaseCanvas
         }
     }
 
+    public void LoadSelectedWeapon()
+    {
+        string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
+
+        if (!string.IsNullOrEmpty(selectedWeaponName) && player != null)
+        {
+            foreach (WeaponData weapon in weapons)
+            {
+                if (weapon.weaponName == selectedWeaponName)
+                {
+                    player.ChangeWeapon(weapon.weaponType);
+                    Debug.Log("Loaded selected weapon: " + weapon.weaponName);
+
+                    return;
+                }
+            }
+
+            Debug.LogWarning("Selected weapon not found: " + selectedWeaponName);
+        }
+        else if (player == null)
+        {
+            Debug.LogWarning("Player not found, cannot load selected weapon");
+        }
+    }
 
     private void CloseShop()
     {
         gameObject.SetActive(false);
         UIManager.Instance.OpenMainMenu();
     }
+
 }

@@ -3002,8 +3002,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 175.85327, y: -158.09717}
-  m_SizeDelta: {x: 1673.5479, y: 1504.5674}
+  m_AnchoredPosition: {x: 233.03839, y: -183.51276}
+  m_SizeDelta: {x: 2217.7627, y: 1746.4414}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &755656860
 MonoBehaviour:
@@ -3473,6 +3473,7 @@ MonoBehaviour:
   gamePlayCanvas: {fileID: 1406031923}
   playerKillScoreDisplay: {fileID: 253801988}
   interactionCanvas: {fileID: 58942454}
+  shopCanvas: {fileID: 1890431161}
 --- !u!1 &963365900
 GameObject:
   m_ObjectHideFlags: 0

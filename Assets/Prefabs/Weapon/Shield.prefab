@@ -208,4 +208,4 @@ MonoBehaviour:
   rotateSpeed: 1440
   rotateMode: 3
   rb: {fileID: 3562958303719707135}
-  returnSpeed: 16
+  returnSpeed: 15
