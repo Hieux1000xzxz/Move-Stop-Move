@@ -12,8 +12,8 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private EnemyIndicatorManager enemyIndicatorManager;
     [SerializeField] private PlayerAttackRange playerAttackRange;
     [SerializeField] private GamePlayCanvas gamePlayCanvas;
-    [SerializeField] private Player player;
-    [SerializeField] private KillScoreDisplay killScoreDisplay;
+    [SerializeField] private KillScoreDisplay playerKillScoreDisplay;
+    [SerializeField] private InteractionCanvas interactionCanvas;
     private List<GameObject> activeAIs = new List<GameObject>();
     private int totalSpawned = 0;
     private int totalKilled = 0;
@@ -83,10 +83,10 @@ public class GameManager : Singleton<GameManager>
     private void DisableGamePlaySystem()
     {
         aiSpawner.enabled = false;
-        player.Joystick.gameObject.SetActive(false);
         enemyIndicatorManager.enabled = false;
         playerAttackRange.enabled = false;
-        killScoreDisplay.gameObject.SetActive(false);
+        playerKillScoreDisplay.gameObject.SetActive(false);
+        interactionCanvas.Hide();
     }
 
     private void EnableGamePlaySystem()
@@ -94,9 +94,9 @@ public class GameManager : Singleton<GameManager>
         aiSpawner.enabled = true;
         zoomController.baseFOV = 60f;
         zoomController.baseFollowY = 15f;
-        player.Joystick.gameObject.SetActive(true);
         enemyIndicatorManager.enabled = true;
         playerAttackRange.enabled = true;
-        killScoreDisplay.gameObject.SetActive(true);
+        playerKillScoreDisplay.gameObject.SetActive(true);
+        interactionCanvas.Show();
     }
 }

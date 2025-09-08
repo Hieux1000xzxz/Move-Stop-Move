@@ -8,6 +8,7 @@ TagManager:
   - Axe
   - Arrow
   - Knife
+  - Dead
   layers:
   - Default
   - TransparentFX
@@ -18,8 +19,8 @@ TagManager:
   - Enemy
   - Obstacle
   - Ground
-  - 
-  - 
+  - Dead
+  - Weapon
   - 
   - 
   - 
