@@ -19,6 +19,9 @@ public class Player : CharacterBase
     protected override void Update()
     {
         base.Update();
+
+        if (!IsOwner) return;
+
         Vector3 input = GetMovementInput();
         isMovingInput = input.magnitude > 0.01f;
 
@@ -30,6 +33,7 @@ public class Player : CharacterBase
 
         if (currentState == CharacterState.Attack && !isAttacking)
         {
+            Debug.Log("Player Attack requested");
             RequestAttackServerRpc();
         }
     }

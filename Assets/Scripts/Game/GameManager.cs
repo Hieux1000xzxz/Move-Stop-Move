@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
 using Unity.Cinemachine;
 using UnityEngine;
+using Unity.Netcode;
 
-public class GameManager : Singleton<GameManager>
+public class GameManager : NetworkBehaviour
 {
+    public static GameManager Instance { get; private set; }
+
     [Header("AI Settings")]
     [SerializeField] private int totalAIQuota = 100;
     [SerializeField] private int currentAIQuota;
@@ -22,9 +25,9 @@ public class GameManager : Singleton<GameManager>
     private int totalKilled = 0;
     private bool isGameStarted = false;
     public bool IsGameStarted => isGameStarted;
-    protected override void Awake()
-    {
-        base.Awake();
+    protected void Awake()
+    { 
+        Instance = this;
         isGameStarted = false;
         currentAIQuota = totalAIQuota;
         shopCanvas.LoadSelectedWeapon();
@@ -84,6 +87,14 @@ public class GameManager : Singleton<GameManager>
         DisableGamePlaySystem();
         gamePlayCanvas.OnGameOver();
     }
+
+    [ClientRpc]
+    public void GameOverClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        Debug.Log("GameOver called on this client");
+        GameOver();
+    }
+
     private void DisableGamePlaySystem()
     {
         aiSpawner.enabled = false;
