@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Unity.Cinemachine;
 using UnityEngine;
 
 public class GameManager : Singleton<GameManager>
@@ -14,6 +15,10 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private KillScoreDisplay playerKillScoreDisplay;
     [SerializeField] private InteractionCanvas interactionCanvas;
     [SerializeField] private ShopCanvas shopCanvas;
+
+    [Header("Camera")]
+    [SerializeField] private CinemachineCamera mainCamera;
+
     private List<GameObject> activeAIs = new List<GameObject>();
     private int totalSpawned = 0;
     private int totalKilled = 0;
@@ -100,4 +105,16 @@ public class GameManager : Singleton<GameManager>
         playerKillScoreDisplay.gameObject.SetActive(true);
         interactionCanvas.Show();
     }
+
+    #region Camera
+    public void BindCameraToPlayer(Transform player)
+    {
+        if (mainCamera != null)
+        {
+            mainCamera.Follow = player;
+            mainCamera.LookAt = player;
+        }
+    }
+
+    #endregion
 }

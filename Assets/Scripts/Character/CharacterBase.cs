@@ -1,11 +1,13 @@
 ﻿using DG.Tweening;
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
+using Unity.Netcode;
 
 public enum CharacterState { Idle, Move, Attack }
 
-public abstract class CharacterBase : MonoBehaviour
+public abstract class CharacterBase : NetworkBehaviour
 {
     [Header("Character Settings")]
     [SerializeField] protected float moveSpeed = 5f;
