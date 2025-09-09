@@ -321,15 +321,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 10.3
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -1.5
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -3.87
       objectReference: {fileID: 0}
     - target: {fileID: 6121874163945546029, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_LocalRotation.w
@@ -447,6 +447,9 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 4822096757030938270}
+    - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 3008413264066109357}
     - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       insertIndex: -1
@@ -457,6 +460,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4874386498056903534}
+    - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 456209315541663249}
+    - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 746300112721650876}
+    - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4202064593646546705}
   m_SourcePrefab: {fileID: 100100000, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
 --- !u!95 &1840719375837626499 stripped
 Animator:
@@ -473,6 +485,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8113523858602730650, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
   m_PrefabInstance: {fileID: 5352907915757971787}
   m_PrefabAsset: {fileID: 0}
+--- !u!136 &7201976662141129627 stripped
+CapsuleCollider:
+  m_CorrespondingSourceObject: {fileID: 3007233565322787536, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+  m_PrefabInstance: {fileID: 5352907915757971787}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7460699316388111778 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3296884638839033065, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
@@ -483,6 +500,31 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
   m_PrefabInstance: {fileID: 5352907915757971787}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4822096757030938270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7926306860219652939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 1175573395
+  InScenePlacedSourceGlobalObjectIdHash: 1175573395
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &3008413264066109357
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -495,6 +537,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c0f894acb8bd9a46a7b7efaad8e938f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   moveSpeed: 8
   agent: {fileID: 3534665075435859495}
   animator: {fileID: 1840719375837626499}
@@ -504,16 +547,18 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 64
-  characterCollider: {fileID: 0}
+  characterCollider: {fileID: 7201976662141129627}
   weaponSpawnPoint: {fileID: 7101475273743860029}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
-  attackDelay: 0.4
+  attackDelay: 0.3
   weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
   sizePerScore: 0.05
-  rangePerScore: 0.01
+  rangePerScore: 0.02
   moveSpeedPerScore: 0.05
   maxScale: 2.5
+  Score:
+    m_InternalValue: 0
   joystick: {fileID: 0}
 --- !u!114 &1186641312026304189
 MonoBehaviour:
@@ -555,7 +600,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 749b9069dc4742c5bfa5c74644049926, type: 2}
+  - {fileID: 2100000, guid: a8ef56532e2ec224aaf5f2187ec9454e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -575,7 +620,7 @@ LineRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 10
   m_Positions:
   - {x: 0, y: 0, z: 0}
   - {x: 0, y: 0, z: 1}
@@ -650,9 +695,82 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c738343d65bfc3b40aff031879773b8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  character: {fileID: 3008413264066109357}
-  segments: 50
-  line: {fileID: 7545416753985370068}
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &456209315541663249
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7926306860219652939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b73a5d0dde6b5b5419d1e0e063c85700, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  connectionInfoText: {fileID: 0}
+--- !u!114 &746300112721650876
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7926306860219652939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  TransitionStateInfoList: []
+  m_Animator: {fileID: 1840719375837626499}
+--- !u!114 &4202064593646546705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7926306860219652939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac31dc6908d324742a0c0ef7dcf1e8b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkTransformExpanded: 1
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
+  AuthorityMode: 0
+  TickSyncChildren: 0
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  SwitchTransformSpaceWhenParented: 0
+  Interpolate: 1
+  SlerpPosition: 0
 --- !u!114 &8885232775652440427 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3533048899575648288, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}

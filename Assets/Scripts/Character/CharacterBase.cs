@@ -43,6 +43,9 @@ public abstract class CharacterBase : NetworkBehaviour
     private Vector3 lastPosition;
     private Coroutine attackRoutine;
 
+    public NetworkVariable<int> Score = new NetworkVariable<int>(
+    0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     public float currentAttackRange => attackRange;
     public WeaponBase currentWeaponPublic => currentWeapon;
 
@@ -369,10 +372,9 @@ public abstract class CharacterBase : NetworkBehaviour
 
     public void AddScore(int value)
     {
-        if (scoreDisplay != null)
+        if (IsServer) 
         {
-            scoreDisplay.SetScore(value);
-            UpdateCharacterStats();
+            Score.Value += value;
         }
     }
 
@@ -504,4 +506,33 @@ public abstract class CharacterBase : NetworkBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
     }
+
+    #region Network Methods
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        if (scoreDisplay != null)
+        {
+            scoreDisplay.SetScore(Score.Value);
+
+            Score.OnValueChanged += (oldValue, newValue) =>
+            {
+                scoreDisplay.SetScore(newValue);
+                UpdateCharacterStats();
+            };
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+
+        Score.OnValueChanged -= (oldValue, newValue) =>
+        {
+            scoreDisplay.SetScore(newValue);
+            UpdateCharacterStats();
+        };
+    }
+    #endregion
 }
