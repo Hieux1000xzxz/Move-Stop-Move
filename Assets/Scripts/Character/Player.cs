@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using Unity.Netcode;
 using UnityEngine;
 
 public class Player : CharacterBase
@@ -25,6 +26,11 @@ public class Player : CharacterBase
         {
             EndAttack();
             ChangeState(CharacterState.Move);
+        }
+
+        if (currentState == CharacterState.Attack && !isAttacking)
+        {
+            RequestAttackServerRpc();
         }
     }
 

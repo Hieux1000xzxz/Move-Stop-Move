@@ -10,9 +10,7 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private AISpawner aiSpawner;
     [SerializeField] private CinemachineZoomController zoomController;
     [SerializeField] private EnemyIndicatorManager enemyIndicatorManager;
-    [SerializeField] private PlayerAttackRange playerAttackRange;
     [SerializeField] private GamePlayCanvas gamePlayCanvas;
-    [SerializeField] private KillScoreDisplay playerKillScoreDisplay;
     [SerializeField] private InteractionCanvas interactionCanvas;
     [SerializeField] private ShopCanvas shopCanvas;
 
@@ -90,8 +88,6 @@ public class GameManager : Singleton<GameManager>
     {
         aiSpawner.enabled = false;
         enemyIndicatorManager.enabled = false;
-        playerAttackRange.enabled = false;
-        playerKillScoreDisplay.gameObject.SetActive(false);
         interactionCanvas.Hide();
     }
 
@@ -101,12 +97,8 @@ public class GameManager : Singleton<GameManager>
         zoomController.baseFOV = 60f;
         zoomController.baseFollowY = 15f;
         enemyIndicatorManager.enabled = true;
-        playerAttackRange.enabled = true;
-        playerKillScoreDisplay.gameObject.SetActive(true);
         interactionCanvas.Show();
     }
-
-    #region Camera
     public void BindCameraToPlayer(Transform player)
     {
         if (mainCamera != null)
@@ -115,6 +107,4 @@ public class GameManager : Singleton<GameManager>
             mainCamera.LookAt = player;
         }
     }
-
-    #endregion
 }
