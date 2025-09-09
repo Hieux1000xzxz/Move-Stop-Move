@@ -56,14 +56,24 @@ public abstract class CharacterBase : NetworkBehaviour
             agent.speed = moveSpeed;
             lastPosition = transform.position;
         }
+
+        if (IsOwner)
+        {
+            string selected = PlayerPrefs.GetString("SelectedWeapon", "Knife");
+            WeaponType type = (WeaponType)System.Enum.Parse(typeof(WeaponType), selected);
+            RequestSetWeaponServerRpc(type);
+        }
+
         OnWeaponReturned();
         LoadWeapon();
     }
 
     protected virtual void Update()
     {
+        if (!GameManager.Instance || !GameManager.Instance.IsGameStarted)
+            return;
         CheckForDead();
-        if (isDead || health.isDead)
+        if (isDead || health.IsDead)
         {
             return;
         }
@@ -151,22 +161,32 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected Transform FindNearestTarget()
     {
-        Collider[] targets = Physics.OverlapSphere(transform.position, attackRange, targetLayer);
+        Collider[] targets = Physics.OverlapSphere(transform.position, attackRange);
+        Debug.Log($"{name} scanning {targets.Length} colliders in range {attackRange}");
+
         Transform nearest = null;
         float minDistance = Mathf.Infinity;
 
         foreach (var target in targets)
         {
+            Debug.Log($"Found collider {target.name} on layer {LayerMask.LayerToName(target.gameObject.layer)} tag {target.tag}");
+
             if (target.transform == transform || !target.gameObject.activeInHierarchy)
                 continue;
 
-            float distance = Vector3.Distance(transform.position, target.transform.position);
+            if (!target.CompareTag("Player")) continue;
+
+            CharacterBase otherChar = target.GetComponent<CharacterBase>();
+            if (otherChar == null || otherChar == this) continue;
+
+            float distance = Vector3.Distance(transform.position, otherChar.transform.position);
             if (distance < minDistance)
             {
                 minDistance = distance;
-                nearest = target.transform;
+                nearest = otherChar.transform;
             }
         }
+
         return nearest;
     }
 
@@ -288,18 +308,19 @@ public abstract class CharacterBase : NetworkBehaviour
             StopCoroutine(attackRoutine);
         }
         attackRoutine = StartCoroutine(AttackRoutine());
-        
-       
     }
 
     private IEnumerator AttackRoutine()
     {
         yield return new WaitForSeconds(attackDelay);
+
         if (currentWeapon != null && attackTarget != null)
         {
             ThrowWeapon();
         }
+
         yield return new WaitForSeconds(0.1f);
+
         if (animator != null)
         {
             animator.SetBool("IsAttacking", false);
@@ -319,6 +340,7 @@ public abstract class CharacterBase : NetworkBehaviour
             Vector3 dir = (attackTarget.position - weaponSpawnPoint.position).normalized;
             Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(weaponRotationOffset);
             currentWeapon.transform.rotation = rot;
+
             currentWeapon.Launch(dir, this.gameObject);
         }
     }
@@ -401,7 +423,6 @@ public abstract class CharacterBase : NetworkBehaviour
         detectedTarget = null;
         isAttacking = false;
         isDead = false;
-        health.isDead = false;
         hasWeapon = true;
         scoreDisplay.gameObject.SetActive(true);
         this.gameObject.layer = LayerMask.NameToLayer("Enemy");
@@ -486,11 +507,11 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected virtual void CheckForDead()
     {
-        if (health.isDead == true)
+        if (health.IsDead == true)
         {
             StopAllCoroutines();
             scoreDisplay.gameObject.SetActive(false);
-            characterCollider.enabled = false;
+            //characterCollider.enabled = false;
             if (agent != null && agent.isActiveAndEnabled)
             {
                 agent.isStopped = true;
@@ -541,7 +562,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (isDead) return;
 
-        if (!isAttacking && hasWeapon && !isDead)
+        if (!isAttacking && hasWeapon)
         {
             PerformAttack();
             PlayAttackAnimationClientRpc();
@@ -556,5 +577,13 @@ public abstract class CharacterBase : NetworkBehaviour
             animator.SetBool("IsAttacking", true);
         }
     }
+
+    //Weapon Change 
+    [ServerRpc]
+    public void RequestSetWeaponServerRpc(WeaponType selectedWeapon)
+    {
+        ChangeWeapon(selectedWeapon);
+    }
+
     #endregion
 }

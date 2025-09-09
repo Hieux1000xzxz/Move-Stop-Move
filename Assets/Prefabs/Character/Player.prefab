@@ -107,6 +107,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 1262094512762032384, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1303041302857595113, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_Layer
       value: 3
@@ -162,6 +166,10 @@ PrefabInstance:
     - target: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_TagString
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 3296884638839033065, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3326613699113651698, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_Layer
@@ -396,6 +404,10 @@ PrefabInstance:
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8195631882403457748, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8195631882403457748, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
@@ -546,7 +558,7 @@ MonoBehaviour:
   attackDuration: 0.5
   targetLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 8
   characterCollider: {fileID: 7201976662141129627}
   weaponSpawnPoint: {fileID: 7101475273743860029}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
@@ -559,7 +571,7 @@ MonoBehaviour:
   maxScale: 2.5
   Score:
     m_InternalValue: 0
-  joystick: {fileID: 8170153791668043265, guid: 0d230cc8be529a542a08cb878ab14b18, type: 3}
+  joystick: {fileID: 0}
 --- !u!114 &1186641312026304189
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -572,10 +584,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae35314d900311c448ad04066759bc31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 1840719375837626499}
   maxHealth: 10
   deadLayerName: Dead
-  isDead: 0
+  CurrentHealth:
+    m_InternalValue: 0
 --- !u!120 &7545416753985370068
 LineRenderer:
   serializedVersion: 2

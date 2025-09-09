@@ -1,5 +1,6 @@
-﻿using UnityEngine;
-using DG.Tweening;
+﻿using DG.Tweening;
+using Unity.Netcode;
+using UnityEngine;
 
 public class WeaponBase : MonoBehaviour
 {
@@ -65,26 +66,19 @@ public class WeaponBase : MonoBehaviour
     protected virtual void OnTriggerEnter(Collider other)
     {
         if (!isFlying || other.gameObject == owner.gameObject) return;
+        if (!NetworkManager.Singleton.IsServer) return;
 
-        if (other.CompareTag("Enemy"))
+        CharacterBase victim = other.GetComponent<CharacterBase>();
+        if (victim != null && victim != owner)
         {
             Health h = other.GetComponent<Health>();
-            if (h != null) h.TakeDamage(damage);
-            owner.AddScore(1);
-            ReturnToHand();
-        }
-        if(other.CompareTag("Player"))
-        {
-            Health h = other.GetComponent<Health>();
-            if (h != null) h.TakeDamage(damage);
-            DOVirtual.DelayedCall(0.5f, () =>
-            {
-                GameManager.Instance.GameOver();
-            });
+            if (h != null) h.TakeDamageServerRpc(damage);
+
             owner.AddScore(1);
             ReturnToHand();
         }
     }
+
 
     protected virtual void ReturnToHand()
     {
