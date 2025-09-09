@@ -6,44 +6,60 @@ using UnityEngine.UI;
 
 public class ConnectionCanvas : BaseCanvas
 {
-    [SerializeField] private Button hostButton;
-    [SerializeField] private Button joinButton;
+    [Header("Menu Buttons")]
+    [SerializeField] private Button openHostPanelButton;
+    [SerializeField] private Button openJoinPanelButton;
+    [SerializeField] private Button backButton;
+
+    [Header("Panels")]
+    [SerializeField] private GameObject hostPanel;
+    [SerializeField] private GameObject joinPanel;
+
+    [Header("Host Panel References")]
+    [SerializeField] private Button startHostButton;
+    [SerializeField] private TextMeshProUGUI hostStatusText;
+
+    [Header("Join Panel References")]
+    [SerializeField] private Button startJoinButton;
     [SerializeField] private TMP_InputField ipInputField;
-    [SerializeField] private TextMeshProUGUI statusText;
+    [SerializeField] private TextMeshProUGUI joinStatusText;
+
+    [Header("Network")]
     [SerializeField] private NetworkManager networkManager;
     [SerializeField] private UnityTransport transport;
-    [SerializeField] private Button backButton;
 
     private void Start()
     {
-        ipInputField.text = "127.0.0.1";
+        openHostPanelButton.onClick.AddListener(() => TogglePanels(true));
+        openJoinPanelButton.onClick.AddListener(() => TogglePanels(false));
+        backButton.onClick.AddListener(OnBackToMenu);
 
-        hostButton.onClick.AddListener(StartHost);
-        joinButton.onClick.AddListener(StartClient);
+        startHostButton.onClick.AddListener(StartHost);
+
+        startJoinButton.onClick.AddListener(StartClient);
 
         networkManager.OnClientConnectedCallback += OnClientConnected;
         networkManager.OnClientDisconnectCallback += OnClientDisconnected;
         networkManager.OnServerStarted += OnServerStarted;
+    }
 
-        backButton.onClick.AddListener(OnBackToMenu);
-
+    private void TogglePanels(bool showHost)
+    {
+        hostPanel.SetActive(showHost);
+        joinPanel.SetActive(!showHost);
     }
 
     private void StartHost()
     {
         try
         {
-            // Lắng nghe trên tất cả interface mạng (LAN/WiFi/Ethernet)
             transport.SetConnectionData("0.0.0.0", 7777);
-
             networkManager.StartHost();
-            statusText.text = "Đang khởi động Host...";
-            hostButton.interactable = false;
-            joinButton.interactable = false;
+            hostStatusText.text = "Đang khởi động Host...";
         }
         catch (System.Exception e)
         {
-            statusText.text = $"Lỗi khởi động Host: {e.Message}";
+            hostStatusText.text = $"Lỗi Host: {e.Message}";
         }
     }
 
@@ -53,55 +69,50 @@ public class ConnectionCanvas : BaseCanvas
         {
             if (!string.IsNullOrEmpty(ipInputField.text))
             {
-                // Kết nối đến IP host nhập vào
                 transport.SetConnectionData(ipInputField.text, 7777);
             }
 
             networkManager.StartClient();
-            statusText.text = $"Đang kết nối đến {ipInputField.text}...";
-            hostButton.interactable = false;
-            joinButton.interactable = false;
+            joinStatusText.text = $"Đang kết nối đến {ipInputField.text}...";
         }
         catch (System.Exception e)
         {
-            statusText.text = $"Lỗi kết nối: {e.Message}";
+            joinStatusText.text = $"Lỗi kết nối: {e.Message}";
         }
     }
 
     private void OnServerStarted()
     {
-        statusText.text = "Host đã khởi động thành công!";
-        Debug.Log("Server started successfully");
+        hostStatusText.text = "Host đã khởi động thành công!";
     }
 
     private void OnClientConnected(ulong clientId)
     {
         if (networkManager.IsHost)
-        {
-            statusText.text = $"Client {clientId} đã kết nối";
-            Debug.Log($"Client {clientId} connected to host");
-        }
+            hostStatusText.text = $"Client {clientId} đã kết nối";
         else
-        {
-            statusText.text = "Đã kết nối thành công đến Host!";
-            Debug.Log("Connected to host successfully");
-        }
+            joinStatusText.text = "Đã kết nối thành công đến Host!";
     }
 
     private void OnClientDisconnected(ulong clientId)
     {
-        statusText.text = "Đã ngắt kết nối";
-        hostButton.interactable = true;
-        joinButton.interactable = true;
-        Debug.Log("Disconnected from server");
+        hostStatusText.text = "Đã ngắt kết nối";
+        joinStatusText.text = "Đã ngắt kết nối";
     }
 
     private void OnBackToMenu()
     {
+        hostPanel.SetActive(false);
+        joinPanel.SetActive(false);
         UIManager.Instance.CloseNetwork();
         UIManager.Instance.OpenMainMenu();
     }
-    private void OnDestroy()
+    private void OnEnable()
+    {
+        hostPanel.SetActive(true);
+        joinPanel.SetActive(false);
+    }
+    private void OnDisable()
     {
         if (networkManager != null)
         {
