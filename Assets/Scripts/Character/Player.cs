@@ -6,7 +6,15 @@ public class Player : CharacterBase
     [SerializeField] private FloatingJoystick joystick;
     public FloatingJoystick Joystick => joystick;
     private bool isMovingInput;
+    protected override void Start()
+    {
+        base.Start();
 
+        if (IsOwner) 
+        {
+            GameManager.Instance.BindCameraToPlayer(transform);
+        }
+    }
     protected override void Update()
     {
         base.Update();
@@ -22,6 +30,7 @@ public class Player : CharacterBase
 
     protected override void UpdateAnimator()
     {
+        if (!IsOwner) return;
         if (animator == null) return;
 
         bool isMovingNow = isMovingInput && !isAttacking;
