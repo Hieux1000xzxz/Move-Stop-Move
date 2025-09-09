@@ -1,40 +1,47 @@
-﻿using UnityEngine;
+﻿using Unity.Netcode;
+using UnityEngine;
 
 [RequireComponent(typeof(LineRenderer))]
-public class PlayerAttackRange : MonoBehaviour
+public class PlayerAttackRange : NetworkBehaviour
 {
-    [SerializeField] private CharacterBase character;
-    [SerializeField] private int segments = 60;
-    [SerializeField] private LineRenderer line;
+    private LineRenderer line;
+    private CharacterBase character;
 
-    void Awake()
+    private void Awake()
     {
-        line.useWorldSpace = true;
-        line.loop = true;
-        line.startWidth = 0.05f;
-        line.endWidth = 0.05f;
-        line.material = new Material(Shader.Find("Sprites/Default"));
-        line.startColor = Color.red;
-        line.endColor = Color.red;
+        line = GetComponent<LineRenderer>();
+        character = GetComponent<CharacterBase>();
     }
 
-    void Update()
+    private void Update()
     {
-        if (character == null) return;
-        DrawCircle(character.transform.position, character.currentAttackRange);
-    }
-
-    void DrawCircle(Vector3 center, float radius)
-    {
-        line.positionCount = segments;
-        float angleStep = 2f * Mathf.PI / (segments - 1);
-
-        for (int i = 0; i < segments; i++)
+        if (!IsOwner) 
         {
-            float angle = i * angleStep;
+            if (line.enabled) line.enabled = false;
+            return;
+        }
+
+        if (!line.enabled) line.enabled = true;
+        DrawCircle(character.currentAttackRange);
+    }
+
+    private void DrawCircle(float radius)
+    {
+        int points = 50;
+        line.positionCount = points + 1;
+        line.useWorldSpace = true;
+
+        Vector3 center = transform.position;
+
+        for (int i = 0; i <= points; i++)
+        {
+            float angle = i * Mathf.PI * 2f / points;
             float x = Mathf.Cos(angle) * radius;
             float z = Mathf.Sin(angle) * radius;
-            line.SetPosition(i, new Vector3(center.x + x, center.y, center.z + z));
+            line.SetPosition(i, new Vector3(center.x + x, center.y + 0.05f, center.z + z));
         }
+        Debug.Log($"Drawing circle with {points} points at {center} radius {radius}");
+        line.widthMultiplier = 0.05f;
     }
+
 }
