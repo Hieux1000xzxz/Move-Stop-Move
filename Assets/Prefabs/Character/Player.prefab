@@ -559,7 +559,7 @@ MonoBehaviour:
   maxScale: 2.5
   Score:
     m_InternalValue: 0
-  joystick: {fileID: 0}
+  joystick: {fileID: 8170153791668043265, guid: 0d230cc8be529a542a08cb878ab14b18, type: 3}
 --- !u!114 &1186641312026304189
 MonoBehaviour:
   m_ObjectHideFlags: 0

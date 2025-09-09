@@ -534,5 +534,27 @@ public abstract class CharacterBase : NetworkBehaviour
             UpdateCharacterStats();
         };
     }
+
+    //Anim Attack
+    [ServerRpc]
+    public void RequestAttackServerRpc()
+    {
+        if (isDead) return;
+
+        if (!isAttacking && hasWeapon && !isDead)
+        {
+            PerformAttack();
+            PlayAttackAnimationClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    public void PlayAttackAnimationClientRpc()
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsAttacking", true);
+        }
+    }
     #endregion
 }
