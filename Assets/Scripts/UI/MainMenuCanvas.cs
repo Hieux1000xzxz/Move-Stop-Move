@@ -5,11 +5,12 @@ public class MainMenuCanvas : BaseCanvas
 {
     [SerializeField] private Button playButton;
     [SerializeField] private Button shopButton;
-
+    [SerializeField] private Button MultiplayerButton;
     private void Awake()
     {
         playButton.onClick.AddListener(OnPlayClicked);
         shopButton.onClick.AddListener(OnShopClicked);
+        MultiplayerButton.onClick.AddListener(OnMultiplayerClicked);
     }
 
     private void OnPlayClicked()
@@ -22,5 +23,11 @@ public class MainMenuCanvas : BaseCanvas
     {
         Debug.Log("Open Shop!");
         UIManager.Instance.OpenShop();
+    }
+
+    private void OnMultiplayerClicked()
+    {
+        Debug.Log("Open Multi!");
+        UIManager.Instance.OpenNetwork();
     }
 }

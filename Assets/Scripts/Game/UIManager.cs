@@ -10,7 +10,7 @@ public class UIManager : Singleton<UIManager>
     [Header("Canvases")]
     [SerializeField] private MainMenuCanvas mainMenuCanvas;
     [SerializeField] private ShopCanvas shopCanvas;
-
+    [SerializeField] private ConnectionCanvas connectionCanvas;
     private void Update()
     {
         UpdateAICounter();
@@ -61,9 +61,16 @@ public class UIManager : Singleton<UIManager>
         GameManager.Instance.StartGame();
     }
 
+    public void OpenNetwork()
+    {
+        mainMenuCanvas.Hide();
+        connectionCanvas.Show();
+    }
     public void OpenMainMenu() => OpenUI(mainMenuCanvas);
     public void OpenShop() => OpenUI(shopCanvas);
+    public void OpenConnection() => OpenUI(connectionCanvas);
 
     public void CloseMainMenu() => CloseUI(mainMenuCanvas);
     public void CloseShop() => CloseUI(shopCanvas);
+    public void CloseNetwork() => CloseUI(connectionCanvas);
 }
