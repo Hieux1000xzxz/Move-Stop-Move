@@ -13,11 +13,11 @@ public abstract class CharacterBase : NetworkBehaviour
     [SerializeField] protected float moveSpeed = 5f;
     [SerializeField] protected NavMeshAgent agent;
     [SerializeField] protected Animator animator;
-    [SerializeField] protected Health health;
+    [SerializeField] public Health health;
     [SerializeField] protected float attackRange = 2f;
     [SerializeField] protected float attackDuration = 0.5f;
     [SerializeField] protected LayerMask targetLayer;
-    [SerializeField] protected Collider characterCollider;
+    [SerializeField] public Collider characterCollider;
 
     [Header("Weapon Settings")]
     [SerializeField] protected Transform weaponSpawnPoint;
@@ -162,15 +162,13 @@ public abstract class CharacterBase : NetworkBehaviour
     protected Transform FindNearestTarget()
     {
         Collider[] targets = Physics.OverlapSphere(transform.position, attackRange);
-        Debug.Log($"{name} scanning {targets.Length} colliders in range {attackRange}");
 
         Transform nearest = null;
         float minDistance = Mathf.Infinity;
 
         foreach (var target in targets)
         {
-            Debug.Log($"Found collider {target.name} on layer {LayerMask.LayerToName(target.gameObject.layer)} tag {target.tag}");
-
+            
             if (target.transform == transform || !target.gameObject.activeInHierarchy)
                 continue;
 
@@ -341,7 +339,13 @@ public abstract class CharacterBase : NetworkBehaviour
             Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(weaponRotationOffset);
             currentWeapon.transform.rotation = rot;
 
-            currentWeapon.Launch(dir, this.gameObject);
+            if(IsServer)
+            {
+                currentWeapon.Launch(dir, this.gameObject);
+
+                //Send event launch to all the different clients
+                LaunchWeaponClientRPC(dir);
+            }
         }
     }
 
@@ -394,10 +398,8 @@ public abstract class CharacterBase : NetworkBehaviour
 
     public void AddScore(int value)
     {
-        if (IsServer) 
-        {
-            Score.Value += value;
-        }
+       if(!IsServer) return;
+       Score.Value += value;
     }
 
     private void UpdateCharacterStats()
@@ -585,5 +587,15 @@ public abstract class CharacterBase : NetworkBehaviour
         ChangeWeapon(selectedWeapon);
     }
 
+    [ClientRpc]
+    private void LaunchWeaponClientRPC(Vector3 dir)
+    {
+        if (IsOwner) return;
+
+        if (currentWeapon != null)
+        {
+            currentWeapon.Launch(dir, this.gameObject);
+        }
+    }
     #endregion
 }

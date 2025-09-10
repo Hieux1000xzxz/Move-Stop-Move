@@ -48,7 +48,7 @@ public class KillScoreDisplay : MonoBehaviour
 
     public void SetScore(int value)
     {
-        score += value;
+        score = value;
         UpdateScoreText();
     }
 }

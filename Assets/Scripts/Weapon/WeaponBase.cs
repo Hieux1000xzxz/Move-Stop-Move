@@ -71,14 +71,16 @@ public class WeaponBase : MonoBehaviour
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
         {
-            Health h = other.GetComponent<Health>();
-            if (h != null) h.TakeDamageServerRpc(damage);
+            Health h = victim.GetComponent<Health>();
+            if (h != null && !h.IsDead)
+            {
+                h.TakeDamageServerRpc(h.CurrentHealth.Value); 
+                owner.AddScore(1);
+            }
 
-            owner.AddScore(1);
             ReturnToHand();
         }
     }
-
 
     protected virtual void ReturnToHand()
     {
