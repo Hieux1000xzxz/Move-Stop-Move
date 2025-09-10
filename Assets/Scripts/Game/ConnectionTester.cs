@@ -6,7 +6,11 @@ using TMPro;
 public class ConnectionTester : NetworkBehaviour
 {
     [SerializeField] private TextMeshProUGUI connectionInfoText;
-
+    public void ShowInfo(string msg)
+    {
+        if (connectionInfoText != null)
+            connectionInfoText.text = msg;
+    }
     private void Update()
     {
         UpdateConnectionInfo();

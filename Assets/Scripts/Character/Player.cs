@@ -28,6 +28,8 @@ public class Player : CharacterBase
         Vector3 input = GetMovementInput();
         isMovingInput = input.magnitude > 0.01f;
 
+        NetIsMoving.Value = isMovingInput;
+
         if (isMovingInput && currentState == CharacterState.Attack)
         {
             EndAttack();
@@ -43,11 +45,8 @@ public class Player : CharacterBase
 
     protected override void UpdateAnimator()
     {
-        if (!IsOwner) return;
         if (animator == null) return;
-
-        bool isMovingNow = isMovingInput && !isAttacking;
-        animator.SetBool("IsMoving", isMovingNow);
+        animator.SetBool("IsMoving", NetIsMoving.Value && !isAttacking);
     }
 
     protected override void OnTargetLost(Transform lostTarget)
@@ -85,7 +84,7 @@ public class Player : CharacterBase
         if (IsOwner)
         {
             GameManager.Instance.BindCameraToPlayer(transform);
-
+            GameManager.Instance.BindJoystick(this);
             ulong clientId = OwnerClientId;
             Vector3 spawnPos = Vector3.zero;
 
@@ -121,6 +120,11 @@ public class Player : CharacterBase
 
             transform.position += direction.normalized * moveSpeed * Time.deltaTime;
         }
+    }
+
+    public void SetJoystick(FloatingJoystick js)
+    {
+        joystick = js;
     }
 
 }
