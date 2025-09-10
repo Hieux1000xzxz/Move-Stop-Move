@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using TMPro;
+using Unity.Netcode;
 
 public class UIManager : Singleton<UIManager>
 {
@@ -58,7 +59,17 @@ public class UIManager : Singleton<UIManager>
     {
         mainMenuCanvas.Hide();
         shopCanvas.Hide();
-        GameManager.Instance.StartGame();
+
+        if(NetworkManager.Singleton.IsServer)
+        {
+            GameManager.Instance.StartGame();
+            GameManager.Instance.StartGameClientRpc();
+        }
+
+        else
+        {
+            GameManager.Instance.RequestStartGameServerRpc();
+        }
     }
 
     public void OpenNetwork()

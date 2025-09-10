@@ -118,4 +118,25 @@ public class GameManager : NetworkBehaviour
             mainCamera.LookAt = player;
         }
     }
+
+    #region NETCODE
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestStartGameServerRpc(ServerRpcParams rpcParams = default)
+    {
+        if (!isGameStarted) 
+        {
+            StartGame(); 
+            StartGameClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    public void StartGameClientRpc(ClientRpcParams rpcParams = default)
+    {
+        if (!IsServer) 
+        {
+            StartGame();
+        }
+    }
+    #endregion
 }
