@@ -441,7 +441,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9109480823393303125, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_IsKinematic
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9157358013245584111, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_Layer
@@ -562,7 +562,7 @@ MonoBehaviour:
   characterCollider: {fileID: 7201976662141129627}
   weaponSpawnPoint: {fileID: 7101475273743860029}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
-  attackDelay: 0.3
+  attackDelay: 0
   weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
   sizePerScore: 0.05
@@ -571,7 +571,7 @@ MonoBehaviour:
   maxScale: 2.5
   Score:
     m_InternalValue: 0
-  joystick: {fileID: 0}
+  joystick: {fileID: 6433299856123335784, guid: 0bd3649e64dbcd840962fac485ab370f, type: 3}
 --- !u!114 &1186641312026304189
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -723,7 +723,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  connectionInfoText: {fileID: 0}
+  connectionInfoText: {fileID: 8018839786853563560, guid: 105f7355cebdbf541bfe674b3feb9401, type: 3}
 --- !u!114 &746300112721650876
 MonoBehaviour:
   m_ObjectHideFlags: 0

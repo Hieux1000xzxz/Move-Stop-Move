@@ -20,6 +20,8 @@ public class GameManager : NetworkBehaviour
     [Header("Camera")]
     [SerializeField] private CinemachineCamera mainCamera;
 
+    public FloatingJoystick mainJoystick;
+
     private List<GameObject> activeAIs = new List<GameObject>();
     private int totalSpawned = 0;
     private int totalKilled = 0;
@@ -119,6 +121,10 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    public void BindJoystick(Player player)
+    {
+        player.SetJoystick(mainJoystick);
+    }
     #region NETCODE
     [ServerRpc(RequireOwnership = false)]
     public void RequestStartGameServerRpc(ServerRpcParams rpcParams = default)

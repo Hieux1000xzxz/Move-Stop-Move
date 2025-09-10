@@ -43,11 +43,18 @@ public abstract class CharacterBase : NetworkBehaviour
     private Vector3 lastPosition;
     private Coroutine attackRoutine;
 
-    public NetworkVariable<int> Score = new NetworkVariable<int>(
-    0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     public float currentAttackRange => attackRange;
     public WeaponBase currentWeaponPublic => currentWeapon;
+
+    public NetworkVariable<int> Score = new NetworkVariable<int>(
+    0, NetworkVariableReadPermission.Everyone, 
+    NetworkVariableWritePermission.Server);
+    
+    public NetworkVariable<bool> NetIsMoving = new NetworkVariable<bool>(
+    false,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Owner);
 
     protected virtual void Start()
     {
@@ -545,6 +552,14 @@ public abstract class CharacterBase : NetworkBehaviour
                 UpdateCharacterStats();
             };
         }
+
+        NetIsMoving.OnValueChanged += (oldVal, newVal) =>
+        {
+            if (animator != null)
+            {
+                animator.SetBool("IsMoving", newVal);
+            }
+        };
     }
 
     public override void OnNetworkDespawn()
