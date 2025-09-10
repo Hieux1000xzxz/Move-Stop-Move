@@ -23,6 +23,8 @@ public class GameManager : Singleton<GameManager>
     {
         base.Awake();
         isGameStarted = false;
+        Application.targetFrameRate = 90;
+        QualitySettings.vSyncCount = 0;
         currentAIQuota = totalAIQuota;
         shopCanvas.LoadSelectedWeapon();
         DisableGamePlaySystem();
