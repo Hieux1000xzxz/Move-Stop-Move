@@ -107,6 +107,7 @@ public class ShopCanvas : BaseCanvas
         {
             Debug.LogWarning("Player not found in scene!");
         }
+        UpdateUI();
     }
 
     public void LoadSelectedWeapon()

@@ -49,6 +49,10 @@ public class GameManager : Singleton<GameManager>
         {
             totalKilled++;
         }
+        if (currentAIQuota == 0 && activeAIs.Count == 0)
+        {
+            Invoke("GameOver", 2f);
+        }
     }
 
     public int GetActiveAICount() { return activeAIs.Count; }
