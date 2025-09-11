@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 4805958631808515180}
   - component: {fileID: 8439159098685273033}
   - component: {fileID: 5978842094623835907}
-  - component: {fileID: 7401966110332575777}
   m_Layer: 7
   m_Name: Spooky Tree_ G
   m_TagString: Untagged
@@ -88,25 +87,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &7401966110332575777
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5330539320515978966}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -367630069140117324, guid: b8cf0f4cc18a8934eba39e5bb7597b15, type: 3}

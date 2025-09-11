@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 732070932133979500}
   - component: {fileID: 4433526888349248201}
   - component: {fileID: 1901638890916404739}
-  - component: {fileID: -9049961864947690268}
   m_Layer: 7
   m_Name: Pumpkin_F
   m_TagString: Untagged
@@ -88,25 +87,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &-9049961864947690268
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 99930277396905942}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -5225475893072891255, guid: 0a3f6aef7bca18541b7db32753161dc2, type: 3}

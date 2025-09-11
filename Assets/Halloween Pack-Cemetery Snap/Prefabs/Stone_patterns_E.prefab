@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 4868062912239163867}
   - component: {fileID: 8367986042863343230}
   - component: {fileID: 6036505416720655028}
-  - component: {fileID: 2690834250550158403}
   - component: {fileID: -5011125939927011299}
   m_Layer: 7
   m_Name: Stone_patterns_E
@@ -88,28 +87,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &2690834250550158403
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5243603670564897633}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 6065706722009139955, guid: e72779243f668bc489b1f20e14560d31, type: 3}
 --- !u!65 &-5011125939927011299
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -127,7 +104,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 2.9999995, y: 0.30068007, z: 3.0000002}
   m_Center: {x: -0.00000023841858, y: 0.15034004, z: -0.00000011920929}

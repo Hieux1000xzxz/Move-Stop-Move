@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 4642893435899501461}
   - component: {fileID: 8629184332613243952}
   - component: {fileID: 5775288349524205818}
-  - component: {fileID: 6418675839266577595}
   - component: {fileID: -8885143523953635609}
   m_Layer: 7
   m_Name: Stone_patterns_Turn
@@ -88,28 +87,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &6418675839266577595
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5414749895996735791}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -9203555720749229862, guid: 3a1bd70a808c6f44f91dbe7f25bea738, type: 3}
 --- !u!65 &-8885143523953635609
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -127,7 +104,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 3, y: 0.2920401, z: 3.0000002}
   m_Center: {x: 0, y: 0.14602005, z: 0}

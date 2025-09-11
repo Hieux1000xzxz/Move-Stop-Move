@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 6288303005013384075}
   - component: {fileID: 6983765606933140526}
   - component: {fileID: 5120494475420360932}
-  - component: {fileID: -6300982123912024106}
   - component: {fileID: -619363614778533678}
   m_Layer: 7
   m_Name: Grass_tile_corner_B
@@ -88,28 +87,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &-6300982123912024106
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6633620731830223153}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 6689342658145125945, guid: 0c525304736a04f4cbf5b150bfacb73f, type: 3}
 --- !u!65 &-619363614778533678
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -127,7 +104,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 3, y: 0.29999983, z: 3.0000007}
   m_Center: {x: 0, y: 0.14999992, z: -0.00000035762787}
