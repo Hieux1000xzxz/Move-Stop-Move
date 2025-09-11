@@ -10,14 +10,14 @@ public class Preallocation
     public bool expandable;
     public ObjectType type;
     public WeaponType weaponType;
-    public PowerupType powerupType;
+    //public PowerupType powerupType;
 }
 
 public enum ObjectType
 {
     Enemy,
     Weapon,
-    Powerup,
+    //Powerup,
     Other
 }
 
@@ -46,7 +46,7 @@ public class ObjectPool : Singleton<ObjectPool>
         {
             for (int i = 0; i < item.count; ++i)
             {
-                pooledGobjects.Add(CreateGobject(item.gameObject, item.type));
+                pooledGobjects.Add(CreateGobject(item.gameObject));
             }
         }
     }
@@ -238,88 +238,88 @@ public class ObjectPool : Singleton<ObjectPool>
         return null;
     }
 
-    private GameObject CreateGobject(GameObject item, ObjectType type = ObjectType.Other)
+    private GameObject CreateGobject(GameObject item)
     {
         GameObject gobject = Instantiate(item, transform);
         gobject.transform.SetParent(transform);
 
-        if (type == ObjectType.Powerup)
-        {
-            gobject.SetActive(true);
-        }
-        else
-        {
+        //if (type == ObjectType.Powerup)
+        //{
+        //    gobject.SetActive(true);
+        //}
+        //else
+        //{
             gobject.transform.position = new Vector3(9999, 9999, 9999);
             gobject.SetActive(false);
-        }
+        //}
 
         return gobject;
     }
 
 
-    #region Powerup
-    public GameObject SpawnPowerup(PowerupType type, Transform spawnPoint = null)
-    {
-        GameObject obj = GetInactivePowerup(type);
+    //#region Powerup
+    //public GameObject SpawnPowerup(PowerupType type, Transform spawnPoint = null)
+    //{
+    //    GameObject obj = GetInactivePowerup(type);
 
-        if (obj == null)
-        {
-            obj = ExpandPoolPowerup(type);
-        }
+    //    if (obj == null)
+    //    {
+    //        obj = ExpandPoolPowerup(type);
+    //    }
 
-        if (obj == null) return null;
+    //    if (obj == null) return null;
 
-        obj.SetActive(true); 
+    //    obj.SetActive(true); 
 
-        if (spawnPoint != null)
-        {
-            obj.transform.SetParent(null);
-            obj.transform.position = spawnPoint.position;
-            obj.transform.rotation = spawnPoint.rotation;
-        }
+    //    if (spawnPoint != null)
+    //    {
+    //        obj.transform.SetParent(null);
+    //        obj.transform.position = spawnPoint.position;
+    //        obj.transform.rotation = spawnPoint.rotation;
+    //    }
 
-        var netObj = obj.GetComponent<NetworkObject>();
-        if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
-        {
-            netObj.Spawn(true);
-        }
+    //    var netObj = obj.GetComponent<NetworkObject>();
+    //    if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
+    //    {
+    //        netObj.Spawn(true);
+    //    }
 
-        return obj;
-    }
+    //    return obj;
+    //}
 
 
-    private GameObject GetInactivePowerup(PowerupType type)
-    {
-        foreach (var obj in pooledGobjects)
-        {
-            if (!obj.activeSelf)
-            {
-                foreach (var pre in preAllocations)
-                {
-                    if (pre.type == ObjectType.Powerup && pre.powerupType == type &&
-                        obj.name.Contains(pre.gameObject.name))
-                    {
-                        return obj;
-                    }
-                }
-            }
-        }
-        return null;
-    }
+    //private GameObject GetInactivePowerup(PowerupType type)
+    //{
+    //    foreach (var obj in pooledGobjects)
+    //    {
+    //        if (!obj.activeSelf)
+    //        {
+    //            foreach (var pre in preAllocations)
+    //            {
+    //                if (pre.type == ObjectType.Powerup && pre.powerupType == type &&
+    //                    obj.name.Contains(pre.gameObject.name))
+    //                {
+    //                    return obj;
+    //                }
+    //            }
+    //        }
+    //    }
+    //    return null;
+    //}
 
-    private GameObject ExpandPoolPowerup(PowerupType type)
-    {
-        foreach (var pre in preAllocations)
-        {
-            if (pre.type == ObjectType.Powerup && pre.powerupType == type && pre.expandable)
-            {
-                GameObject newPowerup = CreateGobject(pre.gameObject);
-                pooledGobjects.Add(newPowerup);
-                return newPowerup;
-            }
-        }
-        return null;
-    }
+    //private GameObject ExpandPoolPowerup(PowerupType type)
+    //{
+    //    foreach (var pre in preAllocations)
+    //    {
+    //        if (pre.type == ObjectType.Powerup && pre.powerupType == type && pre.expandable)
+    //        {
+    //            GameObject newPowerup = CreateGobject(pre.gameObject);
+    //            pooledGobjects.Add(newPowerup);
+    //            return newPowerup;
+    //        }
+    //    }
+    //    return null;
+    //}
 
-    #endregion
+    //#endregion
 }
