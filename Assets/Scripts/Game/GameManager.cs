@@ -21,7 +21,7 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private CinemachineCamera mainCamera;
 
     [Header("Powerup")]
-    [SerializeField] private GameObject powerupPrefab;
+    [SerializeField] private GameObject speedPrefab;
     [SerializeField] private GameObject weaponGrowPrefab;
     [SerializeField] private Transform[] spawnPoints;
 
@@ -31,8 +31,8 @@ public class GameManager : NetworkBehaviour
     private int totalSpawned = 0;
     private int totalKilled = 0;
     private bool isGameStarted = false;
-    private Transform lastSpawnPoint = null;
     public bool IsGameStarted => isGameStarted;
+
     protected void Awake()
     { 
         Instance = this;
@@ -41,13 +41,13 @@ public class GameManager : NetworkBehaviour
         shopCanvas.LoadSelectedWeapon();
         DisableGamePlaySystem();
     }
-    //private void Start()
-    //{
-    //    if (IsServer)
-    //    {
-    //        InvokeRepeating(nameof(SpawnPowerup), 5f, 12f);
-    //    }
-    //}
+    private void Start()
+    {
+        if (IsServer)
+        {
+            InvokeRepeating(nameof(SpawnPowerup), 5f, 12f);
+        }
+    }
 
     public bool CanSpawnAI()
     {
@@ -159,32 +159,28 @@ public class GameManager : NetworkBehaviour
     }
     #endregion
 
-    //private void SpawnPowerup()
-    //{
-    //    if (spawnPoints.Length == 0) return;
+    private void SpawnPowerup()
+    {
+        if (!IsServer) return; // chỉ server spawn
 
-    //    // Chọn random spawn point khác lần trước
-    //    Transform spawnPoint;
-    //    do
-    //    {
-    //        int index = Random.Range(0, spawnPoints.Length);
-    //        spawnPoint = spawnPoints[index];
-    //    }
-    //    while (spawnPoints.Length > 1 && spawnPoint == lastSpawnPoint);
+        if (spawnPoints.Length == 0) return;
 
-    //    lastSpawnPoint = spawnPoint;
+        // chọn vị trí random
+        int index = Random.Range(0, spawnPoints.Length);
+        Transform spawnPoint = spawnPoints[index];
 
-    //    // Random loại powerup
-    //    PowerupType randomType = (Random.value > 0.5f) ? PowerupType.SpeedBoost : PowerupType.WeaponGrow;
+        // random loại
+        PowerupType type = (Random.value > 0.5f) ? PowerupType.SpeedBoost : PowerupType.WeaponGrow;
 
-    //    // Spawn từ pool (server chịu trách nhiệm spawn)
-    //    GameObject obj = ObjectPool.Instance.SpawnPowerup(randomType, spawnPoint);
+        // spawn từ pool
+        GameObject obj = PowerupPool.Instance.Spawn(type, spawnPoint.position, Quaternion.identity);
+        Powerup powerup = obj.GetComponent<Powerup>();
+        powerup.SetType(type);
 
-    //    Powerup powerup = obj.GetComponent<Powerup>();
-    //    if (powerup != null)
-    //    {
-    //        powerup.SetType(randomType);
-    //    }
-    //}
+        Debug.Log($"[Server] Spawned pooled powerup {type} at {spawnPoint.position}");
+    }
+
+
+
 
 }

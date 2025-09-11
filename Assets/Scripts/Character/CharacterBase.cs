@@ -645,53 +645,53 @@ public abstract class CharacterBase : NetworkBehaviour
     #endregion
 
 
-    //#region POWERUP
+    #region POWERUP
 
-    //public void ApplyPowerup(PowerupType type, float duration)
-    //{
-    //    if (type == PowerupType.SpeedBoost)
-    //    {
-    //        StartCoroutine(DoSpeedBoost(duration));
-    //    }
-    //    else if (type == PowerupType.WeaponGrow)
-    //    {
-    //        StartCoroutine(DoWeaponGrow(duration));
-    //    }
-    //}
+    public void ApplyPowerup(PowerupType type, float duration)
+    {
+        StartCoroutine(HandlePowerupEffect(type, duration));
+    }
 
-    //private IEnumerator DoSpeedBoost(float duration)
-    //{
-    //    float oldSpeed = moveSpeed;
-    //    moveSpeed = moveSpeed * 2f;
-    //    if (agent != null)
-    //    {
-    //        agent.speed = moveSpeed;
-    //    }
+    [ClientRpc]
+    public void ApplyPowerupClientRpc(PowerupType type, float duration)
+    {
+        StartCoroutine(HandlePowerupEffect(type, duration));
+    }
 
-    //    yield return new WaitForSeconds(duration);
+    private IEnumerator HandlePowerupEffect(PowerupType type, float duration)
+    {
+        if (type == PowerupType.SpeedBoost)
+        {
+            // lưu tốc độ cũ
+            float oldSpeed = moveSpeed;
 
-    //    moveSpeed = oldSpeed;
-    //    if (agent != null)
-    //    {
-    //        agent.speed = moveSpeed;
-    //    }
-    //}
+            // tăng ngay lập tức
+            moveSpeed *= 2f;
+            if (agent != null) agent.speed = moveSpeed;
 
-    //private IEnumerator DoWeaponGrow(float duration)
-    //{
-    //    if (currentWeapon == null) yield break;
+            yield return new WaitForSeconds(duration);
 
-    //    Transform weaponTransform = currentWeapon.transform;
-    //    Vector3 oldScale = weaponTransform.localScale;
-    //    weaponTransform.localScale = oldScale * 1.5f;
+            // reset về cũ
+            moveSpeed = oldSpeed;
+            if (agent != null) agent.speed = moveSpeed;
+        }
+        else if (type == PowerupType.WeaponGrow)
+        {
+            if (currentWeapon == null) yield break;
 
-    //    yield return new WaitForSeconds(duration);
+            Transform weaponTransform = currentWeapon.transform;
+            Vector3 oldScale = weaponTransform.localScale;
 
-    //    if (currentWeapon != null)
-    //    {
-    //        weaponTransform.localScale = oldScale;
-    //    }
-    //}
+            // phóng to ngay lập tức
+            weaponTransform.localScale = oldScale * 1.5f;
 
-    //#endregion
+            yield return new WaitForSeconds(duration);
+
+            // trả về cũ
+            if (currentWeapon != null)
+                weaponTransform.localScale = oldScale;
+        }
+    }
+    #endregion
+
 }
