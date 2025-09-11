@@ -1230,7 +1230,7 @@ Transform:
   m_GameObject: {fileID: 213847314}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.01, y: 0, z: 0}
+  m_LocalPosition: {x: -9.36, y: 0, z: -9.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1550,6 +1550,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6063942156598963403, guid: 8b791f67e4db6b741a7a6dea9b57868a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 181467421}
+    - targetCorrespondingSourceObject: {fileID: 6063942156598963403, guid: 8b791f67e4db6b741a7a6dea9b57868a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1789088906}
     - targetCorrespondingSourceObject: {fileID: 8449286919615582062, guid: 8b791f67e4db6b741a7a6dea9b57868a, type: 3}
       insertIndex: 0
       addedObject: {fileID: 657955680}
@@ -3729,7 +3732,7 @@ Transform:
   m_GameObject: {fileID: 832575517}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -9.37, y: 0, z: -9.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4109,6 +4112,10 @@ MonoBehaviour:
   interactionCanvas: {fileID: 58942454}
   shopCanvas: {fileID: 1890431161}
   mainCamera: {fileID: 1246925138}
+  powerupPrefab: {fileID: 3871282897138482758, guid: a9290d7fda36be74fb042a5ce67f878d, type: 3}
+  weaponGrowPrefab: {fileID: 367088542311687683, guid: bb5f02d02cf1aac4b8188ff6b7a9eb89, type: 3}
+  spawnPoints:
+  - {fileID: 1789088906}
   mainJoystick: {fileID: 8170153792984791206}
 --- !u!114 &900380978
 MonoBehaviour:
@@ -7754,6 +7761,114 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1744228648}
   m_CullTransparentMesh: 1
+--- !u!1 &1789088902
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1789088906}
+  - component: {fileID: 1789088905}
+  - component: {fileID: 1789088904}
+  - component: {fileID: 1789088903}
+  m_Layer: 0
+  m_Name: Cube (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &1789088903
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1789088902}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &1789088904
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1789088902}
+  m_Enabled: 0
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1789088905
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1789088902}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1789088906
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1789088902}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.3074, y: -0.187, z: -0.79466}
+  m_LocalScale: {x: 13.138098, y: 0.1156, z: 13.524007}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1850881276}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1792413385
 GameObject:
   m_ObjectHideFlags: 0
@@ -8736,36 +8851,55 @@ MonoBehaviour:
     expandable: 0
     type: 0
     weaponType: 0
+    powerupType: 0
   - gameObject: {fileID: 7193694367047912757, guid: 85977aafb9ca3da42a48f4c07465f373, type: 3}
     count: 0
     expandable: 0
     type: 0
     weaponType: 0
+    powerupType: 0
   - gameObject: {fileID: 7193694367047912757, guid: fa0cbab05ee6ac043bb03192f2dbf364, type: 3}
     count: 0
     expandable: 0
     type: 0
     weaponType: 0
+    powerupType: 0
   - gameObject: {fileID: 7795159553526056017, guid: c7b098950134fa04382bfaefc205536b, type: 3}
     count: 50
     expandable: 1
     type: 1
     weaponType: 4
+    powerupType: 0
   - gameObject: {fileID: 7795159553526056017, guid: ef278a0c4c33d7145b42a8485dcb636b, type: 3}
     count: 50
     expandable: 1
     type: 1
     weaponType: 3
+    powerupType: 0
   - gameObject: {fileID: 7795159553526056017, guid: 0b9cf42ee1efd974c8d2c242dd2ca171, type: 3}
     count: 50
     expandable: 1
     type: 1
     weaponType: 1
+    powerupType: 0
   - gameObject: {fileID: 7795159553526056017, guid: a8af49be756ce4342b0528b5cb473968, type: 3}
     count: 50
     expandable: 1
     type: 1
     weaponType: 2
+    powerupType: 0
+  - gameObject: {fileID: 3871282897138482758, guid: a9290d7fda36be74fb042a5ce67f878d, type: 3}
+    count: 10
+    expandable: 1
+    type: 2
+    weaponType: 0
+    powerupType: 1
+  - gameObject: {fileID: 367088542311687683, guid: bb5f02d02cf1aac4b8188ff6b7a9eb89, type: 3}
+    count: 10
+    expandable: 1
+    type: 2
+    weaponType: 0
+    powerupType: 2
   pooledGobjects: []
 --- !u!4 &1894145586
 Transform:
