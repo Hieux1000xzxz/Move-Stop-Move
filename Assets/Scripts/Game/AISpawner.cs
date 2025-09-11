@@ -76,8 +76,8 @@ public class AISpawner : MonoBehaviour
     {
         foreach (Transform point in spawnPoints)
         {
-            if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
-                SpawnAtPoint(point);
+            //if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
+            //    SpawnAtPoint(point);
         }
     }
 
@@ -89,7 +89,7 @@ public class AISpawner : MonoBehaviour
         {
             if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
             {
-                SpawnAtPoint(point);
+                //SpawnAtPoint(point);
                 yield return new WaitForSeconds(delay);
             }
         }
@@ -97,28 +97,28 @@ public class AISpawner : MonoBehaviour
         spawnCoroutine = null;
     }
 
-    private void SpawnAtPoint(Transform spawnPoint)
-    {
-        if (!GameManager.Instance.CanSpawnAI()) return;
+    //private void SpawnAtPoint(Transform spawnPoint)
+    //{
+    //    if (!GameManager.Instance.CanSpawnAI()) return;
 
-        GameObject enemy = ObjectPool.Instance.SpawnRandom(ObjectType.Enemy);
-        if (enemy == null) return;
+    //    GameObject enemy = ObjectPool.Instance.SpawnRandom(ObjectType.Enemy);
+    //    if (enemy == null) return;
 
-        CharacterBase character = enemy.GetComponent<CharacterBase>();
-        if (character != null) character.ResetState();
+    //    CharacterBase character = enemy.GetComponent<CharacterBase>();
+    //    if (character != null) character.ResetState();
 
-        if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
-        {
-            enemy.transform.position = hit.position;
-            enemy.transform.rotation = spawnPoint.rotation;
-            spawnPointAIs[spawnPoint] = enemy;
-            GameManager.Instance.RegisterAI(enemy);
-        }
-        else
-        {
-            enemy.SetActive(false);
-        }
-    }
+    //    if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+    //    {
+    //        enemy.transform.position = hit.position;
+    //        enemy.transform.rotation = spawnPoint.rotation;
+    //        spawnPointAIs[spawnPoint] = enemy;
+    //        GameManager.Instance.RegisterAI(enemy);
+    //    }
+    //    else
+    //    {
+    //        enemy.SetActive(false);
+    //    }
+    //}
 
     public int GetActiveAICount()
     {

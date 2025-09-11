@@ -105,6 +105,7 @@ public abstract class CharacterBase : NetworkBehaviour
         }
 
         UpdateAnimator();
+        Debug.Log($"Position of the hand: {weaponSpawnPoint.position}");
     }
 
     protected virtual void UpdateRadar()
@@ -468,25 +469,32 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (currentWeapon != null)
         {
-            currentWeapon.gameObject.SetActive(false);
+            ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
+            currentWeapon = null;
         }
 
         GameObject newWeaponObj = ObjectPool.Instance.SpawnWeaponByType(newWeaponType);
+
         if (newWeaponObj != null)
         {
-            newWeaponObj.transform.SetParent(weaponSpawnPoint);
-            newWeaponObj.transform.localPosition = Vector3.zero;
-            newWeaponObj.transform.localRotation = Quaternion.identity;
-
             currentWeapon = newWeaponObj.GetComponent<WeaponBase>();
-            if (currentWeapon != null)
+            if (currentWeapon != null && NetworkManager.Singleton.IsServer)
             {
-                currentWeapon.Init(this, weaponSpawnPoint);
+                currentWeapon.transform.SetParent(weaponSpawnPoint, true);
+
+                if (!currentWeapon.NetObj.IsSpawned)
+                    currentWeapon.NetObj.Spawn(true);
+
+                currentWeapon.NetObj.TrySetParent(weaponSpawnPoint, false);
             }
+
+            currentWeapon.Init(this, weaponSpawnPoint);
         }
 
         weaponType = newWeaponType;
     }
+
+
 
     protected virtual void OnDisable()
     {
@@ -605,7 +613,6 @@ public abstract class CharacterBase : NetworkBehaviour
     [ClientRpc]
     private void LaunchWeaponClientRPC(Vector3 dir)
     {
-        if (IsOwner) return;
 
         if (currentWeapon != null)
         {
