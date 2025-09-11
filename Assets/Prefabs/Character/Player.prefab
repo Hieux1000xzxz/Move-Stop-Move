@@ -571,6 +571,8 @@ MonoBehaviour:
   maxScale: 2.5
   Score:
     m_InternalValue: 0
+  NetIsMoving:
+    m_InternalValue: 0
   joystick: {fileID: 6433299856123335784, guid: 0bd3649e64dbcd840962fac485ab370f, type: 3}
 --- !u!114 &1186641312026304189
 MonoBehaviour:
@@ -717,13 +719,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7926306860219652939}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b73a5d0dde6b5b5419d1e0e063c85700, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  connectionInfoText: {fileID: 8018839786853563560, guid: 105f7355cebdbf541bfe674b3feb9401, type: 3}
+  connectionInfoText: {fileID: 0}
 --- !u!114 &746300112721650876
 MonoBehaviour:
   m_ObjectHideFlags: 0
