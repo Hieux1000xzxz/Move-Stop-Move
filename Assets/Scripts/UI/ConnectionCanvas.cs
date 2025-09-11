@@ -20,10 +20,12 @@ public class ConnectionCanvas : BaseCanvas
 
     [Header("Host Panel References")]
     [SerializeField] private Button startHostButton;
+    [SerializeField] private TMP_InputField lobbyNameInputField;
     [SerializeField] private TextMeshProUGUI hostStatusText;
 
     [Header("Join Panel References")]
     [SerializeField] private Button refreshListButton;
+    [SerializeField] private Button joinByIdButton;
     [SerializeField] private TextMeshProUGUI joinStatusText;
     [SerializeField] private Transform lobbyListContainer;
     [SerializeField] private GameObject lobbyItemPrefab;
@@ -44,6 +46,7 @@ public class ConnectionCanvas : BaseCanvas
 
         startHostButton.onClick.AddListener(StartHost);
         refreshListButton.onClick.AddListener(RefreshLobbyList);
+        joinByIdButton.onClick.AddListener(JoinByLobbyId);
 
         networkManager.OnClientConnectedCallback += OnClientConnected;
         networkManager.OnClientDisconnectCallback += OnClientDisconnected;
@@ -74,7 +77,7 @@ public class ConnectionCanvas : BaseCanvas
                 // Đăng ký lobby lên server
                 var request = new LobbyRegistrationRequest
                 {
-                    lobbyName = "Phòng của tôi",
+                    lobbyName = string.IsNullOrEmpty(lobbyNameInputField.text)? "Lobby": lobbyNameInputField.text,
                     hostIpAddress = ipLan,   // IP LAN để client join
                     hostPort = port,
                     maxPlayers = 6
@@ -264,11 +267,15 @@ public class ConnectionCanvas : BaseCanvas
     // === UTILS ===
     private void OnBackToMenu()
     {
+        if (networkManager != null && networkManager.IsListening)
+            networkManager.Shutdown();
+
         hostPanel.SetActive(false);
         joinPanel.SetActive(false);
         UIManager.Instance.CloseNetwork();
         UIManager.Instance.OpenMainMenu();
     }
+
 
     private string GetLocalIPAddress()
     {
