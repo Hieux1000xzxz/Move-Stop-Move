@@ -267,9 +267,6 @@ public class ConnectionCanvas : BaseCanvas
     // === UTILS ===
     private void OnBackToMenu()
     {
-        if (networkManager != null && networkManager.IsListening)
-            networkManager.Shutdown();
-
         hostPanel.SetActive(false);
         joinPanel.SetActive(false);
         UIManager.Instance.CloseNetwork();
@@ -298,6 +295,16 @@ public class ConnectionCanvas : BaseCanvas
             networkManager.OnClientConnectedCallback -= OnClientConnected;
             networkManager.OnClientDisconnectCallback -= OnClientDisconnected;
             networkManager.OnServerStarted -= OnServerStarted;
+        }
+    }
+
+    private async void DeleteLobby()
+    {
+        if (string.IsNullOrEmpty(currentLobbyId)) return;
+
+        using (var www = UnityWebRequest.Delete($"{SERVER_URL}/{currentLobbyId}/delete"))
+        {
+            await www.SendWebRequest();
         }
     }
 }

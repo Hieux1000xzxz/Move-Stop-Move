@@ -1550,9 +1550,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6063942156598963403, guid: 8b791f67e4db6b741a7a6dea9b57868a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 181467421}
-    - targetCorrespondingSourceObject: {fileID: 6063942156598963403, guid: 8b791f67e4db6b741a7a6dea9b57868a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1789088906}
     - targetCorrespondingSourceObject: {fileID: 8449286919615582062, guid: 8b791f67e4db6b741a7a6dea9b57868a, type: 3}
       insertIndex: 0
       addedObject: {fileID: 657955680}
@@ -4349,7 +4346,7 @@ MonoBehaviour:
   powerupPrefab: {fileID: 3871282897138482758, guid: a9290d7fda36be74fb042a5ce67f878d, type: 3}
   weaponGrowPrefab: {fileID: 367088542311687683, guid: bb5f02d02cf1aac4b8188ff6b7a9eb89, type: 3}
   spawnPoints:
-  - {fileID: 1789088906}
+  - {fileID: 0}
   mainJoystick: {fileID: 8170153792984791206}
 --- !u!114 &900380978
 MonoBehaviour:
@@ -9729,18 +9726,6 @@ MonoBehaviour:
     type: 1
     weaponType: 2
     powerupType: 0
-  - gameObject: {fileID: 3871282897138482758, guid: a9290d7fda36be74fb042a5ce67f878d, type: 3}
-    count: 10
-    expandable: 1
-    type: 2
-    weaponType: 0
-    powerupType: 1
-  - gameObject: {fileID: 367088542311687683, guid: bb5f02d02cf1aac4b8188ff6b7a9eb89, type: 3}
-    count: 10
-    expandable: 1
-    type: 2
-    weaponType: 0
-    powerupType: 2
   pooledGobjects: []
 --- !u!4 &1894145586
 Transform:

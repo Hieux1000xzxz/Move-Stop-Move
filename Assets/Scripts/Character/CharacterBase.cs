@@ -437,9 +437,22 @@ public abstract class CharacterBase : NetworkBehaviour
         scoreDisplay.gameObject.SetActive(true);
         this.gameObject.layer = LayerMask.NameToLayer("Enemy");
         characterCollider.enabled = true;
+
         if (currentWeapon != null)
         {
-            currentWeapon.transform.SetParent(weaponSpawnPoint);
+            if (NetworkManager.Singleton.IsServer)
+            {
+                var netObj = currentWeapon.NetObj;
+                if (!netObj.IsSpawned)
+                    netObj.Spawn(true);
+
+                netObj.TrySetParent(weaponSpawnPoint, false);
+            }
+            else
+            {
+                currentWeapon.transform.SetParent(weaponSpawnPoint, false);
+            }
+
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.identity;
             currentWeapon.gameObject.SetActive(true);
@@ -462,8 +475,8 @@ public abstract class CharacterBase : NetworkBehaviour
             agent.ResetPath();
             agent.velocity = Vector3.zero;
         }
-       
     }
+
 
     public void ChangeWeapon(WeaponType newWeaponType)
     {
@@ -478,17 +491,27 @@ public abstract class CharacterBase : NetworkBehaviour
         if (newWeaponObj != null)
         {
             currentWeapon = newWeaponObj.GetComponent<WeaponBase>();
-            if (currentWeapon != null && NetworkManager.Singleton.IsServer)
+            if (currentWeapon != null)
             {
-                currentWeapon.transform.SetParent(weaponSpawnPoint, true);
+                var netObj = currentWeapon.NetObj;
 
-                if (!currentWeapon.NetObj.IsSpawned)
-                    currentWeapon.NetObj.Spawn(true);
+                if (NetworkManager.Singleton.IsServer)
+                {
+                    // ✅ Spawn trước
+                    if (!netObj.IsSpawned)
+                        netObj.Spawn(true);
 
-                currentWeapon.NetObj.TrySetParent(weaponSpawnPoint, false);
+                    // ✅ Sau đó mới reparent
+                    netObj.TrySetParent(weaponSpawnPoint, false);
+                }
+                else
+                {
+                    // Client chỉ cosmetic
+                    currentWeapon.transform.SetParent(weaponSpawnPoint, false);
+                }
+
+                currentWeapon.Init(this, weaponSpawnPoint);
             }
-
-            currentWeapon.Init(this, weaponSpawnPoint);
         }
 
         weaponType = newWeaponType;

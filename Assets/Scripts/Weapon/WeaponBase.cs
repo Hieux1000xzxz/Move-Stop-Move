@@ -37,7 +37,6 @@ public class WeaponBase : MonoBehaviour
         owner = character;
         spawnPoint = hand;
 
-        transform.SetParent(spawnPoint, false);
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.Euler(handRotationOffset);
 
@@ -107,7 +106,7 @@ public class WeaponBase : MonoBehaviour
         rb.isKinematic = true;
         StopRotation();
 
-        transform.SetParent(spawnPoint, false);
+        transform.SetParent(spawnPoint);
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.Euler(handRotationOffset);
 
