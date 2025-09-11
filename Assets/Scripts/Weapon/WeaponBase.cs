@@ -15,7 +15,7 @@ public class WeaponBase : MonoBehaviour
     [SerializeField] protected RotateMode rotateMode = RotateMode.FastBeyond360;
 
     [SerializeField] protected Rigidbody rb;
-
+    [SerializeField] private NetworkObject netObj;
     protected CharacterBase owner;
     protected Transform spawnPoint;
     protected Vector3 originalPos;
@@ -26,22 +26,45 @@ public class WeaponBase : MonoBehaviour
 
     public bool IsFlying => isFlying;
 
+    public NetworkObject NetObj => netObj;  
+    protected virtual void Awake()
+    {
+        if (netObj == null)
+            netObj = GetComponent<NetworkObject>();
+    }
     public virtual void Init(CharacterBase character, Transform hand)
     {
         owner = character;
         spawnPoint = hand;
 
-        originalPos = transform.localPosition;
-        originalRot = transform.localRotation * Quaternion.Euler(handRotationOffset);
+        transform.SetParent(spawnPoint, false);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.Euler(handRotationOffset);
 
-        ReturnToHand();
+        originalPos = Vector3.zero;
+        originalRot = transform.localRotation;
     }
 
     public virtual void Launch(Vector3 dir, GameObject shooter)
     {
         if (isFlying) return;
 
-        transform.SetParent(null);
+        if (spawnPoint != null)
+        {
+            transform.position = spawnPoint.position;
+            transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
+        }
+
+        if (NetworkManager.Singleton.IsServer)
+        {
+            var netObj = GetComponent<NetworkObject>();
+            if (netObj != null) netObj.TrySetParent((Transform)null, false); 
+        }
+        else
+        {
+            transform.SetParent(null);
+        }
+
         rb.isKinematic = false;
         rb.linearVelocity = dir * speed;
 
@@ -50,6 +73,8 @@ public class WeaponBase : MonoBehaviour
 
         StartRotation();
     }
+
+
 
     protected virtual void Update()
     {
@@ -66,37 +91,32 @@ public class WeaponBase : MonoBehaviour
     protected virtual void OnTriggerEnter(Collider other)
     {
         if (!isFlying || other.gameObject == owner.gameObject) return;
-        if (!NetworkManager.Singleton.IsServer) return;
 
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
         {
-            Health h = victim.GetComponent<Health>();
-            if (h != null && !h.IsDead)
-            {
-                h.TakeDamageServerRpc(h.CurrentHealth.Value); 
-                owner.AddScore(1);
-            }
-
+            NotifyHitServerRpc(victim.NetworkObject);
             ReturnToHand();
         }
     }
 
     protected virtual void ReturnToHand()
     {
-        rb.isKinematic = true;
+        if (spawnPoint == null) return;
 
+        rb.isKinematic = true;
         StopRotation();
 
-        transform.SetParent(spawnPoint);
-        transform.localPosition = originalPos;
-        transform.localRotation = originalRot;
+        transform.SetParent(spawnPoint, false);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.Euler(handRotationOffset);
 
         isFlying = false;
 
         if (owner != null)
             owner.OnWeaponReturned();
     }
+
 
     public virtual void ResetWeapon()
     {
@@ -127,4 +147,25 @@ public class WeaponBase : MonoBehaviour
         damage = data.damage;
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    private void NotifyHitServerRpc(NetworkObjectReference victimRef)
+    {
+        if (!victimRef.TryGet(out NetworkObject victimObj)) return;
+
+        CharacterBase victim = victimObj.GetComponent<CharacterBase>();
+        if (victim == null || victim == owner) return;
+
+        Health h = victim.GetComponent<Health>();
+        if (h != null)
+        {
+            h.ApplyDamage(damage);
+        }
+
+        owner.AddScore(1);
+
+        if (victim.characterCollider != null)
+        {
+            victim.characterCollider.enabled = false;
+        }
+    }
 }
