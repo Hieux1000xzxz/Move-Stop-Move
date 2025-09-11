@@ -1,8 +1,8 @@
 
-public enum PowerupType
-{
-    None,
-    SpeedBoost,  
-    WeaponGrow        
-}
+//public enum PowerupType
+//{
+//    None,
+//    SpeedBoost,  
+//    WeaponGrow        
+//}
 

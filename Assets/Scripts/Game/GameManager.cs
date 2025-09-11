@@ -41,13 +41,13 @@ public class GameManager : NetworkBehaviour
         shopCanvas.LoadSelectedWeapon();
         DisableGamePlaySystem();
     }
-    private void Start()
-    {
-        if (IsServer)
-        {
-            InvokeRepeating(nameof(SpawnPowerup), 5f, 12f);
-        }
-    }
+    //private void Start()
+    //{
+    //    if (IsServer)
+    //    {
+    //        InvokeRepeating(nameof(SpawnPowerup), 5f, 12f);
+    //    }
+    //}
 
     public bool CanSpawnAI()
     {
@@ -159,32 +159,32 @@ public class GameManager : NetworkBehaviour
     }
     #endregion
 
-    private void SpawnPowerup()
-    {
-        if (spawnPoints.Length == 0) return;
+    //private void SpawnPowerup()
+    //{
+    //    if (spawnPoints.Length == 0) return;
 
-        // Chọn random spawn point khác lần trước
-        Transform spawnPoint;
-        do
-        {
-            int index = Random.Range(0, spawnPoints.Length);
-            spawnPoint = spawnPoints[index];
-        }
-        while (spawnPoints.Length > 1 && spawnPoint == lastSpawnPoint);
+    //    // Chọn random spawn point khác lần trước
+    //    Transform spawnPoint;
+    //    do
+    //    {
+    //        int index = Random.Range(0, spawnPoints.Length);
+    //        spawnPoint = spawnPoints[index];
+    //    }
+    //    while (spawnPoints.Length > 1 && spawnPoint == lastSpawnPoint);
 
-        lastSpawnPoint = spawnPoint;
+    //    lastSpawnPoint = spawnPoint;
 
-        // Random loại powerup
-        PowerupType randomType = (Random.value > 0.5f) ? PowerupType.SpeedBoost : PowerupType.WeaponGrow;
+    //    // Random loại powerup
+    //    PowerupType randomType = (Random.value > 0.5f) ? PowerupType.SpeedBoost : PowerupType.WeaponGrow;
 
-        // Spawn từ pool (server chịu trách nhiệm spawn)
-        GameObject obj = ObjectPool.Instance.SpawnPowerup(randomType, spawnPoint);
+    //    // Spawn từ pool (server chịu trách nhiệm spawn)
+    //    GameObject obj = ObjectPool.Instance.SpawnPowerup(randomType, spawnPoint);
 
-        Powerup powerup = obj.GetComponent<Powerup>();
-        if (powerup != null)
-        {
-            powerup.SetType(randomType);
-        }
-    }
+    //    Powerup powerup = obj.GetComponent<Powerup>();
+    //    if (powerup != null)
+    //    {
+    //        powerup.SetType(randomType);
+    //    }
+    //}
 
 }
