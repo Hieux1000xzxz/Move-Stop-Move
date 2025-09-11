@@ -620,4 +620,55 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
     #endregion
+
+
+    #region POWERUP
+
+    public void ApplyPowerup(PowerupType type, float duration)
+    {
+        if (type == PowerupType.SpeedBoost)
+        {
+            StartCoroutine(DoSpeedBoost(duration));
+        }
+        else if (type == PowerupType.WeaponGrow)
+        {
+            StartCoroutine(DoWeaponGrow(duration));
+        }
+    }
+
+    private IEnumerator DoSpeedBoost(float duration)
+    {
+        float oldSpeed = moveSpeed;
+        moveSpeed = moveSpeed * 2f;
+        if (agent != null)
+        {
+            agent.speed = moveSpeed;
+        }
+
+        yield return new WaitForSeconds(duration);
+
+        moveSpeed = oldSpeed;
+        if (agent != null)
+        {
+            agent.speed = moveSpeed;
+        }
+    }
+
+    private IEnumerator DoWeaponGrow(float duration)
+    {
+        if (currentWeapon == null) yield break;
+
+        Transform weaponTransform = currentWeapon.transform;
+        Vector3 oldScale = weaponTransform.localScale;
+        weaponTransform.localScale = oldScale * 1.5f;
+
+        yield return new WaitForSeconds(duration);
+
+        if (currentWeapon != null)
+        {
+            weaponTransform.localScale = oldScale;
+        }
+    }
+
+    #endregion
 }
