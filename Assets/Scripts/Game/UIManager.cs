@@ -54,6 +54,7 @@ public class UIManager : Singleton<UIManager>
     {
         if (mainMenuCanvas != null) mainMenuCanvas.Hide();
         if (shopCanvas != null) shopCanvas.Hide();
+        if (connectionCanvas != null) connectionCanvas.Hide();
     }
     public void StartGame()
     {
@@ -72,11 +73,8 @@ public class UIManager : Singleton<UIManager>
         }
     }
 
-    public void OpenNetwork()
-    {
-        mainMenuCanvas.Hide();
-        connectionCanvas.Show();
-    }
+
+
     public void OpenMainMenu() => OpenUI(mainMenuCanvas);
     public void OpenShop() => OpenUI(shopCanvas);
     public void OpenConnection() => OpenUI(connectionCanvas);

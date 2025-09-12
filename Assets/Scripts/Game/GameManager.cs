@@ -94,6 +94,8 @@ public class GameManager : NetworkBehaviour
         isGameStarted = true;
         EnableGamePlaySystem();
         ResetGame();
+        UIManager.Instance.CloseAllUI();
+
     }
     public void GameOver()
     {
@@ -106,7 +108,11 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     public void GameOverClientRpc(ClientRpcParams clientRpcParams = default)
     {
+        if (isGameStarted) return;
+        isGameStarted = true;
+
         Debug.Log("GameOver called on this client");
+        UIManager.Instance.CloseAllUI();
         GameOver();
     }
 
