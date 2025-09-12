@@ -41,10 +41,13 @@ public class GameManager : NetworkBehaviour
         shopCanvas.LoadSelectedWeapon();
         DisableGamePlaySystem();
     }
-    private void Start()
+    public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
+
         if (IsServer)
         {
+            Debug.Log("✅ Server đã spawn GameManager, bắt đầu InvokeRepeating...");
             InvokeRepeating(nameof(SpawnPowerup), 5f, 12f);
         }
     }
@@ -161,23 +164,19 @@ public class GameManager : NetworkBehaviour
 
     private void SpawnPowerup()
     {
-        if (!IsServer) return; // chỉ server spawn
+        if (!IsServer) return;
 
         if (spawnPoints.Length == 0) return;
 
-        // chọn vị trí random
         int index = Random.Range(0, spawnPoints.Length);
         Transform spawnPoint = spawnPoints[index];
 
-        // random loại
         PowerupType type = (Random.value > 0.5f) ? PowerupType.SpeedBoost : PowerupType.WeaponGrow;
 
-        // spawn từ pool
-        GameObject obj = PowerupPool.Instance.Spawn(type, spawnPoint.position, Quaternion.identity);
+        GameObject obj = ObjectPool.Instance.SpawnPowerup(type, spawnPoint.position, Quaternion.identity);
         Powerup powerup = obj.GetComponent<Powerup>();
         powerup.SetType(type);
 
-        Debug.Log($"[Server] Spawned pooled powerup {type} at {spawnPoint.position}");
     }
 
 

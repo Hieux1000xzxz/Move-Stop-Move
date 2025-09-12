@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -41,7 +41,5 @@ public class ShopManager : BaseCanvas
         {
             player.currentWeaponPublic.ApplyData(weapon);
         }
-
-        Debug.Log("Player equipped: " + weapon.weaponName);
     }
 }
