@@ -219,13 +219,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c08240cfeaf4924c80fca49ffe7ba75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 16
+  speed: 4
   damage: 10
   handRotationOffset: {x: 90, y: 0, z: 90}
   rotateAxis: {x: 1, y: 0, z: 0}
   rotateSpeed: 1440
   rotateMode: 3
   rb: {fileID: 3562958303719707135}
+  netObj: {fileID: 0}
 --- !u!114 &7127309102368046219
 MonoBehaviour:
   m_ObjectHideFlags: 0
