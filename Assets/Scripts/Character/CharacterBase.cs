@@ -4,14 +4,15 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 using Unity.Netcode;
+using UnityEngine.Splines;
 
 public enum CharacterState { Idle, Move, Attack }
 
 public abstract class CharacterBase : NetworkBehaviour
 {
     [Header("Character Settings")]
-    [SerializeField] protected float moveSpeed = 5f;
-    [SerializeField] protected NavMeshAgent agent;
+    [SerializeField] public float moveSpeed = 5f;
+    [SerializeField] public NavMeshAgent agent;
     [SerializeField] protected Animator animator;
     [SerializeField] public Health health;
     [SerializeField] protected float attackRange = 2f;
@@ -64,15 +65,11 @@ public abstract class CharacterBase : NetworkBehaviour
             lastPosition = transform.position;
         }
 
-        if (IsOwner)
-        {
-            string selected = PlayerPrefs.GetString("SelectedWeapon", "Knife");
-            WeaponType type = (WeaponType)System.Enum.Parse(typeof(WeaponType), selected);
-            RequestSetWeaponServerRpc(type);
-        }
-
+        //if (IsServer)
+        //{
+        //    RequestSetWeaponServerRpc(WeaponType.Knife);
+        //}
         OnWeaponReturned();
-        LoadWeapon();
     }
 
     protected virtual void Update()
@@ -437,22 +434,9 @@ public abstract class CharacterBase : NetworkBehaviour
         scoreDisplay.gameObject.SetActive(true);
         this.gameObject.layer = LayerMask.NameToLayer("Enemy");
         characterCollider.enabled = true;
-
         if (currentWeapon != null)
         {
-            if (NetworkManager.Singleton.IsServer)
-            {
-                var netObj = currentWeapon.NetObj;
-                if (!netObj.IsSpawned)
-                    netObj.Spawn(true);
-
-                netObj.TrySetParent(weaponSpawnPoint, false);
-            }
-            else
-            {
-                currentWeapon.transform.SetParent(weaponSpawnPoint, false);
-            }
-
+            currentWeapon.transform.SetParent(weaponSpawnPoint);
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.identity;
             currentWeapon.gameObject.SetActive(true);
@@ -475,8 +459,8 @@ public abstract class CharacterBase : NetworkBehaviour
             agent.ResetPath();
             agent.velocity = Vector3.zero;
         }
+       
     }
-
 
     public void ChangeWeapon(WeaponType newWeaponType)
     {
@@ -486,36 +470,22 @@ public abstract class CharacterBase : NetworkBehaviour
             currentWeapon = null;
         }
 
-        GameObject newWeaponObj = ObjectPool.Instance.SpawnWeaponByType(newWeaponType);
+        var go = ObjectPool.Instance.SpawnWeaponByType(newWeaponType);
+        currentWeapon = go.GetComponent<WeaponBase>();
 
-        if (newWeaponObj != null)
-        {
-            currentWeapon = newWeaponObj.GetComponent<WeaponBase>();
-            if (currentWeapon != null)
-            {
-                var netObj = currentWeapon.NetObj;
+        currentWeapon.transform.SetParent(weaponSpawnPoint, false);
+        currentWeapon.transform.localPosition = Vector3.zero;
+        currentWeapon.transform.localRotation = Quaternion.Euler(weaponRotationOffset);
 
-                if (NetworkManager.Singleton.IsServer)
-                {
-                    // ✅ Spawn trước
-                    if (!netObj.IsSpawned)
-                        netObj.Spawn(true);
+        if (IsServer && !currentWeapon.NetObj.IsSpawned)
+            currentWeapon.NetObj.Spawn(true);
+        AttachWeaponClientRpc(currentWeapon.NetObj, newWeaponType);
+        if (IsServer) currentWeapon.NetObj.TrySetParent(weaponSpawnPoint, false);
 
-                    // ✅ Sau đó mới reparent
-                    netObj.TrySetParent(weaponSpawnPoint, false);
-                }
-                else
-                {
-                    // Client chỉ cosmetic
-                    currentWeapon.transform.SetParent(weaponSpawnPoint, false);
-                }
-
-                currentWeapon.Init(this, weaponSpawnPoint);
-            }
-        }
-
-        weaponType = newWeaponType;
+        currentWeapon.Init(this, weaponSpawnPoint);
     }
+
+
 
 
 
@@ -572,6 +542,11 @@ public abstract class CharacterBase : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+
+        if(IsServer)
+        {
+            RequestSetWeaponServerRpc(WeaponType.Shield);
+        }
 
         if (scoreDisplay != null)
         {
@@ -636,62 +611,81 @@ public abstract class CharacterBase : NetworkBehaviour
     [ClientRpc]
     private void LaunchWeaponClientRPC(Vector3 dir)
     {
-
+        if (IsServer) return;
         if (currentWeapon != null)
         {
             currentWeapon.Launch(dir, this.gameObject);
         }
     }
-    #endregion
 
+    [ClientRpc]
+    private void AttachWeaponClientRpc(NetworkObjectReference weaponRef, WeaponType type)
+    {
+        if (IsServer) return;
+
+        if (weaponRef.TryGet(out NetworkObject netObj))
+        {
+            var weapon = netObj.GetComponent<WeaponBase>();
+            if (weapon != null)
+            {
+                currentWeapon = weapon;
+                currentWeapon.transform.SetParent(weaponSpawnPoint, false);
+                currentWeapon.transform.localPosition = Vector3.zero;
+                currentWeapon.transform.localRotation = Quaternion.Euler(weaponRotationOffset);
+                currentWeapon.Init(this, weaponSpawnPoint);
+                weaponType = type;
+            }
+        }
+    }
+
+    #endregion
 
     #region POWERUP
 
-    public void ApplyPowerup(PowerupType type, float duration)
-    {
-        StartCoroutine(HandlePowerupEffect(type, duration));
-    }
-
+    // Sync OnTriggerEnter:  server call to sync for the clients
     [ClientRpc]
     public void ApplyPowerupClientRpc(PowerupType type, float duration)
     {
-        StartCoroutine(HandlePowerupEffect(type, duration));
+        if (!IsOwner && !IsHost) return;
+
+        switch (type)
+        {
+            case PowerupType.SpeedBoost:
+                StartCoroutine(ApplySpeedBoostLocal(duration));
+                break;
+
+            case PowerupType.WeaponGrow:
+                StartCoroutine(ApplyWeaponGrowLocal(duration));
+                break;
+        }
     }
 
-    private IEnumerator HandlePowerupEffect(PowerupType type, float duration)
+    private IEnumerator ApplySpeedBoostLocal(float duration, float multiplier = 2f)
     {
-        if (type == PowerupType.SpeedBoost)
-        {
-            // lưu tốc độ cũ
-            float oldSpeed = moveSpeed;
+        float oldSpeed = moveSpeed;
+        moveSpeed *= multiplier;
+        if (agent != null) agent.speed = moveSpeed;
 
-            // tăng ngay lập tức
-            moveSpeed *= 2f;
-            if (agent != null) agent.speed = moveSpeed;
+        yield return new WaitForSeconds(duration);
 
-            yield return new WaitForSeconds(duration);
-
-            // reset về cũ
-            moveSpeed = oldSpeed;
-            if (agent != null) agent.speed = moveSpeed;
-        }
-        else if (type == PowerupType.WeaponGrow)
-        {
-            if (currentWeapon == null) yield break;
-
-            Transform weaponTransform = currentWeapon.transform;
-            Vector3 oldScale = weaponTransform.localScale;
-
-            // phóng to ngay lập tức
-            weaponTransform.localScale = oldScale * 1.5f;
-
-            yield return new WaitForSeconds(duration);
-
-            // trả về cũ
-            if (currentWeapon != null)
-                weaponTransform.localScale = oldScale;
-        }
+        moveSpeed = oldSpeed;
+        if (agent != null) agent.speed = moveSpeed;
     }
-    #endregion
 
+    private IEnumerator ApplyWeaponGrowLocal(float duration, float scaleMultiplier = 1.5f)
+    {
+        if (currentWeaponPublic == null) yield break;
+
+        Transform weaponTransform = currentWeaponPublic.transform;
+        Vector3 oldScale = weaponTransform.localScale;
+
+        weaponTransform.localScale = oldScale * scaleMultiplier;
+
+        yield return new WaitForSeconds(duration);
+
+        if (currentWeaponPublic != null)
+            weaponTransform.localScale = oldScale;
+    }
+
+    #endregion
 }

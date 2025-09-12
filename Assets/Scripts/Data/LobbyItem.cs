@@ -1,4 +1,4 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,10 +7,10 @@ public class LobbyItem : MonoBehaviour
     [SerializeField] private TextMeshProUGUI lobbyNameText;
     [SerializeField] private Button joinButton;
 
-    private ConnectionCanvas.LobbyInfo lobbyInfo;
+    private LobbyInfo lobbyInfo;
     private ConnectionCanvas connectionCanvas;
 
-    public void Setup(ConnectionCanvas.LobbyInfo info, ConnectionCanvas canvas)
+    public void Setup(LobbyInfo info, ConnectionCanvas canvas)
     {
         lobbyInfo = info;
         connectionCanvas = canvas;

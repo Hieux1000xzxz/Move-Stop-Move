@@ -12,26 +12,17 @@ using UnityEngine.UI;
 public class ConnectionCanvas : BaseCanvas
 {
     [Header("Menu Buttons")]
-    [SerializeField] private Button openHostPanelButton;
-    [SerializeField] private Button openJoinPanelButton;
     [SerializeField] private Button backButton;
-
-    [Header("Panels")]
-    [SerializeField] private GameObject hostPanel;
-    [SerializeField] private GameObject joinPanel;
     [SerializeField] private GameObject lobbyPanel;
+    [SerializeField] private GameObject mainPanel;
 
-    [Header("Host Panel References")]
+
+
+    [Header("Main Panel References")]
     [SerializeField] private Button startHostButton;
-    [SerializeField] private TMP_InputField lobbyNameInputField;
-    [SerializeField] private TextMeshProUGUI hostStatusText;
-    [SerializeField] private Button startGameButtonHost;
-
-    [Header("Join Panel References")]
     [SerializeField] private Button refreshListButton;
     [SerializeField] private Button joinByIdButton;
-    [SerializeField] private TextMeshProUGUI joinStatusText;
-    [SerializeField] private Transform lobbyListContainer;
+     [SerializeField] private Transform lobbyListContainer;
     [SerializeField] private GameObject lobbyItemPrefab;
     [SerializeField] private TMP_InputField lobbyIdInputField;
 
@@ -60,12 +51,6 @@ public class ConnectionCanvas : BaseCanvas
 
     private void Start()
     {
-        // Menu buttons
-        openHostPanelButton.onClick.RemoveAllListeners();
-        openHostPanelButton.onClick.AddListener(() => TogglePanels(true));
-
-        openJoinPanelButton.onClick.RemoveAllListeners();
-        openJoinPanelButton.onClick.AddListener(() => TogglePanels(false));
 
         backButton.onClick.RemoveAllListeners();
         backButton.onClick.AddListener(OnBackToMenu);
@@ -73,8 +58,8 @@ public class ConnectionCanvas : BaseCanvas
         // Host actions
         startHostButton.onClick.RemoveAllListeners();
         startHostButton.onClick.AddListener(StartHost);
-        startGameButtonHost.onClick.RemoveAllListeners();
-        startGameButtonHost.onClick.AddListener(OnStartGameClicked);
+        startGameButton.onClick.RemoveAllListeners();
+        startGameButton.onClick.AddListener(OnStartGameClicked);
         exitButton.onClick.RemoveAllListeners();
         exitButton.onClick.AddListener(OnExitClicked);
 
@@ -96,8 +81,7 @@ public class ConnectionCanvas : BaseCanvas
             networkManager.OnClientDisconnectCallback += OnClientDisconnected;
             networkManager.OnServerStarted += OnServerStarted;
         }
-        hostPanel.SetActive(true);
-        joinPanel.SetActive(false);
+     
         lobbyPanel.SetActive(false);
         enterNamePopup.SetActive(false);
 
@@ -115,17 +99,12 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-    private void TogglePanels(bool showHost)
-    {
-        hostPanel.SetActive(showHost);
-        joinPanel.SetActive(!showHost);
-    }
-
     // === HOST ===
     private void StartHost()
     {
         StartCoroutine(StartHostRoutine());
-        hostPanel.SetActive(false);
+                mainPanel.SetActive(false);
+
     }
 
     private void OnStartGameClicked()
@@ -140,33 +119,43 @@ public class ConnectionCanvas : BaseCanvas
     {
         if (networkManager == null) return;
 
+        StopAllCoroutines(); // dừng PollLobbyInfo hoặc join coroutine đang chạy
+
         if (networkManager.IsHost)
         {
-            // Host → hủy phòng trên server
+            // Host → hủy phòng
             DeleteLobbyLocal();
-            networkManager.Shutdown();
-            hostStatusText.text = "Phòng đã bị hủy";
+
+            // Shutdown host
+            if (networkManager.IsListening)
+                networkManager.Shutdown();
         }
         else if (networkManager.IsClient)
         {
-            // Client → thoát phòng trên server
-            StartCoroutine(LeaveLobbyServer());
-            networkManager.Shutdown();
-            joinStatusText.text = "Đã thoát phòng";
+            // Client → thoát phòng
+            string playerId = PlayerPrefs.GetString("PlayerId", "");
+            if (!string.IsNullOrEmpty(currentLobbyId) && !string.IsNullOrEmpty(playerId))
+            {
+                StartCoroutine(LeaveLobbyRoutine(currentLobbyId, playerId));
+            }
+
+            if (networkManager.IsClient)
+                networkManager.Shutdown();
         }
+
+        // Reset state
+        currentLobbyId = string.Empty;
+        localUserName = string.Empty;
+        pendingLobbyToJoin = null;
 
         // Reset UI về Join Panel
         lobbyPanel.SetActive(false);
-        hostPanel.SetActive(false);
         enterNamePopup.SetActive(false);
+        mainPanel.SetActive(true);
 
-        // 👇 mở lại Join Panel để có thể tạo/join tiếp
-        joinPanel.SetActive(true);
-
-        // 👇 refresh danh sách phòng
-        StartCoroutine(RefreshLobbyListUI());
+        // Làm mới danh sách lobby để có thể join/tạo lại
+        RefreshLobbyList();
     }
-
 
 
     private IEnumerator StartHostRoutine()
@@ -178,15 +167,13 @@ public class ConnectionCanvas : BaseCanvas
 
         if (!networkManager.StartHost())
         {
-            hostStatusText.text = "Không thể khởi động Host!";
             yield break;
         }
 
-        hostStatusText.text = $"Đang khởi động Host ({ipLan}:{port})...";
 
         var request = new LobbyRegistrationRequest
         {
-            lobbyName = string.IsNullOrEmpty(lobbyNameInputField.text) ? "Lobby" : lobbyNameInputField.text,
+            lobbyName = string.IsNullOrEmpty(lobbyIdInputField.text) ? "Lobby" : lobbyIdInputField.text,
             hostIpAddress = ipLan,
             hostPort = port,
             maxPlayers = 6,
@@ -209,13 +196,11 @@ public class ConnectionCanvas : BaseCanvas
                 var lobby = JsonUtility.FromJson<LobbyInfo>(www.downloadHandler.text);
                 currentLobbyId = lobby.lobbyId;
                 ShowLobbyUI(lobby);
-                hostStatusText.text = $"Phòng đã tạo tại {ipLan}:{port} (ID: {currentLobbyId})";
                 // start polling lobby info (host)
                 StartCoroutine(PollLobbyInfo());
             }
             else
             {
-                hostStatusText.text = $"Lỗi đăng ký lobby: {www.error}";
             }
         }
     }
@@ -271,7 +256,6 @@ public class ConnectionCanvas : BaseCanvas
         string playerName = nameInputField.text.Trim();
         if (string.IsNullOrEmpty(playerName))
         {
-            joinStatusText.text = "Tên không được để trống!";
             return;
         }
 
@@ -289,7 +273,6 @@ public class ConnectionCanvas : BaseCanvas
             string lobbyId = lobbyIdInputField.text.Trim();
             if (string.IsNullOrEmpty(lobbyId))
             {
-                joinStatusText.text = "Vui lòng nhập ID phòng!";
                 return;
             }
             StartCoroutine(JoinLobbyRoutine(lobbyId, playerName));
@@ -321,14 +304,12 @@ public class ConnectionCanvas : BaseCanvas
                 // connect to host
                 JoinLobby(lobby.hostIpAddress, lobby.hostPort);
 
-                joinStatusText.text = $"Đang kết nối {lobby.lobbyName} ({lobby.currentPlayers}/{lobby.maxPlayers})...";
 
                 // cập nhật danh sách lobby trên view JoinPanel
                 RefreshLobbyList();
             }
             else
             {
-                joinStatusText.text = $"Lỗi join phòng: {www.error}";
             }
         }
     }
@@ -387,7 +368,6 @@ public class ConnectionCanvas : BaseCanvas
             }
             else
             {
-                joinStatusText.text = $"Lỗi tải danh sách: {www.error}";
             }
         }
     }
@@ -395,7 +375,6 @@ public class ConnectionCanvas : BaseCanvas
     // === CALLBACKS ===
     private void OnServerStarted()
     {
-        hostStatusText.text = "Host đã khởi động thành công!";
     }
 
     private void OnClientConnected(ulong clientId)
@@ -407,7 +386,6 @@ public class ConnectionCanvas : BaseCanvas
         }
         else
         {
-            joinStatusText.text = "Đã kết nối thành công!";
         }
     }
 
@@ -415,27 +393,29 @@ public class ConnectionCanvas : BaseCanvas
     {
         if (!networkManager.IsHost)
         {
-            // Client mất kết nối → báo server là đã rời phòng
             string playerId = PlayerPrefs.GetString("PlayerId", "");
             if (!string.IsNullOrEmpty(currentLobbyId) && !string.IsNullOrEmpty(playerId))
             {
                 StartCoroutine(LeaveLobbyRoutine(currentLobbyId, playerId));
             }
 
-            joinStatusText.text = "Đã ngắt kết nối";
+            // Reset UI cho client
+            lobbyPanel.SetActive(false);
+            mainPanel.SetActive(true);
+            RefreshLobbyList();
         }
         else
         {
             // host cập nhật danh sách client
-            StartCoroutine(PollLobbyInfo());
+            if (!networkManager.ShutdownInProgress)
+                StartCoroutine(PollLobbyInfo());
         }
     }
+
 
     // === UTIL ===
     private void OnBackToMenu()
     {
-        hostPanel.SetActive(false);
-        joinPanel.SetActive(false);
         lobbyPanel.SetActive(false);
         enterNamePopup.SetActive(false);
 
@@ -480,14 +460,14 @@ public class ConnectionCanvas : BaseCanvas
 
     private IEnumerator PollLobbyInfo()
     {
-        while (networkManager != null && networkManager.IsHost)
+        while (networkManager != null && networkManager.IsHost && !networkManager.ShutdownInProgress)
         {
             if (!string.IsNullOrEmpty(currentLobbyId))
             {
                 using (var www = UnityWebRequest.Get($"{SERVER_URL}/find/{currentLobbyId}"))
                 {
                     yield return www.SendWebRequest();
-                    if (www.result == UnityWebRequest.Result.Success)
+                    if (www.result == UnityWebRequest.Result.Success && this != null && lobbyPanel != null)
                     {
                         LobbyInfo lobby = JsonUtility.FromJson<LobbyInfo>(www.downloadHandler.text);
                         UpdatePlayerList(lobby);
@@ -497,6 +477,7 @@ public class ConnectionCanvas : BaseCanvas
             yield return new WaitForSeconds(2f);
         }
     }
+
 
     private void OnDisable()
     {
@@ -530,51 +511,52 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-    // === MODELS ===
-    [Serializable]
-    public class LobbyInfo
+    
+}
+// === MODELS ===
+[Serializable]
+public class LobbyInfo
+{
+    public string lobbyId;
+    public string lobbyName;
+    public string hostIpAddress;
+    public int hostPort;
+    public int currentPlayers;
+    public int maxPlayers;
+    public string createdAt;
+    public List<UserInfo> users = new List<UserInfo>();
+}
+
+[Serializable]
+public class UserInfo
+{
+    public string userId;
+    public string userName;
+}
+
+[Serializable]
+public class LobbyRegistrationRequest
+{
+    public string lobbyName;
+    public string hostIpAddress;
+    public int hostPort;
+    public int maxPlayers;
+    public string hostName;
+}
+
+// === JSON HELPER ===
+public static class JsonHelper
+{
+    public static T[] FromJson<T>(string json)
     {
-        public string lobbyId;
-        public string lobbyName;
-        public string hostIpAddress;
-        public int hostPort;
-        public int currentPlayers;
-        public int maxPlayers;
-        public string createdAt;
-        public List<UserInfo> users = new List<UserInfo>();
+        string newJson = "{ \"array\": " + json + "}";
+        Wrapper<T> wrapper = JsonUtility.FromJson<Wrapper<T>>(newJson);
+        return wrapper.array;
     }
 
     [Serializable]
-    public class UserInfo
+    private class Wrapper<T>
     {
-        public string userId;
-        public string userName;
-    }
-
-    [Serializable]
-    public class LobbyRegistrationRequest
-    {
-        public string lobbyName;
-        public string hostIpAddress;
-        public int hostPort;
-        public int maxPlayers;
-        public string hostName;
-    }
-
-    // === JSON HELPER ===
-    public static class JsonHelper
-    {
-        public static T[] FromJson<T>(string json)
-        {
-            string newJson = "{ \"array\": " + json + "}";
-            Wrapper<T> wrapper = JsonUtility.FromJson<Wrapper<T>>(newJson);
-            return wrapper.array;
-        }
-
-        [Serializable]
-        private class Wrapper<T>
-        {
-            public T[] array;
-        }
+        public T[] array;
     }
 }
