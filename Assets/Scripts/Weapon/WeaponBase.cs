@@ -15,7 +15,7 @@ public class WeaponBase : MonoBehaviour
     [SerializeField] protected RotateMode rotateMode = RotateMode.FastBeyond360;
 
     [SerializeField] protected Rigidbody rb;
-    [SerializeField] private NetworkObject netObj;
+    //[SerializeField] private NetworkObject netObj;
     protected CharacterBase owner;
     protected Transform spawnPoint;
     protected Vector3 originalPos;
@@ -26,18 +26,18 @@ public class WeaponBase : MonoBehaviour
 
     public bool IsFlying => isFlying;
 
-    public NetworkObject NetObj => netObj;  
-    protected virtual void Awake()
-    {
-        if (netObj == null)
-            netObj = GetComponent<NetworkObject>();
-    }
+    //public NetworkObject NetObj => netObj;  
+    //protected virtual void Awake()
+    //{
+    //    if (netObj == null)
+    //        netObj = GetComponent<NetworkObject>();
+    //}
     public virtual void Init(CharacterBase character, Transform hand)
     {
         owner = character;
         spawnPoint = hand;
 
-        transform.SetParent(spawnPoint, false);
+        //transform.SetParent(spawnPoint, false);
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.Euler(handRotationOffset);
 
@@ -47,8 +47,8 @@ public class WeaponBase : MonoBehaviour
     {
         if (isFlying) return;
 
-        if (NetworkManager.Singleton.IsServer) NetObj.TrySetParent((Transform)null, false);
-        transform.SetParent(null, true);
+        //if (NetworkManager.Singleton.IsServer) NetObj.TrySetParent((Transform)null, false);
+        //transform.SetParent(null, true);
 
         rb.isKinematic = false;
         transform.position = spawnPoint.position;
@@ -67,11 +67,11 @@ public class WeaponBase : MonoBehaviour
         rb.isKinematic = true;
         StopRotation();
 
-        transform.SetParent(spawnPoint, false);
+        //transform.SetParent(spawnPoint, false);
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.Euler(handRotationOffset);
 
-        if (NetworkManager.Singleton.IsServer) NetObj.TrySetParent(spawnPoint, false);
+        //if (NetworkManager.Singleton.IsServer) NetObj.TrySetParent(spawnPoint, false);
 
         isFlying = false;
         owner?.OnWeaponReturned();

@@ -123,7 +123,6 @@ MonoBehaviour:
   rotateSpeed: 1080
   rotateMode: 3
   rb: {fileID: 3562958303719707135}
-  netObj: {fileID: 0}
 --- !u!114 &6662112378248426788
 MonoBehaviour:
   m_ObjectHideFlags: 0
