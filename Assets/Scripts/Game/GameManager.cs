@@ -48,7 +48,7 @@ public class GameManager : NetworkBehaviour
         if (IsServer)
         {
             Debug.Log("✅ Server đã spawn GameManager, bắt đầu InvokeRepeating...");
-            //InvokeRepeating(nameof(SpawnPowerup), 5f, 12f);
+            InvokeRepeating(nameof(SpawnPowerup), 5f, 12f);
         }
     }
 
@@ -172,16 +172,37 @@ public class GameManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        if (spawnPoints.Length == 0) return;
+        if (spawnPoints.Length == 0)
+        {
+            Debug.LogError("❌ Không có spawnPoints nào trong GameManager!");
+            return;
+        }
 
         int index = Random.Range(0, spawnPoints.Length);
         Transform spawnPoint = spawnPoints[index];
 
         PowerupType type = (Random.value > 0.5f) ? PowerupType.SpeedBoost : PowerupType.WeaponGrow;
-
+        Debug.Log($"[SpawnPowerup] Chọn {type} tại {spawnPoint.position}");
+        if (ObjectPool.Instance == null)
+        {
+            Debug.LogError("❌ ObjectPool.Instance == null, chưa có ObjectPool trong scene!");
+            return;
+        }
         GameObject obj = ObjectPool.Instance.SpawnPowerup(type, spawnPoint.position, Quaternion.identity);
+        if (obj == null)
+        {
+            Debug.LogError($"❌ ObjectPool không spawn được prefab cho {type}");
+            return;
+        }
+
         Powerup powerup = obj.GetComponent<Powerup>();
+        if (powerup == null)
+        {
+            Debug.LogError($"❌ Prefab {obj.name} không có script Powerup gắn kèm!");
+            return;
+        }
         powerup.SetType(type);
+        Debug.Log($"✅ Spawn thành công {type} tại {spawnPoint.position}");
 
     }
 
