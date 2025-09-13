@@ -436,7 +436,7 @@ public abstract class CharacterBase : NetworkBehaviour
         characterCollider.enabled = true;
         if (currentWeapon != null)
         {
-            currentWeapon.transform.SetParent(weaponSpawnPoint);
+            //currentWeapon.transform.SetParent(weaponSpawnPoint);
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.identity;
             currentWeapon.gameObject.SetActive(true);
@@ -473,14 +473,14 @@ public abstract class CharacterBase : NetworkBehaviour
         var go = ObjectPool.Instance.SpawnWeaponByType(newWeaponType);
         currentWeapon = go.GetComponent<WeaponBase>();
 
-        currentWeapon.transform.SetParent(weaponSpawnPoint, false);
+        //currentWeapon.transform.SetParent(weaponSpawnPoint, false);
         currentWeapon.transform.localPosition = Vector3.zero;
         currentWeapon.transform.localRotation = Quaternion.Euler(weaponRotationOffset);
 
-        if (IsServer && !currentWeapon.NetObj.IsSpawned)
-            currentWeapon.NetObj.Spawn(true);
-        AttachWeaponClientRpc(currentWeapon.NetObj, newWeaponType);
-        if (IsServer) currentWeapon.NetObj.TrySetParent(weaponSpawnPoint, false);
+        //if (IsServer && !currentWeapon.NetObj.IsSpawned)
+        //    currentWeapon.NetObj.Spawn(true);
+        //AttachWeaponClientRpc(currentWeapon.NetObj, newWeaponType);
+        //if (IsServer) currentWeapon.NetObj.TrySetParent(weaponSpawnPoint, false);
 
         currentWeapon.Init(this, weaponSpawnPoint);
     }
@@ -493,7 +493,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (currentWeapon != null)
         {
-            currentWeapon.gameObject.SetActive(false);
+            //currentWeapon.gameObject.SetActive(false);
         }
         attackTarget = null;
         detectedTarget = null;
@@ -543,10 +543,10 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
-        if(IsServer)
-        {
-            RequestSetWeaponServerRpc(WeaponType.Shield);
-        }
+        //if(IsServer)
+        //{
+        //    RequestSetWeaponServerRpc(WeaponType.Shield);
+        //}
 
         if (scoreDisplay != null)
         {
@@ -618,25 +618,6 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
-    private void AttachWeaponClientRpc(NetworkObjectReference weaponRef, WeaponType type)
-    {
-        if (IsServer) return;
-
-        if (weaponRef.TryGet(out NetworkObject netObj))
-        {
-            var weapon = netObj.GetComponent<WeaponBase>();
-            if (weapon != null)
-            {
-                currentWeapon = weapon;
-                currentWeapon.transform.SetParent(weaponSpawnPoint, false);
-                currentWeapon.transform.localPosition = Vector3.zero;
-                currentWeapon.transform.localRotation = Quaternion.Euler(weaponRotationOffset);
-                currentWeapon.Init(this, weaponSpawnPoint);
-                weaponType = type;
-            }
-        }
-    }
 
     #endregion
 
