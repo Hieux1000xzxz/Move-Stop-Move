@@ -48,7 +48,7 @@ public class GameManager : NetworkBehaviour
         if (IsServer)
         {
             Debug.Log("✅ Server đã spawn GameManager, bắt đầu InvokeRepeating...");
-            InvokeRepeating(nameof(SpawnPowerup), 5f, 12f);
+            //InvokeRepeating(nameof(SpawnPowerup), 5f, 12f);
         }
     }
 
