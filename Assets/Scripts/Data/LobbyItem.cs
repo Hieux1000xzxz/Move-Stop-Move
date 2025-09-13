@@ -1,4 +1,4 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,21 +7,30 @@ public class LobbyItem : MonoBehaviour
     [SerializeField] private TextMeshProUGUI lobbyNameText;
     [SerializeField] private Button joinButton;
 
-    private string ip;
-    private int port;
+    private LobbyInfo lobbyInfo;
     private ConnectionCanvas connectionCanvas;
 
     public void Setup(LobbyInfo info, ConnectionCanvas canvas)
     {
-        lobbyNameText.text = $"{info.lobbyName} ({info.currentPlayers}/{info.maxPlayers})";
-        ip = info.hostIpAddress;
-        port = info.hostPort;
+        lobbyInfo = info;
         connectionCanvas = canvas;
+
+        lobbyNameText.text = $"{info.lobbyName} ({info.currentPlayers}/{info.maxPlayers})";
+
+        joinButton.onClick.RemoveAllListeners();
         joinButton.onClick.AddListener(OnJoinClicked);
     }
 
     private void OnJoinClicked()
     {
-        connectionCanvas.JoinLobby(ip, port);
+        if (connectionCanvas != null && lobbyInfo != null)
+        {
+            connectionCanvas.ShowJoinNamePopup(lobbyInfo);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        joinButton.onClick.RemoveAllListeners();
     }
 }

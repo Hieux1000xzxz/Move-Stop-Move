@@ -28,6 +28,6 @@ public class MainMenuCanvas : BaseCanvas
     private void OnMultiplayerClicked()
     {
         Debug.Log("Open Multi!");
-        UIManager.Instance.OpenNetwork();
+        UIManager.Instance.OpenConnection();
     }
 }

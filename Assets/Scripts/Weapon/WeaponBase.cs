@@ -15,7 +15,7 @@ public class WeaponBase : MonoBehaviour
     [SerializeField] protected RotateMode rotateMode = RotateMode.FastBeyond360;
 
     [SerializeField] protected Rigidbody rb;
-    [SerializeField] private NetworkObject netObj;
+    //[SerializeField] private NetworkObject netObj;
     protected CharacterBase owner;
     protected Transform spawnPoint;
     protected Vector3 originalPos;
@@ -26,51 +26,55 @@ public class WeaponBase : MonoBehaviour
 
     public bool IsFlying => isFlying;
 
-    public NetworkObject NetObj => netObj;  
-    protected virtual void Awake()
-    {
-        if (netObj == null)
-            netObj = GetComponent<NetworkObject>();
-    }
+    //public NetworkObject NetObj => netObj;  
+    //protected virtual void Awake()
+    //{
+    //    if (netObj == null)
+    //        netObj = GetComponent<NetworkObject>();
+    //}
     public virtual void Init(CharacterBase character, Transform hand)
     {
         owner = character;
         spawnPoint = hand;
 
+        //transform.SetParent(spawnPoint, false);
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.Euler(handRotationOffset);
 
-        originalPos = Vector3.zero;
         originalRot = transform.localRotation;
     }
-
     public virtual void Launch(Vector3 dir, GameObject shooter)
     {
         if (isFlying) return;
 
-        if (spawnPoint != null)
-        {
-            transform.position = spawnPoint.position;
-            transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
-        }
-
-        if (NetworkManager.Singleton.IsServer)
-        {
-            var netObj = GetComponent<NetworkObject>();
-            if (netObj != null) netObj.TrySetParent((Transform)null, false); 
-        }
-        else
-        {
-            transform.SetParent(null);
-        }
+        //if (NetworkManager.Singleton.IsServer) NetObj.TrySetParent((Transform)null, false);
+        //transform.SetParent(null, true);
 
         rb.isKinematic = false;
+        transform.position = spawnPoint.position;
+        transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
         rb.linearVelocity = dir * speed;
 
         launchPos = transform.position;
         isFlying = true;
-
         StartRotation();
+    }
+
+    protected virtual void ReturnToHand()
+    {
+        if (spawnPoint == null) return;
+
+        rb.isKinematic = true;
+        StopRotation();
+
+        //transform.SetParent(spawnPoint, false);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.Euler(handRotationOffset);
+
+        //if (NetworkManager.Singleton.IsServer) NetObj.TrySetParent(spawnPoint, false);
+
+        isFlying = false;
+        owner?.OnWeaponReturned();
     }
 
 
@@ -98,24 +102,6 @@ public class WeaponBase : MonoBehaviour
             ReturnToHand();
         }
     }
-
-    protected virtual void ReturnToHand()
-    {
-        if (spawnPoint == null) return;
-
-        rb.isKinematic = true;
-        StopRotation();
-
-        transform.SetParent(spawnPoint);
-        transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.Euler(handRotationOffset);
-
-        isFlying = false;
-
-        if (owner != null)
-            owner.OnWeaponReturned();
-    }
-
 
     public virtual void ResetWeapon()
     {
