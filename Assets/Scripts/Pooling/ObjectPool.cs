@@ -249,6 +249,18 @@ public class ObjectPool : Singleton<ObjectPool>
         return null;
     }
     #endregion
+    public void RebuildPool()
+    {
+        pooledGobjects.Clear();
+
+        foreach (Preallocation item in preAllocations)
+        {
+            for (int i = 0; i < item.count; ++i)
+            {
+                pooledGobjects.Add(CreateGobject(item.gameObject));
+            }
+        }
+    }
 
     // ================== REGION: HELPERS ==================
     #region HELPERS

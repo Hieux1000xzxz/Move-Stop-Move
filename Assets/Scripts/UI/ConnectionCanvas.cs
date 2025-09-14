@@ -103,7 +103,8 @@ public class ConnectionCanvas : BaseCanvas
     private void StartHost()
     {
         StartCoroutine(StartHostRoutine());
-                mainPanel.SetActive(false);
+        ObjectPool.Instance.RebuildPool();
+        mainPanel.SetActive(false);
 
     }
 
@@ -120,7 +121,7 @@ public class ConnectionCanvas : BaseCanvas
         if (networkManager == null) return;
 
         StopAllCoroutines(); // dừng PollLobbyInfo hoặc join coroutine đang chạy
-
+        ObjectPool.Instance.RebuildPool();
         if (networkManager.IsHost)
         {
             // Host → hủy phòng
@@ -169,7 +170,6 @@ public class ConnectionCanvas : BaseCanvas
         {
             yield break;
         }
-
 
         var request = new LobbyRegistrationRequest
         {
