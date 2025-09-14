@@ -1,10 +1,11 @@
 ﻿using DG.Tweening;
 using System.Collections;
 using Unity.Netcode;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
-using Unity.Netcode;
 using UnityEngine.Splines;
+using static UnityEngine.Rendering.DebugUI.Table;
 
 public enum CharacterState { Idle, Move, Attack }
 
@@ -21,7 +22,7 @@ public abstract class CharacterBase : NetworkBehaviour
     [SerializeField] public Collider characterCollider;
 
     [Header("Weapon Settings")]
-    [SerializeField] protected Transform weaponSpawnPoint;
+    [SerializeField] public Transform weaponSpawnPoint;
     [SerializeField] protected Vector3 weaponRotationOffset = Vector3.zero;
     [SerializeField] protected float attackDelay = 0.3f;
     [SerializeField] protected WeaponType weaponType;
@@ -33,6 +34,9 @@ public abstract class CharacterBase : NetworkBehaviour
     [SerializeField] private float rangePerScore = 0.1f;
     [SerializeField] private float moveSpeedPerScore = 0.1f;
     [SerializeField] private float maxScale = 3f;
+
+    [Header("Default Weapon")]
+    [SerializeField] private WeaponType defaultWeapon = WeaponType.Knife;
 
     protected CharacterState currentState = CharacterState.Idle;
     protected Transform attackTarget;
@@ -49,9 +53,9 @@ public abstract class CharacterBase : NetworkBehaviour
     public WeaponBase currentWeaponPublic => currentWeapon;
 
     public NetworkVariable<int> Score = new NetworkVariable<int>(
-    0, NetworkVariableReadPermission.Everyone, 
+    0, NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server);
-    
+
     public NetworkVariable<bool> NetIsMoving = new NetworkVariable<bool>(
     false,
     NetworkVariableReadPermission.Everyone,
@@ -102,7 +106,6 @@ public abstract class CharacterBase : NetworkBehaviour
         }
 
         UpdateAnimator();
-        Debug.Log($"Position of the hand: {weaponSpawnPoint.position}");
     }
 
     protected virtual void UpdateRadar()
@@ -173,7 +176,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
         foreach (var target in targets)
         {
-            
+
             if (target.transform == transform || !target.gameObject.activeInHierarchy)
                 continue;
 
@@ -283,19 +286,27 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected virtual void PerformAttack()
     {
+        Debug.Log($"{name} Đã vào PerformAttack");
+        if (currentWeapon == null)
+        {
+            Debug.LogWarning($"{name} currentWeapon = NULL");
+            return;
+        }
         if (!hasWeapon)
         {
-            DOVirtual.DelayedCall(attackDuration, () =>
-            {
-                if (animator != null)
-                {
-                    animator.SetBool("IsAttacking", false);
-                }
-            });
+            Debug.LogWarning($"{name} không có vũ khí");
+            return;
         }
-        if (currentWeapon == null || !hasWeapon) return;
-        if (currentWeapon.IsFlying) return;
-        if (Time.time < nextAttackTime) return;
+        if (currentWeapon.IsFlying)
+        {
+            Debug.LogWarning($"{name} vũ khí đang bay");
+            return;
+        }
+        if (Time.time < nextAttackTime)
+        {
+            Debug.LogWarning($"{name} đang chờ đợi cooldown tấn công");
+            return;
+        }
 
         isAttacking = true;
         hasWeapon = false;
@@ -315,13 +326,19 @@ public abstract class CharacterBase : NetworkBehaviour
 
     private IEnumerator AttackRoutine()
     {
+        Debug.Log($"{name} bắt đầu hành động tấn công");
+        // Delay = thời điểm vũ khí rời tay
         yield return new WaitForSeconds(attackDelay);
-
-        if (currentWeapon != null && attackTarget != null)
+        Debug.Log($"{name} IsOwner = {IsOwner}, IsServer = {IsServer}, IsClient = {IsClient}");
+        if (IsOwner)  // chỉ owner gửi request lên server
         {
-            ThrowWeapon();
+            Debug.Log($"{name} (Owner) yêu cầu server xử lý việc bắn vũ khí");
+            RequestLaunchServerRpc();
         }
-
+        else
+        {
+            Debug.Log($"{name} không phải Owner, không gửi yêu cầu bắn");
+        }
         yield return new WaitForSeconds(0.1f);
 
         if (animator != null)
@@ -329,6 +346,8 @@ public abstract class CharacterBase : NetworkBehaviour
             animator.SetBool("IsAttacking", false);
         }
     }
+
+
 
     public virtual void OnWeaponReturned()
     {
@@ -344,7 +363,7 @@ public abstract class CharacterBase : NetworkBehaviour
             Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(weaponRotationOffset);
             currentWeapon.transform.rotation = rot;
 
-            if(IsServer)
+            if (IsServer)
             {
                 currentWeapon.Launch(dir, this.gameObject);
 
@@ -403,8 +422,8 @@ public abstract class CharacterBase : NetworkBehaviour
 
     public void AddScore(int value)
     {
-       if(!IsServer) return;
-       Score.Value += value;
+        if (!IsServer) return;
+        Score.Value += value;
     }
 
     private void UpdateCharacterStats()
@@ -413,7 +432,12 @@ public abstract class CharacterBase : NetworkBehaviour
 
         float newScale = Mathf.Min(1f + scoreDisplay.CurrentScore * sizePerScore, maxScale);
         transform.localScale = Vector3.one * newScale;
-        currentWeapon.transform.localScale = Vector3.one * newScale;
+
+        if (currentWeapon != null)
+        {
+            currentWeapon.transform.localScale = Vector3.one * newScale;
+        }
+
         attackRange += scoreDisplay.CurrentScore * rangePerScore;
         moveSpeed += moveSpeedPerScore;
 
@@ -459,11 +483,13 @@ public abstract class CharacterBase : NetworkBehaviour
             agent.ResetPath();
             agent.velocity = Vector3.zero;
         }
-       
+
     }
 
     public void ChangeWeapon(WeaponType newWeaponType)
     {
+        if (!IsServer) return; // ❗ Client không spawn
+
         if (currentWeapon != null)
         {
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
@@ -471,19 +497,25 @@ public abstract class CharacterBase : NetworkBehaviour
         }
 
         var go = ObjectPool.Instance.SpawnWeaponByType(newWeaponType);
+        if (go == null) return;
+
         currentWeapon = go.GetComponent<WeaponBase>();
+        currentWeapon.transform.position = weaponSpawnPoint.position;
+        currentWeapon.transform.rotation = weaponSpawnPoint.rotation;
 
-        //currentWeapon.transform.SetParent(weaponSpawnPoint, false);
-        currentWeapon.transform.localPosition = Vector3.zero;
-        currentWeapon.transform.localRotation = Quaternion.Euler(weaponRotationOffset);
+        var netObj = currentWeapon.GetComponent<NetworkObject>();
+        if (netObj != null && !netObj.IsSpawned)
+        {
+            netObj.Spawn(true);
+            Debug.Log($"{name} [Server] SpawnWeapon {currentWeapon.name}");
 
-        //if (IsServer && !currentWeapon.NetObj.IsSpawned)
-        //    currentWeapon.NetObj.Spawn(true);
-        //AttachWeaponClientRpc(currentWeapon.NetObj, newWeaponType);
-        //if (IsServer) currentWeapon.NetObj.TrySetParent(weaponSpawnPoint, false);
+            // Gửi reference xuống client
+            SetWeaponClientRpc(netObj);
+        }
 
         currentWeapon.Init(this, weaponSpawnPoint);
     }
+
 
 
 
@@ -543,10 +575,11 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
-        //if(IsServer)
-        //{
-        //    RequestSetWeaponServerRpc(WeaponType.Shield);
-        //}
+        if (IsOwner)
+        {
+            Debug.Log($"{name} (Owner) gọi ServerRPC để lấy vũ khí");
+            RequestSetWeaponServerRpc(WeaponType.Knife); // hoặc weapon đã chọn
+        }
 
         if (scoreDisplay != null)
         {
@@ -601,11 +634,26 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-    //Weapon Change 
     [ServerRpc]
     public void RequestSetWeaponServerRpc(WeaponType selectedWeapon)
     {
         ChangeWeapon(selectedWeapon);
+
+        //// Gửi vũ khí về client
+        //SetWeaponClientRpc(selectedWeapon);
+    }
+
+    [ClientRpc]
+    private void SetWeaponClientRpc(NetworkObjectReference weaponRef)
+    {
+        if (weaponRef.TryGet(out NetworkObject weaponObj))
+        {
+            currentWeapon = weaponObj.GetComponent<WeaponBase>();
+            if (currentWeapon != null)
+            {
+                currentWeapon.Init(this, weaponSpawnPoint); // gắn đúng tay
+            }
+        }
     }
 
     [ClientRpc]
@@ -666,6 +714,48 @@ public abstract class CharacterBase : NetworkBehaviour
 
         if (currentWeaponPublic != null)
             weaponTransform.localScale = oldScale;
+    }
+
+    #endregion
+    #region Attack Animation Event
+    [ServerRpc]
+    private void RequestLaunchServerRpc(ServerRpcParams rpcParams = default)
+    {
+        Debug.Log($"{name} [Server] đã nhận yêu cầu bắn vũ khí");
+        if (isDead || currentWeapon == null || attackTarget == null)
+        {
+            Debug.LogWarning($"{name} [Server] không thể bắn: chết={isDead}, vũ khí={(currentWeapon == null ? "null" : "OK")}, mục tiêu={(attackTarget == null ? "null" : "OK")}");
+            return;
+        }
+        Vector3 dir = (attackTarget.position - weaponSpawnPoint.position).normalized;
+        Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(weaponRotationOffset);
+        Debug.Log($"{name} [Server] tính hướng hướng dir = {dir}");
+        currentWeapon.transform.rotation = rot;
+        Debug.Log($"{name} [Server] đang bắn vũ khí về hướng: {dir}");
+        // Server bắn
+        currentWeapon.Launch(dir, this.gameObject);
+
+        // Sync cho toàn bộ client
+        LaunchWeaponClientRpc(dir, rot);
+    }
+
+    [ClientRpc]
+    private void LaunchWeaponClientRpc(Vector3 dir, Quaternion rot, ClientRpcParams rpcParams = default)
+    {
+        if (IsServer) return;
+
+        Debug.Log($"{name} [Client] nhận lệnh bắn vũ khí từ server");
+
+        if (currentWeapon != null)
+        {
+            currentWeapon.transform.rotation = rot;
+            currentWeapon.Launch(dir, this.gameObject);
+            Debug.Log($"{name} [Client] bắt đầu bắn vũ khí");
+        }
+        else
+        {
+            Debug.LogWarning($"{name} [Client] KHÔNG có vũ khí để bắn!");
+        }
     }
 
     #endregion

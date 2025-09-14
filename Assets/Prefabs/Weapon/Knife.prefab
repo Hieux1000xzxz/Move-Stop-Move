@@ -226,7 +226,7 @@ MonoBehaviour:
   rotateSpeed: 1440
   rotateMode: 3
   rb: {fileID: 3562958303719707135}
-  netObj: {fileID: 0}
+  isFlying: 0
 --- !u!114 &7127309102368046219
 MonoBehaviour:
   m_ObjectHideFlags: 0

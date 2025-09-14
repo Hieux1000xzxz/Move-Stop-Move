@@ -218,7 +218,7 @@ MonoBehaviour:
   rotateSpeed: 1440
   rotateMode: 3
   rb: {fileID: 3562958303719707135}
-  netObj: {fileID: 0}
+  isFlying: 0
   returnSpeed: 15
 --- !u!114 &4932023131939257018
 MonoBehaviour:
@@ -258,7 +258,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
+  NetworkTransformExpanded: 1
   AutoOwnerAuthorityTickOffset: 1
   PositionInterpolationType: 0
   RotationInterpolationType: 0
