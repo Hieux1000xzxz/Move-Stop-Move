@@ -40,7 +40,6 @@ public class PlayerAttackRange : NetworkBehaviour
             float z = Mathf.Sin(angle) * radius;
             line.SetPosition(i, new Vector3(center.x + x, center.y + 0.05f, center.z + z));
         }
-        Debug.Log($"Drawing circle with {points} points at {center} radius {radius}");
         line.widthMultiplier = 0.05f;
     }
 

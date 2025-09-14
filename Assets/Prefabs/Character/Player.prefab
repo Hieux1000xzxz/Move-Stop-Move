@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7101475273743860029}
   m_Layer: 3
-  m_Name: weapon
+  m_Name: HandWeapon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -559,13 +559,14 @@ MonoBehaviour:
   characterCollider: {fileID: 7201976662141129627}
   weaponSpawnPoint: {fileID: 7101475273743860029}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
-  attackDelay: 0
+  attackDelay: 0.03
   weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
   sizePerScore: 0.05
   rangePerScore: 0.02
   moveSpeedPerScore: 0.05
   maxScale: 2.5
+  defaultWeapon: 3
   Score:
     m_InternalValue: 0
   NetIsMoving:

@@ -213,7 +213,6 @@ public class ObjectPool : Singleton<ObjectPool>
         }
 
         obj.SetActive(false);
-        obj.transform.SetParent(transform);
     }
 
     private GameObject GetInactivePowerup(PowerupType type)
