@@ -94,16 +94,4 @@ public class Powerup : NetworkBehaviour
         OnReleased?.Invoke();
         OnReleased = null;
     }
-    private new void OnDestroy()
-    {
-        foreach (var obj in ObjectPool.Instance.preAllocations)
-        {
-            var powerup = obj.gameObject.GetComponent<Powerup>();
-            if (powerup != null)
-            {
-                powerup.OnReleased = null;
-            }
-        }
-    }
-
 }
