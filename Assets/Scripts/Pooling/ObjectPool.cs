@@ -217,8 +217,15 @@ public class ObjectPool : Singleton<ObjectPool>
 
     private GameObject GetInactivePowerup(PowerupType type)
     {
-        foreach (var obj in pooledGobjects)
+        for (int i = pooledGobjects.Count - 1; i >= 0; i--)
         {
+            var obj = pooledGobjects[i];
+            if (obj == null)
+            {
+                pooledGobjects.RemoveAt(i);
+                continue;
+            }
+
             if (!obj.activeSelf)
             {
                 foreach (var pre in preAllocations)
@@ -260,6 +267,16 @@ public class ObjectPool : Singleton<ObjectPool>
             }
         }
     }
+    public void ClearAll()
+    {
+        for (int i = pooledGobjects.Count - 1; i >= 0; i--)
+        {
+            if (pooledGobjects[i] != null)
+                Destroy(pooledGobjects[i]);
+        }
+        pooledGobjects.Clear();
+    }
+
 
     // ================== REGION: HELPERS ==================
     #region HELPERS
