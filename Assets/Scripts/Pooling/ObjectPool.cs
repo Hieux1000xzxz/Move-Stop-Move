@@ -196,7 +196,7 @@ public class ObjectPool : Singleton<ObjectPool>
         var netObj = obj.GetComponent<NetworkObject>();
         if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
         {
-            netObj.Spawn(true);
+            netObj.Spawn(false);
         }
 
         return obj;

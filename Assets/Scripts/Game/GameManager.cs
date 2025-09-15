@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using Unity.Cinemachine;
-using UnityEngine;
 using Unity.Netcode;
+using UnityEngine;
 
 public class GameManager : NetworkBehaviour
 {
@@ -15,6 +16,7 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private EnemyIndicatorManager enemyIndicatorManager;
     [SerializeField] private GamePlayCanvas gamePlayCanvas;
     [SerializeField] private InteractionCanvas interactionCanvas;
+    [SerializeField] private MainMenuCanvas mainMenuCanvas;
     [SerializeField] private ShopCanvas shopCanvas;
 
     [Header("Camera")]
@@ -25,16 +27,18 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject weaponGrowPrefab;
     [SerializeField] private Transform[] spawnPoints;
 
+    private Coroutine powerupRoutine;
     public FloatingJoystick mainJoystick;
 
     private List<GameObject> activeAIs = new List<GameObject>();
     private int totalSpawned = 0;
     private int totalKilled = 0;
     private bool isGameStarted = false;
+
     public bool IsGameStarted => isGameStarted;
 
     protected void Awake()
-    { 
+    {
         Instance = this;
         isGameStarted = false;
         currentAIQuota = totalAIQuota;
@@ -44,12 +48,6 @@ public class GameManager : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
-        if (IsServer)
-        {
-            Debug.Log("✅ Server đã spawn GameManager, bắt đầu InvokeRepeating...");
-            InvokeRepeating(nameof(SpawnPowerup), 5f, 12f);
-        }
     }
 
     public bool CanSpawnAI()
@@ -124,6 +122,7 @@ public class GameManager : NetworkBehaviour
         aiSpawner.enabled = false;
         enemyIndicatorManager.enabled = false;
         interactionCanvas.Hide();
+        gamePlayCanvas.Hide();
     }
 
     private void EnableGamePlaySystem()
@@ -133,6 +132,7 @@ public class GameManager : NetworkBehaviour
         zoomController.baseFollowY = 15f;
         enemyIndicatorManager.enabled = true;
         interactionCanvas.Show();
+        gamePlayCanvas.Show();
     }
     public void BindCameraToPlayer(Transform player)
     {
@@ -142,7 +142,21 @@ public class GameManager : NetworkBehaviour
             mainCamera.LookAt = player;
         }
     }
+    public void ShowMainMenu()
+    {
+        if (mainMenuCanvas != null)
+        {
+            mainMenuCanvas.Show();
+        }
+    }
 
+    public void HideMainMenu() {
+
+        if (mainMenuCanvas != null)
+        {
+            mainMenuCanvas.Hide();
+        }
+    }
     public void BindJoystick(Player player)
     {
         player.SetJoystick(mainJoystick);
@@ -151,9 +165,9 @@ public class GameManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void RequestStartGameServerRpc(ServerRpcParams rpcParams = default)
     {
-        if (!isGameStarted) 
+        if (!isGameStarted)
         {
-            StartGame(); 
+            StartGame();
             StartGameClientRpc();
         }
     }
@@ -161,17 +175,49 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     public void StartGameClientRpc(ClientRpcParams rpcParams = default)
     {
-        if (!IsServer) 
+        if (!IsServer)
         {
             StartGame();
         }
     }
     #endregion
 
-    private void SpawnPowerup()
+    public void StartPowerupSpawning()
     {
         if (!IsServer) return;
 
+        if (powerupRoutine == null)
+        {
+            Debug.Log("▶️ Bắt đầu coroutine spawn powerups...");
+            powerupRoutine = StartCoroutine(SpawnPowerupRoutine());
+        }
+    }
+
+    public void StopPowerupSpawning()
+    {
+        if (!IsServer) return;
+
+        if (powerupRoutine != null)
+        {
+            Debug.Log("⏹ Dừng coroutine spawn powerups");
+            StopCoroutine(powerupRoutine);
+            powerupRoutine = null;
+        }
+    }
+
+    private IEnumerator SpawnPowerupRoutine()
+    {
+        yield return new WaitForSeconds(5f); // delay ban đầu
+        while (true)
+        {
+            SpawnPowerup();
+            yield return new WaitForSeconds(12f); // chu kỳ spawn
+        }
+    }
+
+    private void SpawnPowerup()
+    {
+        if (!IsServer) return;
         if (spawnPoints.Length == 0)
         {
             Debug.LogError("❌ Không có spawnPoints nào trong GameManager!");
@@ -182,31 +228,11 @@ public class GameManager : NetworkBehaviour
         Transform spawnPoint = spawnPoints[index];
 
         PowerupType type = (Random.value > 0.5f) ? PowerupType.SpeedBoost : PowerupType.WeaponGrow;
-        Debug.Log($"[SpawnPowerup] Chọn {type} tại {spawnPoint.position}");
-        if (ObjectPool.Instance == null)
-        {
-            Debug.LogError("❌ ObjectPool.Instance == null, chưa có ObjectPool trong scene!");
-            return;
-        }
         GameObject obj = ObjectPool.Instance.SpawnPowerup(type, spawnPoint.position, Quaternion.identity);
-        if (obj == null)
-        {
-            Debug.LogError($"❌ ObjectPool không spawn được prefab cho {type}");
-            return;
-        }
+        if (obj == null) return;
 
-        Powerup powerup = obj.GetComponent<Powerup>();
-        if (powerup == null)
-        {
-            Debug.LogError($"❌ Prefab {obj.name} không có script Powerup gắn kèm!");
-            return;
-        }
-        powerup.SetType(type);
-        Debug.Log($"✅ Spawn thành công {type} tại {spawnPoint.position}");
-
+        obj.GetComponent<Powerup>().SetType(type);
+        Debug.Log($"✅ Spawn {type} tại {spawnPoint.position}");
     }
-
-
-
-
 }
+
