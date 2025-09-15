@@ -560,7 +560,7 @@ MonoBehaviour:
   weaponSpawnPoint: {fileID: 7101475273743860029}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.03
-  weaponType: 1
+  weaponType: 3
   scoreDisplay: {fileID: 8885232775652440427}
   sizePerScore: 0.05
   rangePerScore: 0.02

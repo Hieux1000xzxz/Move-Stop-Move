@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using UnityEngine.AI;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.AI;
 
-public class AISpawner : MonoBehaviour
+public class AISpawner : NetworkBehaviour
 {
     [Header("Spawn Settings")]
     [SerializeField] private Transform[] spawnPoints;
@@ -18,6 +19,7 @@ public class AISpawner : MonoBehaviour
 
     private void Start()
     {
+        if (!IsServer) return;
         foreach (Transform point in spawnPoints)
             spawnPointAIs[point] = null;
 
@@ -27,6 +29,7 @@ public class AISpawner : MonoBehaviour
 
     private void Update()
     {
+        if (!IsServer) return;
         CleanupDeadAIs();
 
         if (HasEmptyPoints() && GameManager.Instance.CanSpawnAI() && spawnCoroutine == null)
@@ -111,6 +114,11 @@ public class AISpawner : MonoBehaviour
     //    {
     //        enemy.transform.position = hit.position;
     //        enemy.transform.rotation = spawnPoint.rotation;
+
+    //        var netObj = enemy.GetComponent<NetworkObject>();
+    //        if (netObj != null && !netObj.IsSpawned)
+    //            netObj.Spawn(true); // ✅ sync AI tới tất cả client
+
     //        spawnPointAIs[spawnPoint] = enemy;
     //        GameManager.Instance.RegisterAI(enemy);
     //    }
@@ -119,6 +127,7 @@ public class AISpawner : MonoBehaviour
     //        enemy.SetActive(false);
     //    }
     //}
+
 
     public int GetActiveAICount()
     {

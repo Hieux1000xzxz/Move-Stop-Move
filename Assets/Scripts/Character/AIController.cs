@@ -249,6 +249,7 @@ public class AIController : CharacterBase
 
     protected override void CheckForAttack()
     {
+        base.CheckForAttack();
     }
 
     protected override void EndAttack()
