@@ -42,7 +42,7 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private NetworkManager networkManager;
     [SerializeField] private UnityTransport transport;
 
-    private const string SERVER_URL = "http://192.168.0.91:5000/api/lobby";
+    private const string SERVER_URL = "http://192.168.1.5:5000/api/lobby";
     private string currentLobbyId = string.Empty;
     private string localUserName = string.Empty;
 

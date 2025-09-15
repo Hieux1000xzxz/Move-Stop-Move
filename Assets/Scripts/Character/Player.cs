@@ -9,7 +9,7 @@ public class Player : CharacterBase
 {
     [SerializeField] private FloatingJoystick joystick;
     public FloatingJoystick Joystick => joystick;
-    private bool isMovingInput;
+    public bool isMovingInput;
     protected override void Start()
     {
         base.Start();

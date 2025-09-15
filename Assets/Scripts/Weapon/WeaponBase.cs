@@ -1,9 +1,10 @@
 ﻿using DG.Tweening;
+using System;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class WeaponBase : MonoBehaviour
+public class WeaponBase : NetworkBehaviour 
 {
     [Header("Weapon Settings")]
     [SerializeField] protected float speed = 12f;
@@ -20,7 +21,6 @@ public class WeaponBase : MonoBehaviour
     protected Transform spawnPoint;
     protected Vector3 launchPos;
     protected Tween rotateTween;
-
     public bool isFlying;
     public bool IsFlying => isFlying;
 
@@ -30,7 +30,7 @@ public class WeaponBase : MonoBehaviour
     {
         owner = character;
         spawnPoint = hand;
-
+        Debug.Log($"{name} Init cho owner={owner.name}, IsServer={NetworkManager.Singleton.IsServer}, IsClient={NetworkManager.Singleton.IsClient}");
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.Euler(handRotationOffset);
 
@@ -38,6 +38,7 @@ public class WeaponBase : MonoBehaviour
         if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
         {
             netObj.Spawn(true);
+              Debug.Log($"{name} được Server spawn NetworkObject");
         }
 
         isFollowing = true;
@@ -57,6 +58,11 @@ public class WeaponBase : MonoBehaviour
 
     public virtual void Launch(Vector3 dir, GameObject shooter)
     {
+        bool isServer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+        bool isClient = NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient;
+
+        Debug.Log($"{name} {(isServer ? "[Server]" : "[Client]")} bắt đầu Launch từ {transform.position} hướng {dir}");
+
         if (isFlying)
         {
             Debug.LogWarning($"{name} đang bay rồi, không thể bắn lại!");
@@ -85,6 +91,7 @@ public class WeaponBase : MonoBehaviour
 
     protected virtual void ReturnToHand()
     {
+        Debug.Log($"{name} {(NetworkManager.Singleton.IsServer ? "[Server]" : "[Client]")} quay về tay owner={owner?.name}");
         if (spawnPoint == null) return;
 
         StopRotation();
@@ -103,12 +110,13 @@ public class WeaponBase : MonoBehaviour
 
     protected virtual void Update()
     {
+        if (!NetworkManager.Singleton.IsServer) return; // chỉ server tính toán
         if (isFlying && owner != null)
         {
             float dist = Vector3.Distance(launchPos, transform.position);
             if (dist >= owner.currentAttackRange)
             {
-                ReturnToHand();
+                ReturnToHandServerRpc();
             }
         }
     }
@@ -120,10 +128,16 @@ public class WeaponBase : MonoBehaviour
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
         {
+            Debug.Log($"{name} hit {victim.name}, gửi NotifyHitServerRpc()");
             NotifyHitServerRpc(victim.NetworkObject);
-            ReturnToHand();
+
+            if (NetworkManager.Singleton.IsServer)
+            {
+                ReturnToHandServerRpc();
+            }
         }
     }
+
 
     public virtual void ResetWeapon()
     {
@@ -173,6 +187,39 @@ public class WeaponBase : MonoBehaviour
         if (victim.characterCollider != null)
         {
             victim.characterCollider.enabled = false;
+        }
+        Debug.Log($"{name} [Server] NotifyHitServerRpc: {victim.name}, damage={damage}");
+    }
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        if (!IsServer)
+        {
+            CharacterBase ownerChar = GetComponentInParent<CharacterBase>();
+            if (ownerChar != null)
+            {
+                ownerChar.AssignWeapon(this); // this là WeaponBase, đúng type
+                Debug.Log($"{name} [Client] OnNetworkSpawn -> gán cho {ownerChar.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"{name} [Client] OnNetworkSpawn nhưng KHÔNG tìm thấy CharacterBase cha!");
+            }
+        }
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void ReturnToHandServerRpc()
+    {
+        ReturnToHand();
+        ReturnToHandClientRpc();
+    }
+
+    [ClientRpc]
+    private void ReturnToHandClientRpc()
+    {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            ReturnToHand();
         }
     }
 }

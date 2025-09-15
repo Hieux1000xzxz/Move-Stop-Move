@@ -787,6 +787,8 @@ GameObject:
   m_Component:
   - component: {fileID: 128952414}
   - component: {fileID: 128952417}
+  - component: {fileID: 128952415}
+  - component: {fileID: 128952416}
   m_Layer: 0
   m_Name: Cube (2)
   m_TagString: Untagged
@@ -1151,7 +1153,6 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -454.6801, y: 369.53577}
-  m_AnchoredPosition: {x: -454.67993, y: 369.53574}
   m_SizeDelta: {x: 909.36, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &165243571
@@ -3954,6 +3955,8 @@ GameObject:
   m_Component:
   - component: {fileID: 727771968}
   - component: {fileID: 727771971}
+  - component: {fileID: 727771969}
+  - component: {fileID: 727771970}
   m_Layer: 0
   m_Name: Cube (3)
   m_TagString: Untagged
@@ -5853,6 +5856,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1039733640}
   - component: {fileID: 1039733643}
+  - component: {fileID: 1039733641}
+  - component: {fileID: 1039733642}
   m_Layer: 0
   m_Name: Cube (1)
   m_TagString: Untagged
@@ -7856,8 +7861,6 @@ MonoBehaviour:
   m_Direction: 0
   m_Value: 1
   m_Size: 0.9999781
-  m_Value: 0
-  m_Size: 0.99999684
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -8054,6 +8057,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1315544962}
   - component: {fileID: 1315544965}
+  - component: {fileID: 1315544963}
+  - component: {fileID: 1315544964}
   m_Layer: 0
   m_Name: Cube (4)
   m_TagString: Untagged
@@ -8422,7 +8427,6 @@ MonoBehaviour:
   m_Direction: 2
   m_Value: 1
   m_Size: 0.9999739
-  m_Size: 0.99999684
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -9537,6 +9541,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1639591197}
+  - component: {fileID: 1639591198}
   - component: {fileID: 1639591196}
   m_Layer: 0
   m_Name: AISpawner
@@ -9557,6 +9562,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a22ba8760435244bbb3259068d82cc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   spawnPoints:
   - {fileID: 1841225787}
   - {fileID: 658362997}
@@ -9620,6 +9626,31 @@ Transform:
   - {fileID: 863629157}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1639591198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1639591195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 4201033670
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &1641593811
 GameObject:
   m_ObjectHideFlags: 0
@@ -11442,19 +11473,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   preAllocations:
   - gameObject: {fileID: 7193694367047912757, guid: e83e14ba81cdfe54c97a67c4d19baf78, type: 3}
-    count: 0
+    count: 10
     expandable: 0
     type: 0
     weaponType: 0
     powerupType: 0
   - gameObject: {fileID: 7193694367047912757, guid: 85977aafb9ca3da42a48f4c07465f373, type: 3}
-    count: 0
+    count: 10
     expandable: 0
     type: 0
     weaponType: 0
     powerupType: 0
   - gameObject: {fileID: 7193694367047912757, guid: fa0cbab05ee6ac043bb03192f2dbf364, type: 3}
-    count: 0
+    count: 10
     expandable: 0
     type: 0
     weaponType: 0
