@@ -29,7 +29,7 @@ public class PlayerAttackRange : NetworkBehaviour
     {
         int points = 50;
         line.positionCount = points + 1;
-        line.useWorldSpace = true;
+        line.useWorldSpace = true; 
 
         Vector3 center = transform.position;
 
