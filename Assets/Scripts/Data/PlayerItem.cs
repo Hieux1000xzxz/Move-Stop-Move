@@ -5,17 +5,16 @@ using UnityEngine.UI;
 public class PlayerItem : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI playerNameText;
-    [SerializeField] private Button kickButton;   // nút kick
+    [SerializeField] private Button kickButton;
 
-    private string userId;                        // lưu userId để gọi kick
-    private ConnectionCanvas connectionCanvas;    // tham chiếu canvas để gọi KickPlayer
+    private string userId;
+    private ulong clientId;
+    private ConnectionCanvas connectionCanvas;
 
-    /// <summary>
-    /// Cài đặt tên và id người chơi hiển thị trên UI
-    /// </summary>
-    public void Setup(string playerName, string userId, ConnectionCanvas canvas, bool canKick)
+    public void Setup(string playerName, string userId, ulong clientId, ConnectionCanvas canvas, bool canKick)
     {
         this.userId = userId;
+        this.clientId = clientId;
         this.connectionCanvas = canvas;
 
         if (playerNameText != null)
@@ -23,7 +22,7 @@ public class PlayerItem : MonoBehaviour
 
         if (kickButton != null)
         {
-            kickButton.gameObject.SetActive(canKick); // chỉ hiện khi host
+            kickButton.gameObject.SetActive(canKick);
             kickButton.onClick.RemoveAllListeners();
             kickButton.onClick.AddListener(OnKickClicked);
         }
@@ -33,7 +32,7 @@ public class PlayerItem : MonoBehaviour
     {
         if (connectionCanvas != null && !string.IsNullOrEmpty(userId))
         {
-            connectionCanvas.KickPlayer(userId);
+            connectionCanvas.KickPlayer(userId, clientId);
         }
     }
 }

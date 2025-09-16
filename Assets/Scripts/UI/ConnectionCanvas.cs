@@ -48,6 +48,7 @@ public class ConnectionCanvas : BaseCanvas
     private string currentLobbyId = string.Empty;
     private string localUserName = string.Empty;
     private LobbyInfo pendingLobbyToJoin = null;
+    private Coroutine heartbeatRoutine;
 
     private void Start()
     {
@@ -130,27 +131,34 @@ public class ConnectionCanvas : BaseCanvas
         Debug.Log("Handling exit logic...");
         if (networkManager == null) return;
 
-        // Lưu trạng thái trước khi shutdown
         bool wasHost = networkManager.IsHost;
         bool wasClient = networkManager.IsClient;
         string playerId = PlayerPrefs.GetString("PlayerId", "");
         string lobbyId = currentLobbyId;
 
-        // Ngắt kết nối mạng trước
         if (networkManager.IsListening)
         {
             networkManager.Shutdown();
         }
 
-        // Dọn dẹp lobby sau khi ngắt kết nối
-        if (wasHost && !string.IsNullOrEmpty(lobbyId))
+        // Nếu là host → dừng heartbeat + poll
+        if (wasHost)
         {
-            StartCoroutine(DeleteLobbyRoutine(lobbyId));
+            if (heartbeatRoutine != null) StopCoroutine(heartbeatRoutine);
+
+            if (!string.IsNullOrEmpty(lobbyId))
+            {
+                StartCoroutine(DeleteLobbyRoutine(lobbyId));
+            }
         }
-        else if (wasClient && !string.IsNullOrEmpty(lobbyId) && !string.IsNullOrEmpty(playerId))
+        // Nếu là client → chỉ dừng poll khi rời lobby thành công
+        else if (wasClient)
         {
-            var user = new UserInfo { userId = playerId, userName = localUserName };
-            StartCoroutine(LeaveLobbyRoutine(lobbyId, user));
+            if (!string.IsNullOrEmpty(lobbyId) && !string.IsNullOrEmpty(playerId))
+            {
+                var user = new UserInfo { userId = playerId, userName = localUserName };
+                StartCoroutine(LeaveLobbyRoutine(lobbyId, user));
+            }
         }
 
         GameManager.Instance.StopPowerupSpawning();
@@ -158,6 +166,7 @@ public class ConnectionCanvas : BaseCanvas
         ResetUIState();
         RefreshLobbyList();
     }
+
 
     private void ResetState()
     {
@@ -219,6 +228,7 @@ public class ConnectionCanvas : BaseCanvas
                 currentLobbyId = lobby.lobbyId;
                 localUserName = "Host";
                 ShowLobbyUI(lobby);
+                heartbeatRoutine = StartCoroutine(SendHeartbeatRoutine());
                 StartCoroutine(PollLobbyInfo());
             }
             else
@@ -248,10 +258,11 @@ public class ConnectionCanvas : BaseCanvas
             if (comp != null)
             {
                 bool canKick = NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost;
-                comp.Setup(user.userName, user.userId, this, canKick);
+                comp.Setup(user.userName, user.userId, user.clientId, this, canKick);
             }
         }
     }
+
 
     // === JOIN FUNCTIONS ===
     public void ShowJoinNamePopup(LobbyInfo lobby, string customTitle = null)
@@ -516,13 +527,13 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-    public void KickPlayer(string userId)
+    public void KickPlayer(string userId, ulong clientId)
     {
         if (string.IsNullOrEmpty(currentLobbyId)) return;
-        StartCoroutine(KickPlayerRoutine(currentLobbyId, userId));
+        StartCoroutine(KickAndNotifyRoutine(currentLobbyId, userId, clientId));
     }
 
-    private IEnumerator KickPlayerRoutine(string lobbyId, string userId)
+    private IEnumerator KickAndNotifyRoutine(string lobbyId, string userId, ulong clientId)
     {
         string url = $"{SERVER_URL}/{lobbyId}/kick/{userId}";
         using (var www = new UnityWebRequest(url, "POST"))
@@ -535,7 +546,12 @@ public class ConnectionCanvas : BaseCanvas
 
             if (www.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log($"Kicked player {userId}");
+                Debug.Log($"Kicked player {userId} on server");
+
+                // gọi Netcode kick client
+                RequestKickServerRpc(clientId);
+
+                // cập nhật lại lobby host
                 StartCoroutine(PollLobbyInfo());
             }
             else
@@ -545,6 +561,23 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
+
+
+    private IEnumerator SendHeartbeatRoutine()
+    {
+        while (networkManager != null && networkManager.IsHost && !networkManager.ShutdownInProgress)
+        {
+            using (var www = UnityWebRequest.PostWwwForm($"{SERVER_URL}/{currentLobbyId}/heartbeat", ""))
+            {
+                yield return www.SendWebRequest();
+                if (www.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning("Heartbeat failed: " + www.error);
+                }
+            }
+            yield return new WaitForSeconds(5f); // ping mỗi 5s
+        }
+    }
 
 
     [ServerRpc(RequireOwnership = false)]
@@ -570,8 +603,19 @@ public class ConnectionCanvas : BaseCanvas
     [ClientRpc]
     private void KickClientClientRpc(ClientRpcParams rpcParams = default)
     {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient && 
+        !NetworkManager.Singleton.IsHost)
+    {
         Debug.Log("You have been kicked by host");
-        HandleExitLogic(); // về menu
+
+        // Thoát client
+        NetworkManager.Singleton.Shutdown();
+
+        // Quay về main panel
+        ResetState();
+        ResetUIState();
+        RefreshLobbyList();
+    }
     }
 
 
@@ -598,6 +642,7 @@ public class UserInfo
 {
     public string userId;
     public string userName;
+    public ulong clientId;
 }
 
 [Serializable]
