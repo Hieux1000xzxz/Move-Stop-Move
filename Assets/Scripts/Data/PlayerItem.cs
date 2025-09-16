@@ -1,17 +1,39 @@
 ﻿using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerItem : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI playerNameText;
+    [SerializeField] private Button kickButton;   // nút kick
+
+    private string userId;                        // lưu userId để gọi kick
+    private ConnectionCanvas connectionCanvas;    // tham chiếu canvas để gọi KickPlayer
 
     /// <summary>
-    /// Cài đặt tên người chơi hiển thị trên UI
+    /// Cài đặt tên và id người chơi hiển thị trên UI
     /// </summary>
-    /// <param name="playerName">Tên người chơi</param>
-    public void Setup(string playerName)
+    public void Setup(string playerName, string userId, ConnectionCanvas canvas, bool canKick)
     {
+        this.userId = userId;
+        this.connectionCanvas = canvas;
+
         if (playerNameText != null)
             playerNameText.text = playerName;
+
+        if (kickButton != null)
+        {
+            kickButton.gameObject.SetActive(canKick); // chỉ hiện khi host
+            kickButton.onClick.RemoveAllListeners();
+            kickButton.onClick.AddListener(OnKickClicked);
+        }
+    }
+
+    private void OnKickClicked()
+    {
+        if (connectionCanvas != null && !string.IsNullOrEmpty(userId))
+        {
+            connectionCanvas.KickPlayer(userId);
+        }
     }
 }

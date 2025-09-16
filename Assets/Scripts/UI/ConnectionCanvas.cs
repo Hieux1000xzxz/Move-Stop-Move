@@ -44,7 +44,7 @@ public class ConnectionCanvas : BaseCanvas
 
     [SerializeField] private GameObject playerPreview;
 
-    private const string SERVER_URL = "http://192.168.1.30:5000/api/lobby";
+    private const string SERVER_URL = "http://192.168.1.32:5000/api/lobby";
     private string currentLobbyId = string.Empty;
     private string localUserName = string.Empty;
     private LobbyInfo pendingLobbyToJoin = null;
@@ -248,8 +248,11 @@ public class ConnectionCanvas : BaseCanvas
         {
             var item = Instantiate(playerItemPrefab, playerListContainer);
             var comp = item.GetComponent<PlayerItem>();
-            if (comp != null) 
-                comp.Setup(user.userName);
+            if (comp != null)
+            {
+                bool canKick = NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost;
+                comp.Setup(user.userName, user.userId, this, canKick);
+            }
         }
     }
 
@@ -524,21 +527,28 @@ public class ConnectionCanvas : BaseCanvas
 
     private IEnumerator KickPlayerRoutine(string lobbyId, string userId)
     {
-        using (var www = UnityWebRequest.PostWwwForm($"{SERVER_URL}/{lobbyId}/kick/{userId}", ""))
+        string url = $"{SERVER_URL}/{lobbyId}/kick/{userId}";
+        using (var www = new UnityWebRequest(url, "POST"))
         {
+            www.uploadHandler = new UploadHandlerRaw(new byte[0]);
+            www.downloadHandler = new DownloadHandlerBuffer();
+            www.SetRequestHeader("Content-Type", "application/json");
+
             yield return www.SendWebRequest();
 
             if (www.result == UnityWebRequest.Result.Success)
             {
                 Debug.Log($"Kicked player {userId}");
-                StartCoroutine(PollLobbyInfo()); // cập nhật danh sách sau khi kick
+                StartCoroutine(PollLobbyInfo());
             }
             else
             {
-                Debug.LogError($"Kick player failed: {www.error}");
+                Debug.LogError($"Kick player failed: {www.error} {www.downloadHandler.text} → URL: {url}");
             }
         }
     }
+
+
 
     [ServerRpc(RequireOwnership = false)]
     public void RequestKickServerRpc(ulong clientId)

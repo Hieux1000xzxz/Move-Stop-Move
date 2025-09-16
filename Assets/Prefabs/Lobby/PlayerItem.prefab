@@ -92,6 +92,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerNameText: {fileID: 589997646359280070}
+  kickButton: {fileID: 4025587922915377310}
 --- !u!114 &4546349796458702736
 MonoBehaviour:
   m_ObjectHideFlags: 0
