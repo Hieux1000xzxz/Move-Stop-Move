@@ -20,6 +20,8 @@ public class ShopCanvas : BaseCanvas
     [SerializeField] private WeaponData[] weapons;
     [SerializeField] private Player player;
 
+    [SerializeField] private PlayerPreview previewPlayer;
+
     private int currentIndex = 0;
 
     private void Start()
@@ -65,6 +67,12 @@ public class ShopCanvas : BaseCanvas
             buyButton.interactable = true;
             selectButton.interactable = false;
         }
+
+        if (previewPlayer != null)
+        {
+            previewPlayer.ShowWeapon(weapon);
+        }
+
     }
 
 
@@ -101,8 +109,13 @@ public class ShopCanvas : BaseCanvas
 
         if (player != null)
         {
-            player.ChangeWeapon(weapon.weaponType);
+            CharacterBase netChar = player.GetComponent<CharacterBase>();
+            if (netChar != null && netChar.IsOwner)
+            {
+                netChar.RequestChangeWeaponServerRpc(weapon.weaponType);
+            }
         }
+
         else
         {
             Debug.LogWarning("Player not found in scene!");

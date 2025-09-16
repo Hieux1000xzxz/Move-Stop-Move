@@ -80,13 +80,14 @@ public class WeaponBase : NetworkBehaviour
 
         rb.isKinematic = false;
         transform.position = spawnPoint.position;
-        transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
+        transform.rotation = Quaternion.LookRotation(-dir) * Quaternion.Euler(handRotationOffset);
         rb.linearVelocity = dir * speed;
+
 
         Debug.Log($"{name} được bắn từ vị trí {spawnPoint.position} theo hướng {dir}, tốc độ {speed}");
         launchPos = transform.position;
 
-        StartRotation();
+        //StartRotation();
     }
 
     protected virtual void ReturnToHand()

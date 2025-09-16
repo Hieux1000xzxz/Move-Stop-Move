@@ -42,7 +42,9 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private NetworkManager networkManager;
     [SerializeField] private UnityTransport transport;
 
-    private const string SERVER_URL = "http://192.168.1.32:5000/api/lobby";
+    [SerializeField] private GameObject playerPreview;
+
+    private const string SERVER_URL = "http://192.168.1.30:5000/api/lobby";
     private string currentLobbyId = string.Empty;
     private string localUserName = string.Empty;
     private LobbyInfo pendingLobbyToJoin = null;
@@ -101,6 +103,9 @@ public class ConnectionCanvas : BaseCanvas
         StartCoroutine(StartHostRoutine());
         ObjectPool.Instance.RebuildPool();
         mainPanel.SetActive(false);
+
+        if (playerPreview != null)
+            playerPreview.SetActive(false);
     }
 
     private void OnStartGameClicked()

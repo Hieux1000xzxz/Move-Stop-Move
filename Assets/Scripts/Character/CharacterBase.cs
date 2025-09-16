@@ -573,8 +573,22 @@ public abstract class CharacterBase : NetworkBehaviour
                 agent.velocity = Vector3.zero;
                 agent.ResetPath();
             }
+            
             isDead = true;
         }
+
+        //if (currentWeapon != null)
+        //{
+        //    if (IsServer)
+        //    {
+        //        ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject); 
+        //    }
+        //    else
+        //    {
+        //        currentWeapon.gameObject.SetActive(false);
+        //    }
+        //    currentWeapon = null;
+        //}
     }
 
     protected virtual void OnDrawGizmosSelected()
@@ -593,12 +607,17 @@ public abstract class CharacterBase : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        Debug.Log($"{name} OnNetworkSpawn: IsOwner={IsOwner}, IsServer={IsServer}");
         if (IsOwner)
         {
-            Debug.Log($"{name} (Owner) gọi ServerRPC để lấy vũ khí");
-            RequestSetWeaponServerRpc(WeaponType.Knife); // hoặc weapon đã chọn
+            string savedWeapon = PlayerPrefs.GetString("SelectedWeapon", WeaponType.Knife.ToString());
+
+            if (!System.Enum.TryParse(savedWeapon, out WeaponType weaponType))
+                weaponType = WeaponType.Knife;
+
+            RequestSetWeaponServerRpc(weaponType);
         }
+
+
 
         if (scoreDisplay != null)
         {
@@ -618,6 +637,8 @@ public abstract class CharacterBase : NetworkBehaviour
                 animator.SetBool("IsMoving", newVal);
             }
         };
+
+
     }
 
     public override void OnNetworkDespawn()
@@ -782,6 +803,12 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             Debug.LogWarning($"{name} [Client] KHÔNG có vũ khí để bắn!");
         }
+    }
+
+    [ServerRpc]
+    public void RequestChangeWeaponServerRpc(WeaponType newWeaponType)
+    {
+        ChangeWeapon(newWeaponType); // Server trực tiếp spawn vũ khí
     }
 
     #endregion

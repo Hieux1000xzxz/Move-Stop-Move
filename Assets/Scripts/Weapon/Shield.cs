@@ -43,4 +43,11 @@ public class Shield : WeaponBase
 
         StartRotation();
     }
+
+    public override void Launch(Vector3 dir, GameObject shooter)
+    {
+        base.Launch(dir, shooter);
+        StartRotation(); // ✅ Shield mới xoay
+    }
+
 }

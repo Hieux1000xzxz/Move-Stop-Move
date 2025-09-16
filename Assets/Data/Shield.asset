@@ -19,3 +19,4 @@ MonoBehaviour:
   description: 'Speed: 14,   Medium Aoe,   Return '
   speed: 12
   damage: 1
+  weaponPrefab: {fileID: 7795159553526056017, guid: c7b098950134fa04382bfaefc205536b, type: 3}
