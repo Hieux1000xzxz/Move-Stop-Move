@@ -510,6 +510,60 @@ public class ConnectionCanvas : BaseCanvas
             }
         }
     }
+
+    public void KickPlayer(string userId)
+    {
+        if (string.IsNullOrEmpty(currentLobbyId)) return;
+        StartCoroutine(KickPlayerRoutine(currentLobbyId, userId));
+    }
+
+    private IEnumerator KickPlayerRoutine(string lobbyId, string userId)
+    {
+        using (var www = UnityWebRequest.PostWwwForm($"{SERVER_URL}/{lobbyId}/kick/{userId}", ""))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log($"Kicked player {userId}");
+                StartCoroutine(PollLobbyInfo()); // cập nhật danh sách sau khi kick
+            }
+            else
+            {
+                Debug.LogError($"Kick player failed: {www.error}");
+            }
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestKickServerRpc(ulong clientId)
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
+        {
+            var targetClient = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new[] { clientId }
+                }
+            };
+
+            KickClientClientRpc(targetClient);
+
+            // cắt kết nối client đó
+            NetworkManager.Singleton.DisconnectClient(clientId);
+        }
+    }
+
+    [ClientRpc]
+    private void KickClientClientRpc(ClientRpcParams rpcParams = default)
+    {
+        Debug.Log("You have been kicked by host");
+        HandleExitLogic(); // về menu
+    }
+
+
+
 }
 
 // === MODELS ===
