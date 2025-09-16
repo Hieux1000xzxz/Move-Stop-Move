@@ -11,9 +11,7 @@ public class PowerupSpawner : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (!IsServer) return;
-
-        if (IsHost)  // đảm bảo chỉ host/server xử lý
+        if (IsServer)
         {
             SpawnAllOnce();
         }
@@ -77,6 +75,11 @@ public class PowerupSpawner : NetworkBehaviour
     private System.Collections.IEnumerator RespawnAfterDelay(Transform point, float delayTime)
     {
         yield return new WaitForSeconds(delayTime);
-        SpawnAtPoint(point);
+
+        if (IsServer && NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            SpawnAtPoint(point);
+        }
     }
+
 }
