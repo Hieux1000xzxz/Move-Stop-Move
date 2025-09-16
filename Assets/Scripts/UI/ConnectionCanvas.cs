@@ -103,9 +103,6 @@ public class ConnectionCanvas : BaseCanvas
         StartCoroutine(StartHostRoutine());
         ObjectPool.Instance.RebuildPool();
         mainPanel.SetActive(false);
-
-        if (playerPreview != null)
-            playerPreview.SetActive(false);
     }
 
     private void OnStartGameClicked()
