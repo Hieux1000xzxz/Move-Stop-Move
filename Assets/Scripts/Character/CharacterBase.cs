@@ -25,7 +25,7 @@ public abstract class CharacterBase : NetworkBehaviour
     [SerializeField] public Transform weaponSpawnPoint;
     [SerializeField] protected Vector3 weaponRotationOffset = Vector3.zero;
     [SerializeField] protected float attackDelay = 0.3f;
-    [SerializeField] protected WeaponType weaponType;
+    [SerializeField] public WeaponType weaponType;
     protected WeaponBase currentWeapon;
 
     [Header("Score Settings")]
