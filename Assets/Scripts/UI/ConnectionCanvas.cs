@@ -15,7 +15,6 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private Button backButton;
     [SerializeField] private GameObject lobbyPanel;
     [SerializeField] private GameObject mainPanel;
-
     [SerializeField] private GameObject enterNamePopup;
     [SerializeField] private GamePlayCanvas gameplayCanvas;
 
@@ -29,6 +28,7 @@ public class ConnectionCanvas : BaseCanvas
 
     [Header("Lobby Panel")]
     [SerializeField] private Transform playerListContainer;
+    [SerializeField] private TextMeshProUGUI lobbyId;
     [SerializeField] private GameObject playerItemPrefab;
     [SerializeField] private Button startGameButton;
     [SerializeField] private Button exitButton;
@@ -37,6 +37,7 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private TMP_InputField nameInputField;
     [SerializeField] private Button confirmNameButton;
     [SerializeField] private TextMeshProUGUI popupTitleText;
+    [SerializeField] private Button closeEnterNamePanelButton;
 
     [Header("Network")]
     [SerializeField] private NetworkManager networkManager;
@@ -67,6 +68,7 @@ public class ConnectionCanvas : BaseCanvas
         refreshListButton.onClick.AddListener(RefreshLobbyList);
         joinByIdButton.onClick.AddListener(() => ShowJoinNamePopup(null, "Enter"));
         confirmNameButton.onClick.AddListener(OnConfirmName);
+        closeEnterNamePanelButton.onClick.AddListener(() => enterNamePopup.SetActive(false));
     }
 
     private void InitializeNetworkCallbacks()
@@ -241,6 +243,7 @@ public class ConnectionCanvas : BaseCanvas
     private void ShowLobbyUI(LobbyInfo lobby)
     {
         lobbyPanel.SetActive(true);
+        lobbyId.text = $"Lobby ID: {lobby.lobbyId}";
         UpdatePlayerList(lobby);
         startGameButton.interactable = networkManager.IsHost;
     }
@@ -634,6 +637,7 @@ public class LobbyInfo
     public int maxPlayers;
     public string createdAt;
     public int hostUserId;
+    public bool isGameStarted;
     public List<UserInfo> users = new List<UserInfo>();
 }
 
