@@ -5317,7 +5317,7 @@ MonoBehaviour:
   spawnPoints:
   - {fileID: 1426034305}
   - {fileID: 1241521622}
-  playerPreview: {fileID: 0}
+  playerPreview: {fileID: 1118466717}
   mainJoystick: {fileID: 8170153792984791206}
 --- !u!114 &900380978
 MonoBehaviour:
