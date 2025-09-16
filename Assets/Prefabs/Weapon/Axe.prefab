@@ -86,10 +86,10 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -2934282853103997181}
+      addedObject: {fileID: 6662112378248426788}
     - targetCorrespondingSourceObject: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 6662112378248426788}
+      addedObject: {fileID: -2934282853103997181}
     - targetCorrespondingSourceObject: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       insertIndex: -1
       addedObject: {fileID: -7734793605507807385}
@@ -104,26 +104,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
   m_PrefabInstance: {fileID: 7836738682889203449}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &-2934282853103997181
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7795159553526056017}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67a87718ec0d8ce4c83250c39326305a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 4
-  damage: 10
-  handRotationOffset: {x: 0, y: 0, z: 90}
-  rotateAxis: {x: 0, y: 0, z: -1}
-  rotateSpeed: 1080
-  rotateMode: 3
-  rb: {fileID: 3562958303719707135}
-  isFlying: 0
 --- !u!114 &6662112378248426788
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -149,6 +129,27 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &-2934282853103997181
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7795159553526056017}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67a87718ec0d8ce4c83250c39326305a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  speed: 4
+  damage: 10
+  handRotationOffset: {x: 0, y: 0, z: 90}
+  rotateAxis: {x: 0, y: 0, z: -1}
+  rotateSpeed: 1080
+  rotateMode: 3
+  rb: {fileID: 3562958303719707135}
+  isFlying: 0
 --- !u!114 &-7734793605507807385
 MonoBehaviour:
   m_ObjectHideFlags: 0

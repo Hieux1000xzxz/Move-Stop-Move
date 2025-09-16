@@ -560,18 +560,19 @@ MonoBehaviour:
   weaponSpawnPoint: {fileID: 7101475273743860029}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.03
-  weaponType: 3
+  weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
   sizePerScore: 0.05
   rangePerScore: 0.02
   moveSpeedPerScore: 0.05
   maxScale: 2.5
-  defaultWeapon: 3
+  defaultWeapon: 1
   Score:
     m_InternalValue: 0
   NetIsMoving:
     m_InternalValue: 0
   joystick: {fileID: 6433299856123335784, guid: 0bd3649e64dbcd840962fac485ab370f, type: 3}
+  isMovingInput: 0
 --- !u!114 &1186641312026304189
 MonoBehaviour:
   m_ObjectHideFlags: 0

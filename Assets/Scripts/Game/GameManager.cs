@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class GameManager : NetworkBehaviour
 {
+
     public static GameManager Instance { get; private set; }
 
     [Header("AI Settings")]
@@ -26,6 +27,9 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject speedPrefab;
     [SerializeField] private GameObject weaponGrowPrefab;
     [SerializeField] private Transform[] spawnPoints;
+
+    [Header("UI / Preview")]
+    [SerializeField] private GameObject playerPreview;
 
     private Coroutine powerupRoutine;
     public FloatingJoystick mainJoystick;
@@ -96,6 +100,8 @@ public class GameManager : NetworkBehaviour
         EnableGamePlaySystem();
         ResetGame();
         UIManager.Instance.CloseAllUI();
+
+        HidePlayerPreview();
 
     }
     public void GameOver()
@@ -234,5 +240,21 @@ public class GameManager : NetworkBehaviour
         obj.GetComponent<Powerup>().SetType(type);
         Debug.Log($"✅ Spawn {type} tại {spawnPoint.position}");
     }
+
+    public void HidePlayerPreview()
+    {
+        if (IsServer)
+        {
+            HidePlayerPreviewClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    private void HidePlayerPreviewClientRpc()
+    {
+        if (playerPreview != null)
+            playerPreview.SetActive(false);
+    }
+
 }
 

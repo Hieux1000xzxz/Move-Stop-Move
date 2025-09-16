@@ -19,3 +19,4 @@ MonoBehaviour:
   description: 'Speed: 13,   Wide AoE'
   speed: 12
   damage: 1
+  weaponPrefab: {fileID: 7795159553526056017, guid: a8af49be756ce4342b0528b5cb473968, type: 3}

@@ -12,4 +12,7 @@ public class WeaponData : ScriptableObject
     [Header("Stats")]
     public float speed = 12f;
     public int damage = 1;
+
+    [Header("Prefab")]
+    public GameObject weaponPrefab;
 }
