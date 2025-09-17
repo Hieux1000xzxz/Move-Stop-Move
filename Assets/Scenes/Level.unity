@@ -5302,7 +5302,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  totalAIQuota: 50
+  totalAIQuota: 40
   currentAIQuota: 0
   aiSpawner: {fileID: 1639591196}
   zoomController: {fileID: 1246925140}
@@ -11692,136 +11692,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1639591197}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1894145584
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1894145586}
-  - component: {fileID: 1894145585}
-  m_Layer: 0
-  m_Name: Pool
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1894145585
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894145584}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26bdd3a79f955c94bb6d1c1710b34e0d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  preAllocations:
-  - gameObject: {fileID: 7193694367047912757, guid: e83e14ba81cdfe54c97a67c4d19baf78, type: 3}
-    count: 10
-    expandable: 1
-    type: 0
-    weaponType: 0
-    powerupType: 0
-  - gameObject: {fileID: 7193694367047912757, guid: 85977aafb9ca3da42a48f4c07465f373, type: 3}
-    count: 10
-    expandable: 1
-    type: 0
-    weaponType: 0
-    powerupType: 0
-  - gameObject: {fileID: 7193694367047912757, guid: fa0cbab05ee6ac043bb03192f2dbf364, type: 3}
-    count: 10
-    expandable: 1
-    type: 0
-    weaponType: 0
-    powerupType: 0
-  - gameObject: {fileID: 7795159553526056017, guid: c7b098950134fa04382bfaefc205536b, type: 3}
-    count: 1
-    expandable: 0
-    type: 1
-    weaponType: 4
-    powerupType: 0
-  - gameObject: {fileID: 7795159553526056017, guid: ef278a0c4c33d7145b42a8485dcb636b, type: 3}
-    count: 1
-    expandable: 0
-    type: 1
-    weaponType: 3
-    powerupType: 0
-  - gameObject: {fileID: 7795159553526056017, guid: 0b9cf42ee1efd974c8d2c242dd2ca171, type: 3}
-    count: 1
-    expandable: 0
-    type: 1
-    weaponType: 1
-    powerupType: 0
-  - gameObject: {fileID: 7795159553526056017, guid: a8af49be756ce4342b0528b5cb473968, type: 3}
-    count: 10
-    expandable: 1
-    type: 1
-    weaponType: 2
-    powerupType: 0
-  - gameObject: {fileID: 7797295479864358708, guid: 73f30cb686b247f45bee3ef5ee46fedb, type: 3}
-    count: 10
-    expandable: 1
-    type: 2
-    weaponType: 0
-    powerupType: 2
-  - gameObject: {fileID: 3703581492467372302, guid: 46787c0ca02578e40ab1a18b749a4ff1, type: 3}
-    count: 50
-    expandable: 1
-    type: 3
-    weaponType: 0
-    powerupType: 1
-  - gameObject: {fileID: 3703581492467372302, guid: 46787c0ca02578e40ab1a18b749a4ff1, type: 3}
-    count: 10
-    expandable: 1
-    type: 2
-    weaponType: 0
-    powerupType: 1
-  - gameObject: {fileID: 7795159553526056017, guid: 4a1a80cd68a81a546aea7abdfbddbb89, type: 3}
-    count: 10
-    expandable: 1
-    type: 1
-    weaponType: 2
-    powerupType: 0
-  - gameObject: {fileID: 7795159553526056017, guid: 44c13fa0d5f5c214ab46d99e12ef49be, type: 3}
-    count: 10
-    expandable: 1
-    type: 1
-    weaponType: 4
-    powerupType: 0
-  - gameObject: {fileID: 7795159553526056017, guid: dee0208a6e19e5c4faf46e9f8e487d71, type: 3}
-    count: 10
-    expandable: 1
-    type: 1
-    weaponType: 6
-    powerupType: 0
-  - gameObject: {fileID: 7795159553526056017, guid: 2af905520d407c04686cbf1e5f23402c, type: 3}
-    count: 10
-    expandable: 1
-    type: 1
-    weaponType: 8
-    powerupType: 0
-  pooledGobjects: []
---- !u!4 &1894145586
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894145584}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.09, y: -0.97249126, z: 2.33}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1896899656
 GameObject:
   m_ObjectHideFlags: 0
@@ -12975,6 +12845,119 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!4 &3349033219579836727
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8946323131215190422}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.09, y: -0.97249126, z: 2.33}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3760339678856753337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8946323131215190422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26bdd3a79f955c94bb6d1c1710b34e0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  preAllocations:
+  - gameObject: {fileID: 7193694367047912757, guid: e83e14ba81cdfe54c97a67c4d19baf78, type: 3}
+    count: 20
+    expandable: 0
+    type: 0
+    weaponType: 0
+    powerupType: 0
+  - gameObject: {fileID: 7193694367047912757, guid: 85977aafb9ca3da42a48f4c07465f373, type: 3}
+    count: 10
+    expandable: 0
+    type: 0
+    weaponType: 0
+    powerupType: 0
+  - gameObject: {fileID: 7193694367047912757, guid: fa0cbab05ee6ac043bb03192f2dbf364, type: 3}
+    count: 10
+    expandable: 0
+    type: 0
+    weaponType: 0
+    powerupType: 0
+  - gameObject: {fileID: 7795159553526056017, guid: c7b098950134fa04382bfaefc205536b, type: 3}
+    count: 1
+    expandable: 0
+    type: 1
+    weaponType: 7
+    powerupType: 0
+  - gameObject: {fileID: 7795159553526056017, guid: ef278a0c4c33d7145b42a8485dcb636b, type: 3}
+    count: 1
+    expandable: 0
+    type: 1
+    weaponType: 5
+    powerupType: 0
+  - gameObject: {fileID: 7795159553526056017, guid: 0b9cf42ee1efd974c8d2c242dd2ca171, type: 3}
+    count: 1
+    expandable: 0
+    type: 1
+    weaponType: 1
+    powerupType: 0
+  - gameObject: {fileID: 7795159553526056017, guid: a8af49be756ce4342b0528b5cb473968, type: 3}
+    count: 1
+    expandable: 0
+    type: 1
+    weaponType: 3
+    powerupType: 0
+  - gameObject: {fileID: 7797295479864358708, guid: 73f30cb686b247f45bee3ef5ee46fedb, type: 3}
+    count: 10
+    expandable: 1
+    type: 2
+    weaponType: 0
+    powerupType: 2
+  - gameObject: {fileID: 3703581492467372302, guid: 46787c0ca02578e40ab1a18b749a4ff1, type: 3}
+    count: 50
+    expandable: 1
+    type: 3
+    weaponType: 0
+    powerupType: 1
+  - gameObject: {fileID: 3703581492467372302, guid: 46787c0ca02578e40ab1a18b749a4ff1, type: 3}
+    count: 10
+    expandable: 1
+    type: 2
+    weaponType: 0
+    powerupType: 1
+  - gameObject: {fileID: 7795159553526056017, guid: 18e2d52ba16628f4f807be2cc4c0ffef, type: 3}
+    count: 20
+    expandable: 1
+    type: 2
+    weaponType: 2
+    powerupType: 0
+  - gameObject: {fileID: 7795159553526056017, guid: 7df32292391b8984ba4a9be73895bad3, type: 3}
+    count: 20
+    expandable: 1
+    type: 2
+    weaponType: 8
+    powerupType: 0
+  - gameObject: {fileID: 7795159553526056017, guid: 0dad15823e550e941aa7f686c7576438, type: 3}
+    count: 20
+    expandable: 1
+    type: 2
+    weaponType: 6
+    powerupType: 0
+  - gameObject: {fileID: 7795159553526056017, guid: 2b26cd73ba8fb4a4b87b6255a6bf0793, type: 3}
+    count: 20
+    expandable: 1
+    type: 2
+    weaponType: 4
+    powerupType: 0
+  pooledGobjects: []
 --- !u!1001 &8021328012390393606
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13088,6 +13071,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a47f546fc70ec8428172694e78e4288, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &8946323131215190422
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3349033219579836727}
+  - component: {fileID: 3760339678856753337}
+  m_Layer: 0
+  m_Name: Pool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -13099,7 +13099,7 @@ SceneRoots:
   - {fileID: 42240062}
   - {fileID: 213847317}
   - {fileID: 1246925139}
-  - {fileID: 1894145586}
+  - {fileID: 3349033219579836727}
   - {fileID: 1639591197}
   - {fileID: 796917635}
   - {fileID: 1847730156}

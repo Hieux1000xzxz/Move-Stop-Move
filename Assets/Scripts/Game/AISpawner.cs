@@ -113,10 +113,26 @@ public class AISpawner : NetworkBehaviour
         var character = enemy.GetComponent<CharacterBase>();
         if (character != null) character.ResetState();
 
+        var agent = enemy.GetComponent<NavMeshAgent>();
+
         // Snap vào NavMesh gần điểm spawn
         if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
         {
-            enemy.transform.position = hit.position;
+            // 👉 Reset NavMeshAgent để chắc chắn hoạt động
+            if (agent != null)
+            {
+                agent.enabled = false;
+                enemy.transform.position = hit.position;
+                agent.enabled = true;
+
+                if (agent.isOnNavMesh)
+                    agent.Warp(hit.position);
+            }
+            else
+            {
+                enemy.transform.position = hit.position;
+            }
+
             enemy.transform.rotation = spawnPoint.rotation;
 
             var netObj = enemy.GetComponent<NetworkObject>();
@@ -131,6 +147,7 @@ public class AISpawner : NetworkBehaviour
             enemy.SetActive(false);
         }
     }
+
 
 
 
