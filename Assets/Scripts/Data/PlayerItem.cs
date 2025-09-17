@@ -32,7 +32,7 @@ public class PlayerItem : MonoBehaviour
     {
         if (connectionCanvas != null && !string.IsNullOrEmpty(userId))
         {
-            connectionCanvas.KickPlayer(userId, clientId);
+            //connectionCanvas.KickPlayer(userId, clientId);
         }
     }
 }

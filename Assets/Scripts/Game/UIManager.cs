@@ -12,6 +12,7 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] private MainMenuCanvas mainMenuCanvas;
     [SerializeField] private ShopCanvas shopCanvas;
     [SerializeField] private ConnectionCanvas connectionCanvas;
+    [SerializeField] private LoadingCanvas loadingCanvas;
     private void Update()
     {
         UpdateAICounter();
@@ -74,7 +75,7 @@ public class UIManager : Singleton<UIManager>
     }
 
 
-
+    public void OpenLoadingCanvas() => OpenUI(loadingCanvas);
     public void OpenMainMenu() => OpenUI(mainMenuCanvas);
     public void OpenShop() => OpenUI(shopCanvas);
     public void OpenConnection() => OpenUI(connectionCanvas);

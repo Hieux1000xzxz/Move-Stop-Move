@@ -96,14 +96,16 @@ public class GameManager : NetworkBehaviour
 
     public void StartGame()
     {
+        if (isGameStarted) return;
+
         isGameStarted = true;
         EnableGamePlaySystem();
         ResetGame();
         UIManager.Instance.CloseAllUI();
-
         HidePlayerPreview();
-
+        Debug.Log($"Game started - IsServer: {IsServer}, IsClient: {IsClient}");
     }
+
     public void GameOver()
     {
         isGameStarted = false;
@@ -181,8 +183,9 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     public void StartGameClientRpc(ClientRpcParams rpcParams = default)
     {
-        if (!IsServer)
+        if (!IsServer) // Only execute on clients
         {
+            Debug.Log("Game started by host on client!");
             StartGame();
         }
     }
@@ -255,6 +258,7 @@ public class GameManager : NetworkBehaviour
         if (playerPreview != null)
             playerPreview.SetActive(false);
     }
+
 
 }
 

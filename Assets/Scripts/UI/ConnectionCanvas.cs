@@ -112,6 +112,8 @@ public class ConnectionCanvas : BaseCanvas
     {
         if (networkManager.IsHost)
         {
+            StartCoroutine(StartGameOnServerRoutine());
+
             GameManager.Instance.StartGame();
             GameManager.Instance.StartGameClientRpc();
             GameManager.Instance.StartPowerupSpawning();
@@ -295,6 +297,21 @@ public class ConnectionCanvas : BaseCanvas
 
     private IEnumerator JoinLobbyRoutine(string lobbyId, string playerName)
     {
+        using (var checkWww = UnityWebRequest.Get($"{SERVER_URL}/find/{lobbyId}"))
+        {
+            yield return checkWww.SendWebRequest();
+
+            if (checkWww.result == UnityWebRequest.Result.Success)
+            {
+                LobbyInfo lobbyCheck = JsonUtility.FromJson<LobbyInfo>(checkWww.downloadHandler.text);
+                if (lobbyCheck.isGameStarted)
+                {
+                    Debug.LogError("Cannot join - game has already started!");
+                    enterNamePopup.SetActive(false);
+                    yield break;
+                }
+            }
+        }
         string playerId = System.Guid.NewGuid().ToString();
         PlayerPrefs.SetString("PlayerId", playerId);
 
@@ -538,6 +555,11 @@ public class ConnectionCanvas : BaseCanvas
 
     private IEnumerator KickAndNotifyRoutine(string lobbyId, string userId, ulong clientId)
     {
+        if (NetworkManager.Singleton != null && clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            Debug.LogWarning("Cannot kick host player");
+            yield break;
+        }
         string url = $"{SERVER_URL}/{lobbyId}/kick/{userId}";
         using (var www = new UnityWebRequest(url, "POST"))
         {
@@ -552,8 +574,10 @@ public class ConnectionCanvas : BaseCanvas
                 Debug.Log($"Kicked player {userId} on server");
 
                 // gọi Netcode kick client
-                RequestKickServerRpc(clientId);
-
+                if (NetworkManager.Singleton.IsHost)
+                {
+                    RequestKickServerRpc(clientId);
+                }
                 // cập nhật lại lobby host
                 StartCoroutine(PollLobbyInfo());
             }
@@ -564,7 +588,27 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
+    private IEnumerator StartGameOnServerRoutine()
+    {
+        if (string.IsNullOrEmpty(currentLobbyId)) yield break;
 
+        using (var www = new UnityWebRequest($"{SERVER_URL}/{currentLobbyId}/start", "POST"))
+        {
+            www.uploadHandler = new UploadHandlerRaw(new byte[0]);
+            www.downloadHandler = new DownloadHandlerBuffer();
+            www.SetRequestHeader("Content-Type", "application/json");
+
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError($"Failed to start game on server: {www.error}");
+                yield break;
+            }
+
+            Debug.Log("Game started successfully on server");
+        }
+    }
 
     private IEnumerator SendHeartbeatRoutine()
     {
@@ -588,39 +632,94 @@ public class ConnectionCanvas : BaseCanvas
     {
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
         {
-            var targetClient = new ClientRpcParams
+            Debug.Log($"Host attempting to kick client: {clientId}");
+
+            // Kiểm tra clientId hợp lệ
+            if (clientId == NetworkManager.Singleton.LocalClientId)
             {
-                Send = new ClientRpcSendParams
+                Debug.LogWarning("Cannot kick local host client. Use Shutdown() instead.");
+                return;
+            }
+
+            // Kiểm tra client có tồn tại không
+            if (!NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId))
+            {
+                Debug.LogWarning($"Client {clientId} is not connected");
+                return;
+            }
+
+            try
+            {
+                // Gửi RPC đến client bị kick
+                var targetClient = new ClientRpcParams
                 {
-                    TargetClientIds = new[] { clientId }
-                }
-            };
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new[] { clientId }
+                    }
+                };
 
-            KickClientClientRpc(targetClient);
+                KickClientClientRpc(targetClient);
 
-            // cắt kết nối client đó
-            NetworkManager.Singleton.DisconnectClient(clientId);
+                // Ngắt kết nối client
+                NetworkManager.Singleton.DisconnectClient(clientId);
+
+                Debug.Log($"Successfully kicked client: {clientId}");
+
+                // Cleanup objects của client bị kick
+                CleanupPlayerObjects(clientId);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error kicking client {clientId}: {e.Message}");
+            }
         }
     }
 
     [ClientRpc]
     private void KickClientClientRpc(ClientRpcParams rpcParams = default)
     {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient && 
-        !NetworkManager.Singleton.IsHost)
+        // Chỉ xử lý trên client bị kick, không xử lý trên host
+        if (NetworkManager.Singleton != null &&
+            NetworkManager.Singleton.IsClient &&
+            !NetworkManager.Singleton.IsHost)
+        {
+            Debug.Log("You have been kicked by host");
+
+            // Thoát client và reset UI
+            HandleKickedClient();
+        }
+    }
+
+    private void HandleKickedClient()
     {
-        Debug.Log("You have been kicked by host");
+        // Lưu thông tin để gọi API leave
+        string lobbyId = currentLobbyId;
+        string playerId = PlayerPrefs.GetString("PlayerId", "");
+        string userName = localUserName;
 
-        // Thoát client
-        NetworkManager.Singleton.Shutdown();
+        // Shutdown network trước
+        if (networkManager != null && networkManager.IsListening)
+        {
+            networkManager.Shutdown();
+        }
 
-        // Quay về main panel
+        // Gọi API leave trên server (nếu cần)
+        if (!string.IsNullOrEmpty(lobbyId) && !string.IsNullOrEmpty(playerId))
+        {
+            var user = new UserInfo { userId = playerId, userName = userName };
+            StartCoroutine(LeaveLobbyRoutine(lobbyId, user));
+        }
+
+        // Reset state và UI
         ResetState();
         ResetUIState();
         RefreshLobbyList();
-    }
-    }
 
+        // Hiển thị thông báo cho người chơi
+        Debug.Log("Bạn đã bị kick khỏi phòng");
+        // Có thể thêm popup thông báo ở đây
+    }
 
 
 }

@@ -12,6 +12,7 @@ public class GamePlayCanvas : BaseCanvas
     [SerializeField] private Button backToMenuButton;
     [SerializeField] private Button backToMenu1Button;
     [SerializeField] private Button exitGameButton;
+    [SerializeField] private Button continueGameButton;
 
     private ConnectionCanvas connectionCanvas;
     private string lobbyId;
@@ -34,6 +35,7 @@ public class GamePlayCanvas : BaseCanvas
         backToMenu1Button.onClick.AddListener(OnBackToMenu);
         menuButton.onClick.AddListener(OnMenuOpen);
         exitGameButton.onClick.AddListener(OnExitGame);
+        continueGameButton.onClick.AddListener(() => menuUI.SetActive(false));
     }
     private void OnExitGame()
     {
@@ -58,9 +60,8 @@ public class GamePlayCanvas : BaseCanvas
         {
             connectionCanvas.HandleExitLogic();
         }
-
-        GameManager.Instance.ShowMainMenu();
-        SceneManager.LoadScene("Level");
+        UIManager.Instance.OpenLoadingCanvas();
+        Invoke(nameof(OnBackToMenu), 2.4f);
     }
 
     private void OnMenuOpen()
