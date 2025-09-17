@@ -75,12 +75,13 @@ public class AISpawner : NetworkBehaviour
         }
     }
 
+
     private void FillAllPoints()
     {
         foreach (Transform point in spawnPoints)
         {
-            //if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
-            //    SpawnAtPoint(point);
+            if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
+                SpawnAtPoint(point);
         }
     }
 
@@ -92,7 +93,7 @@ public class AISpawner : NetworkBehaviour
         {
             if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
             {
-                //SpawnAtPoint(point);
+                SpawnAtPoint(point);
                 yield return new WaitForSeconds(delay);
             }
         }
@@ -100,33 +101,54 @@ public class AISpawner : NetworkBehaviour
         spawnCoroutine = null;
     }
 
-    //private void SpawnAtPoint(Transform spawnPoint)
-    //{
-    //    if (!GameManager.Instance.CanSpawnAI()) return;
+    private void SpawnAtPoint(Transform spawnPoint)
+    {
+        if (!GameManager.Instance.CanSpawnAI()) return;
 
-    //    GameObject enemy = ObjectPool.Instance.SpawnRandom(ObjectType.Enemy);
-    //    if (enemy == null) return;
+        // Lấy từ pool (server)
+        GameObject enemy = ObjectPool.Instance.SpawnRandomEnemy();
+        if (enemy == null) return;
 
-    //    CharacterBase character = enemy.GetComponent<CharacterBase>();
-    //    if (character != null) character.ResetState();
+        // Hard reset state AI sau khi lấy từ pool
+        var character = enemy.GetComponent<CharacterBase>();
+        if (character != null) character.ResetState();
 
-    //    if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
-    //    {
-    //        enemy.transform.position = hit.position;
-    //        enemy.transform.rotation = spawnPoint.rotation;
+        var agent = enemy.GetComponent<NavMeshAgent>();
 
-    //        var netObj = enemy.GetComponent<NetworkObject>();
-    //        if (netObj != null && !netObj.IsSpawned)
-    //            netObj.Spawn(true); // ✅ sync AI tới tất cả client
+        // Snap vào NavMesh gần điểm spawn
+        if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+        {
+            // 👉 Reset NavMeshAgent để chắc chắn hoạt động
+            if (agent != null)
+            {
+                agent.enabled = false;
+                enemy.transform.position = hit.position;
+                agent.enabled = true;
 
-    //        spawnPointAIs[spawnPoint] = enemy;
-    //        GameManager.Instance.RegisterAI(enemy);
-    //    }
-    //    else
-    //    {
-    //        enemy.SetActive(false);
-    //    }
-    //}
+                if (agent.isOnNavMesh)
+                    agent.Warp(hit.position);
+            }
+            else
+            {
+                enemy.transform.position = hit.position;
+            }
+
+            enemy.transform.rotation = spawnPoint.rotation;
+
+            var netObj = enemy.GetComponent<NetworkObject>();
+            if (netObj != null && !netObj.IsSpawned)
+                netObj.Spawn(true); // sync đến tất cả client
+
+            spawnPointAIs[spawnPoint] = enemy;
+            GameManager.Instance.RegisterAI(enemy);
+        }
+        else
+        {
+            enemy.SetActive(false);
+        }
+    }
+
+
 
 
     public int GetActiveAICount()

@@ -4,14 +4,10 @@ using UnityEngine;
 [RequireComponent(typeof(LineRenderer))]
 public class PlayerAttackRange : NetworkBehaviour
 {
-    private LineRenderer line;
-    private CharacterBase character;
+    [Header("References")]
+    [SerializeField] private LineRenderer line;          // Serialize để gán trong Inspector
+    [SerializeField] private CharacterBase character;
 
-    private void Awake()
-    {
-        line = GetComponent<LineRenderer>();
-        character = GetComponent<CharacterBase>();
-    }
 
     private void Update()
     {

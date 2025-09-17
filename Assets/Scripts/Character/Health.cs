@@ -4,7 +4,7 @@ using UnityEngine;
 public class Health : NetworkBehaviour
 {
     [SerializeField] private Animator animator;
-    [SerializeField] private int maxHealth = 10;
+    [SerializeField] public int maxHealth = 10;
     [SerializeField] private string deadLayerName = "Dead";
 
     public NetworkVariable<int> CurrentHealth = new NetworkVariable<int>(
@@ -18,7 +18,14 @@ public class Health : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         if (IsServer)
+        {
             CurrentHealth.Value = maxHealth;
+        }
+        else
+        {
+            // 👉 Client đợi sync, không check chết trong lúc này
+            Invoke(nameof(EnsureHealthSynced), 0.1f);
+        }
 
         CurrentHealth.OnValueChanged += OnHealthChanged;
     }
@@ -30,6 +37,7 @@ public class Health : NetworkBehaviour
 
     private void OnHealthChanged(int oldValue, int newValue)
     {
+        if (!IsServer) return;
         if (newValue <= 0)
         {
             HandleDeath();
@@ -72,5 +80,13 @@ public class Health : NetworkBehaviour
     private void DisableObject()
     {
         gameObject.SetActive(false);
+    }
+
+    private void EnsureHealthSynced()
+    {
+        if (CurrentHealth.Value <= 0 && !IsServer)
+        {
+            Debug.LogWarning($"{name} Client thấy health=0, nhưng chờ sync từ server...");
+        }
     }
 }

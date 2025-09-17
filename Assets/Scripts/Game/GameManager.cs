@@ -96,16 +96,14 @@ public class GameManager : NetworkBehaviour
 
     public void StartGame()
     {
-        if (isGameStarted) return;
-
         isGameStarted = true;
         EnableGamePlaySystem();
         ResetGame();
         UIManager.Instance.CloseAllUI();
-        HidePlayerPreview();
-        Debug.Log($"Game started - IsServer: {IsServer}, IsClient: {IsClient}");
-    }
 
+        HidePlayerPreview();
+
+    }
     public void GameOver()
     {
         isGameStarted = false;
@@ -183,9 +181,8 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     public void StartGameClientRpc(ClientRpcParams rpcParams = default)
     {
-        if (!IsServer) // Only execute on clients
+        if (!IsServer)
         {
-            Debug.Log("Game started by host on client!");
             StartGame();
         }
     }
@@ -257,6 +254,24 @@ public class GameManager : NetworkBehaviour
     {
         if (playerPreview != null)
             playerPreview.SetActive(false);
+    }
+
+    public void SpawnOnlineAI(Vector3 pos)
+    {
+        if (!IsServer) return; // chỉ Host/Server spawn
+
+        GameObject aiObj = ObjectPool.Instance.SpawnRandomEnemy(pos);
+        if (aiObj != null)
+        {
+            var netObj = aiObj.GetComponent<NetworkObject>();
+            if (netObj != null && !netObj.IsSpawned)
+            {
+                netObj.Spawn(true); // sync xuống tất cả client
+            }
+
+            RegisterAI(aiObj);
+            Debug.Log($"✅ [Online] Spawned AI tại {pos}");
+        }
     }
 
 

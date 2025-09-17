@@ -45,6 +45,7 @@ public class WeaponBase : NetworkBehaviour
         isFlying = false;
 
         rb.isKinematic = true;
+
     }
 
     private void LateUpdate()
@@ -223,4 +224,24 @@ public class WeaponBase : NetworkBehaviour
             ReturnToHand();
         }
     }
+
+    // WeaponBase.cs
+
+    public void SetOwner(CharacterBase newOwner)
+    {
+        owner = newOwner;
+        if (newOwner != null)
+        {
+            spawnPoint = newOwner.weaponSpawnPoint;
+        }
+        Debug.Log($"{name} SetOwner -> {newOwner?.name}");
+    }
+
+    public void ClearOwner()
+    {
+        Debug.Log($"{name} ClearOwner từ {owner?.name}");
+        owner = null;
+        spawnPoint = null;
+    }
+
 }

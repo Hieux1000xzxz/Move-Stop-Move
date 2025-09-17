@@ -572,7 +572,7 @@ MonoBehaviour:
   NetIsMoving:
     m_InternalValue: 0
   joystick: {fileID: 6433299856123335784, guid: 0bd3649e64dbcd840962fac485ab370f, type: 3}
-  isMovingInput: 0
+  isMovingInput: 1
 --- !u!114 &1186641312026304189
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -711,6 +711,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  line: {fileID: 7545416753985370068}
+  character: {fileID: 3008413264066109357}
 --- !u!114 &746300112721650876
 MonoBehaviour:
   m_ObjectHideFlags: 0
