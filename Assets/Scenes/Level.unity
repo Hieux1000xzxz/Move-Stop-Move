@@ -5302,7 +5302,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  totalAIQuota: 10
+  totalAIQuota: 50
   currentAIQuota: 0
   aiSpawner: {fileID: 1639591196}
   zoomController: {fileID: 1246925140}
@@ -6985,6 +6985,10 @@ PrefabInstance:
     - target: {fileID: 4822096757030938270, guid: a2639b7dee820554390958935825b4ce, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 3849890268
+      objectReference: {fileID: 0}
+    - target: {fileID: 4874386498056903534, guid: a2639b7dee820554390958935825b4ce, type: 3}
+      propertyPath: character
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4874386498056903534, guid: a2639b7dee820554390958935825b4ce, type: 3}
       propertyPath: m_Enabled
@@ -11720,48 +11724,48 @@ MonoBehaviour:
   preAllocations:
   - gameObject: {fileID: 7193694367047912757, guid: e83e14ba81cdfe54c97a67c4d19baf78, type: 3}
     count: 10
-    expandable: 0
+    expandable: 1
     type: 0
     weaponType: 0
     powerupType: 0
   - gameObject: {fileID: 7193694367047912757, guid: 85977aafb9ca3da42a48f4c07465f373, type: 3}
     count: 10
-    expandable: 0
+    expandable: 1
     type: 0
     weaponType: 0
     powerupType: 0
   - gameObject: {fileID: 7193694367047912757, guid: fa0cbab05ee6ac043bb03192f2dbf364, type: 3}
     count: 10
-    expandable: 0
+    expandable: 1
     type: 0
     weaponType: 0
     powerupType: 0
   - gameObject: {fileID: 7795159553526056017, guid: c7b098950134fa04382bfaefc205536b, type: 3}
-    count: 50
-    expandable: 1
+    count: 1
+    expandable: 0
     type: 1
     weaponType: 4
     powerupType: 0
   - gameObject: {fileID: 7795159553526056017, guid: ef278a0c4c33d7145b42a8485dcb636b, type: 3}
-    count: 50
-    expandable: 1
+    count: 1
+    expandable: 0
     type: 1
     weaponType: 3
     powerupType: 0
   - gameObject: {fileID: 7795159553526056017, guid: 0b9cf42ee1efd974c8d2c242dd2ca171, type: 3}
-    count: 50
-    expandable: 1
+    count: 1
+    expandable: 0
     type: 1
     weaponType: 1
     powerupType: 0
   - gameObject: {fileID: 7795159553526056017, guid: a8af49be756ce4342b0528b5cb473968, type: 3}
-    count: 50
+    count: 10
     expandable: 1
     type: 1
     weaponType: 2
     powerupType: 0
   - gameObject: {fileID: 7797295479864358708, guid: 73f30cb686b247f45bee3ef5ee46fedb, type: 3}
-    count: 5
+    count: 10
     expandable: 1
     type: 2
     weaponType: 0
@@ -11769,9 +11773,39 @@ MonoBehaviour:
   - gameObject: {fileID: 3703581492467372302, guid: 46787c0ca02578e40ab1a18b749a4ff1, type: 3}
     count: 50
     expandable: 1
+    type: 3
+    weaponType: 0
+    powerupType: 1
+  - gameObject: {fileID: 3703581492467372302, guid: 46787c0ca02578e40ab1a18b749a4ff1, type: 3}
+    count: 10
+    expandable: 1
     type: 2
     weaponType: 0
     powerupType: 1
+  - gameObject: {fileID: 7795159553526056017, guid: 4a1a80cd68a81a546aea7abdfbddbb89, type: 3}
+    count: 10
+    expandable: 1
+    type: 1
+    weaponType: 2
+    powerupType: 0
+  - gameObject: {fileID: 7795159553526056017, guid: 44c13fa0d5f5c214ab46d99e12ef49be, type: 3}
+    count: 10
+    expandable: 1
+    type: 1
+    weaponType: 4
+    powerupType: 0
+  - gameObject: {fileID: 7795159553526056017, guid: dee0208a6e19e5c4faf46e9f8e487d71, type: 3}
+    count: 10
+    expandable: 1
+    type: 1
+    weaponType: 6
+    powerupType: 0
+  - gameObject: {fileID: 7795159553526056017, guid: 2af905520d407c04686cbf1e5f23402c, type: 3}
+    count: 10
+    expandable: 1
+    type: 1
+    weaponType: 8
+    powerupType: 0
   pooledGobjects: []
 --- !u!4 &1894145586
 Transform:

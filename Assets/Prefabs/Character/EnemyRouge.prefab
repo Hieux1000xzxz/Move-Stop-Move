@@ -369,7 +369,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_TagString
-      value: Enemy
+      value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 3296884638839033065, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_Layer
@@ -553,7 +553,10 @@ MonoBehaviour:
   rangePerScore: 0.1
   moveSpeedPerScore: 0.05
   maxScale: 2.5
+  defaultWeapon: 4
   Score:
+    m_InternalValue: 0
+  NetIsMoving:
     m_InternalValue: 0
   patrolRadius: 10
   observeMinTime: 1

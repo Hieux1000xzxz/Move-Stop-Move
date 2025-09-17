@@ -9,6 +9,7 @@ TagManager:
   - Arrow
   - Knife
   - Dead
+  - Arrow1
   layers:
   - Default
   - TransparentFX

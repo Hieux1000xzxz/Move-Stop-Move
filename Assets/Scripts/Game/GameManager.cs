@@ -256,5 +256,24 @@ public class GameManager : NetworkBehaviour
             playerPreview.SetActive(false);
     }
 
+    public void SpawnOnlineAI(Vector3 pos)
+    {
+        if (!IsServer) return; // chỉ Host/Server spawn
+
+        GameObject aiObj = ObjectPool.Instance.SpawnRandomEnemy(pos);
+        if (aiObj != null)
+        {
+            var netObj = aiObj.GetComponent<NetworkObject>();
+            if (netObj != null && !netObj.IsSpawned)
+            {
+                netObj.Spawn(true); // sync xuống tất cả client
+            }
+
+            RegisterAI(aiObj);
+            Debug.Log($"✅ [Online] Spawned AI tại {pos}");
+        }
+    }
+
+
 }
 

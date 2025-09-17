@@ -365,7 +365,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_TagString
-      value: Enemy
+      value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 3296884638839033065, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_Layer
@@ -543,13 +543,16 @@ MonoBehaviour:
   weaponSpawnPoint: {fileID: 7073988956984485799}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.3
-  weaponType: 3
+  weaponType: 6
   scoreDisplay: {fileID: 8459014451873918741}
   sizePerScore: 0.05
   rangePerScore: 0.1
   moveSpeedPerScore: 0.05
   maxScale: 2.5
+  defaultWeapon: 6
   Score:
+    m_InternalValue: 0
+  NetIsMoving:
     m_InternalValue: 0
   patrolRadius: 10
   observeMinTime: 1

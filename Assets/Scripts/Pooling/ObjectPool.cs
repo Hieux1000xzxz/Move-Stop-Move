@@ -25,9 +25,13 @@ public enum WeaponType
 {
     None,
     Arrow,
+    Arrow1,
     Axe,
+    Axe1,
     Knife,
-    Shield
+    Knife1,
+    Shield,
+    Shield1
 }
 
 public class ObjectPool : Singleton<ObjectPool>
@@ -46,19 +50,28 @@ public class ObjectPool : Singleton<ObjectPool>
         {
             for (int i = 0; i < item.count; ++i)
             {
-                pooledGobjects.Add(CreateGobject(item.gameObject));
+                GameObject obj = CreateGobject(item.gameObject);
+
+                // đảm bảo tắt ngay lập tức
+                obj.SetActive(false);
+                pooledGobjects.Add(obj);
             }
         }
     }
 
+
     // ================== REGION: ENEMY ==================
     #region ENEMY
-    public GameObject SpawnRandomEnemy()
+    public GameObject SpawnRandomEnemy(Vector3 pos = default, Quaternion rot = default)
     {
-        List<GameObject> availableEnemies = new List<GameObject>();
+        GameObject enemy = null;
 
+        // Lấy enemy chưa active
+        List<GameObject> availableEnemies = new List<GameObject>();
         foreach (var obj in pooledGobjects)
         {
+            if (obj == null) continue; // tránh lỗi MissingReference
+
             if (!obj.activeSelf)
             {
                 foreach (var pre in preAllocations)
@@ -72,25 +85,44 @@ public class ObjectPool : Singleton<ObjectPool>
             }
         }
 
+
         if (availableEnemies.Count > 0)
         {
-            GameObject randomEnemy = availableEnemies[Random.Range(0, availableEnemies.Count)];
-            randomEnemy.SetActive(true);
-            return randomEnemy;
+            enemy = availableEnemies[Random.Range(0, availableEnemies.Count)];
         }
-
-        foreach (var pre in preAllocations)
+        else
         {
-            if (pre.type == ObjectType.Enemy && pre.expandable)
+            // Nếu không còn thì expand
+            foreach (var pre in preAllocations)
             {
-                GameObject newEnemy = CreateGobject(pre.gameObject);
-                pooledGobjects.Add(newEnemy);
-                newEnemy.SetActive(true);
-                return newEnemy;
+                if (pre.type == ObjectType.Enemy && pre.expandable)
+                {
+                    enemy = CreateGobject(pre.gameObject);
+                    pooledGobjects.Add(enemy);
+                    break;
+                }
             }
         }
 
-        return null;
+        if (enemy == null)
+        {
+            Debug.LogError("❌ Không tìm thấy Enemy prefab trong ObjectPool!");
+            return null;
+        }
+
+        // setup transform
+        enemy.transform.position = pos;
+        enemy.transform.rotation = rot;
+        enemy.SetActive(true);
+
+        // spawn netcode nếu đang chạy multiplayer
+        var netObj = enemy.GetComponent<NetworkObject>();
+        if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            netObj.Spawn(true); // sync xuống client
+        }
+
+        return enemy;
     }
     #endregion
 
@@ -135,17 +167,24 @@ public class ObjectPool : Singleton<ObjectPool>
         var netObj = obj.GetComponent<NetworkObject>();
         if (netObj != null && netObj.IsSpawned && NetworkManager.Singleton.IsServer)
         {
-            netObj.Despawn(true);
+            netObj.Despawn(true); // despawn khỏi mạng
         }
 
-        obj.SetActive(false);
-        obj.transform.SetParent(transform);
+        obj.SetActive(false); // chỉ cần disable, không SetParent
     }
+
 
     private GameObject GetInactiveWeapon(WeaponType type)
     {
-        foreach (var obj in pooledGobjects)
+        for (int i = pooledGobjects.Count - 1; i >= 0; i--)
         {
+            var obj = pooledGobjects[i];
+            if (obj == null)  
+            {
+                pooledGobjects.RemoveAt(i);
+                continue;
+            }
+
             if (!obj.activeSelf)
             {
                 foreach (var pre in preAllocations)
@@ -160,6 +199,7 @@ public class ObjectPool : Singleton<ObjectPool>
         }
         return null;
     }
+
 
     private GameObject ExpandWeapon(WeaponType type)
     {
@@ -271,11 +311,17 @@ public class ObjectPool : Singleton<ObjectPool>
     {
         for (int i = pooledGobjects.Count - 1; i >= 0; i--)
         {
-            if (pooledGobjects[i] != null)
-                Destroy(pooledGobjects[i]);
+            if (pooledGobjects[i] == null)
+            {
+                pooledGobjects.RemoveAt(i); // bỏ hẳn object bị Destroy
+                continue;
+            }
+
+            pooledGobjects[i].SetActive(false); // chỉ disable
         }
-        pooledGobjects.Clear();
     }
+
+
 
 
     // ================== REGION: HELPERS ==================

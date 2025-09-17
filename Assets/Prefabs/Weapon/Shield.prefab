@@ -79,6 +79,10 @@ PrefabInstance:
       value: Shield
       objectReference: {fileID: 0}
     - target: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_TagString
       value: Arrow
       objectReference: {fileID: 0}
@@ -176,10 +180,10 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -4566240778445138294}
+      addedObject: {fileID: 4932023131939257018}
     - targetCorrespondingSourceObject: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4932023131939257018}
+      addedObject: {fileID: -4566240778445138294}
     - targetCorrespondingSourceObject: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6258585256022260941}
@@ -199,27 +203,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
   m_PrefabInstance: {fileID: 7836738682889203449}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &-4566240778445138294
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7795159553526056017}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b36ace67bd72e914795c2c9ad1568757, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 4
-  damage: 10
-  handRotationOffset: {x: 0, y: 0, z: 0}
-  rotateAxis: {x: 0, y: 0, z: -1}
-  rotateSpeed: 1440
-  rotateMode: 3
-  rb: {fileID: 3562958303719707135}
-  isFlying: 0
-  returnSpeed: 15
 --- !u!114 &4932023131939257018
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -245,6 +228,27 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &-4566240778445138294
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7795159553526056017}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b36ace67bd72e914795c2c9ad1568757, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  speed: 14
+  damage: 10
+  handRotationOffset: {x: 0, y: 0, z: 0}
+  rotateAxis: {x: 0, y: 0, z: -1}
+  rotateSpeed: 1440
+  rotateMode: 3
+  rb: {fileID: 3562958303719707135}
+  isFlying: 0
 --- !u!114 &6258585256022260941
 MonoBehaviour:
   m_ObjectHideFlags: 0

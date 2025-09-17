@@ -13,6 +13,10 @@ PrefabInstance:
       value: Axe
       objectReference: {fileID: 0}
     - target: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_TagString
       value: Axe
       objectReference: {fileID: 0}
@@ -142,7 +146,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  speed: 4
+  speed: 14
   damage: 10
   handRotationOffset: {x: 0, y: 0, z: 90}
   rotateAxis: {x: 0, y: 0, z: -1}

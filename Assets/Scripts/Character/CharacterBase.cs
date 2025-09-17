@@ -69,10 +69,6 @@ public abstract class CharacterBase : NetworkBehaviour
             lastPosition = transform.position;
         }
 
-        //if (IsServer)
-        //{
-        //    RequestSetWeaponServerRpc(WeaponType.Knife);
-        //}
         OnWeaponReturned();
     }
 
@@ -257,6 +253,20 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             PerformAttack();
         }
+
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+            agent.velocity = Vector3.zero;
+        }
+
+        FaceTarget(attackTarget.position);
+
+        if (!isAttacking)
+        {
+            PerformAttack();
+        }
     }
 
     protected virtual void CheckForAttack()
@@ -400,6 +410,11 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             currentWeapon.ResetWeapon();
         }
+        
+        if (agent != null && agent.isActiveAndEnabled && !isDead)
+        {
+            agent.isStopped = false;
+        }
 
         nextAttackTime = Time.time;
 
@@ -506,6 +521,7 @@ public abstract class CharacterBase : NetworkBehaviour
         if (currentWeapon != null)
         {
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
+            currentWeapon.ClearOwner();  // ✅ clear owner cũ
             currentWeapon = null;
         }
 
@@ -513,8 +529,10 @@ public abstract class CharacterBase : NetworkBehaviour
         if (go == null) return;
 
         currentWeapon = go.GetComponent<WeaponBase>();
-        currentWeapon.transform.position = weaponSpawnPoint.position;
-        currentWeapon.transform.rotation = weaponSpawnPoint.rotation;
+        currentWeapon.Init(this, weaponSpawnPoint);
+
+        // ✅ bảo đảm mỗi weapon có owner riêng
+        currentWeapon.SetOwner(this);
 
         var netObj = currentWeapon.GetComponent<NetworkObject>();
         if (netObj != null && !netObj.IsSpawned)
@@ -525,9 +543,8 @@ public abstract class CharacterBase : NetworkBehaviour
             // Gửi reference xuống client
             SetWeaponClientRpc(netObj);
         }
-
-        currentWeapon.Init(this, weaponSpawnPoint);
     }
+
 
 
 
@@ -810,6 +827,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         ChangeWeapon(newWeaponType); // Server trực tiếp spawn vũ khí
     }
+
 
     #endregion
 }

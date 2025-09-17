@@ -37,52 +37,6 @@ public class Powerup : NetworkBehaviour
             triggerCollider.enabled = IsServer;
         }
     }
-    private IEnumerator ApplySpeedBoost(CharacterBase character, float duration, float multiplier = 2f, float fadeTime = 2f)
-    {
-        float oldSpeed = character.moveSpeed;
-        float boostedSpeed = oldSpeed * multiplier;
-
-        character.moveSpeed = boostedSpeed;
-        if (character.agent != null)
-            character.agent.speed = boostedSpeed;
-
-        yield return new WaitForSeconds(duration - fadeTime);
-
-        float elapsed = 0f;
-        while (elapsed < fadeTime)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / fadeTime;
-
-            float newSpeed = Mathf.Lerp(boostedSpeed, oldSpeed, t);
-            character.moveSpeed = newSpeed;
-
-            if (character.agent != null)
-                character.agent.speed = newSpeed;
-
-            yield return null;
-        }
-
-        character.moveSpeed = oldSpeed;
-        if (character.agent != null)
-            character.agent.speed = oldSpeed;
-    }
-
-
-    private IEnumerator ApplyWeaponGrow(CharacterBase character, float duration, float scaleMultiplier = 1.5f)
-    {
-        if (character.currentWeaponPublic == null) yield break;
-
-        Transform weaponTransform = character.currentWeaponPublic.transform;
-        Vector3 oldScale = weaponTransform.localScale;
-
-        weaponTransform.localScale = oldScale * scaleMultiplier;
-
-        yield return new WaitForSeconds(duration);
-
-        if (character.currentWeaponPublic != null)
-            weaponTransform.localScale = oldScale;
-    }
 
     public void SetType(PowerupType newType)
     {
