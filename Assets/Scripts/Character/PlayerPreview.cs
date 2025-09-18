@@ -3,6 +3,9 @@
 public class PlayerPreview : MonoBehaviour
 {
     [SerializeField] private Transform weaponSpawnPoint;
+    [SerializeField] private Vector3 weaponRotationOffset; // góc xoay tùy chỉnh
+    [SerializeField] private Vector3 weaponPositionOffset; // nếu bạn muốn dịch vị trí thêm
+
     private GameObject currentWeaponObj;
 
     public void ShowWeapon(WeaponData weaponData)
@@ -19,8 +22,8 @@ public class PlayerPreview : MonoBehaviour
         {
             currentWeaponObj = Instantiate(
                 weaponData.weaponPrefab,
-                weaponSpawnPoint.position,
-                weaponSpawnPoint.rotation,
+                weaponSpawnPoint.position + weaponPositionOffset,
+                weaponSpawnPoint.rotation * Quaternion.Euler(weaponRotationOffset),
                 weaponSpawnPoint
             );
         }
