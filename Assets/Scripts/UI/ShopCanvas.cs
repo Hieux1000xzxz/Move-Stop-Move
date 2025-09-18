@@ -19,7 +19,7 @@ public class ShopCanvas : BaseCanvas
 
     private WeaponData selectedWeapon;
     private Dictionary<string, WeaponItem> weaponItems = new Dictionary<string, WeaponItem>();
-
+  
     private void Start()
     {
         buyButton.onClick.AddListener(OnBuyWeapon);
@@ -28,7 +28,7 @@ public class ShopCanvas : BaseCanvas
         InitializeWeaponsGrid();
         InitSelectedWeapon();
     }
-    private void InitSelectedWeapon()
+    public void InitSelectedWeapon()
     {
         string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
         if (!string.IsNullOrEmpty(selectedWeaponName) && weaponItems.ContainsKey(selectedWeaponName))
@@ -36,13 +36,11 @@ public class ShopCanvas : BaseCanvas
             WeaponItem selectedItem = weaponItems[selectedWeaponName];
             selectedWeapon = selectedItem.WeaponData;
 
-            // Cập nhật hiển thị UI
             foreach (var item in weaponItems.Values)
             {
                 item.SetChosen(item == selectedItem);
             }
 
-            // Cho preview hiển thị
             if (previewPlayer != null)
             {
                 previewPlayer.ShowWeapon(selectedWeapon);
@@ -201,13 +199,13 @@ public class ShopCanvas : BaseCanvas
 
     private void CloseShop()
     {
-        gameObject.SetActive(false);
+        root.SetActive(false);
+        InitSelectedWeapon();
         UIManager.Instance.OpenMainMenu();
     }
 
     private void OnDestroy()
     {
-        // Hủy đăng ký event
         foreach (var item in weaponItems.Values)
         {
             if (item != null)

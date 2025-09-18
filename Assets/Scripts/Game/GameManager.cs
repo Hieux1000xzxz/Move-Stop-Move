@@ -71,6 +71,7 @@ public class GameManager : NetworkBehaviour
         shopCanvas.LoadSelectedWeapon();
         DisableGamePlaySystem();
     }
+    
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();

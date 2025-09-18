@@ -197,31 +197,35 @@ public class ConnectionCanvas : BaseCanvas
         mainPanel.SetActive(true);
     }
 
-   private IEnumerator StartHostRoutine(string hostName)
-{
-    ushort port = 7777;
-    string ipLan = GetHostLANIP();
-    pendingLobbyToJoin = null;
-    transport.SetConnectionData("0.0.0.0", port);
-
-    if (!networkManager.StartHost())
+    private IEnumerator StartHostRoutine(string hostName)
     {
-        yield break;
+        ushort port = 7777;
+        string ipLan = GetHostLANIP();
+        pendingLobbyToJoin = null;
+        transport.SetConnectionData("0.0.0.0", port);
+
+        if (!networkManager.StartHost())
+        {
+            yield break;
+        }
+
+        string hostId = PlayerPrefs.GetString("PlayerId", "");
+
+        string lobbyName = string.IsNullOrEmpty(nameInputField.text) ? "Lobby" : nameInputField.text;
+        if (lobbyName.Length > 6) lobbyName = lobbyName.Substring(0, 6); // cắt chuỗi tối đa 6 ký tự
+
+        var request = new LobbyRegistrationRequest
+        {
+            lobbyName = lobbyName,
+            hostIpAddress = ipLan,
+            hostPort = port,
+            maxPlayers = 6,
+            hostName = hostName.Length > 6 ? hostName.Substring(0, 6) : hostName
+        };
+
+        yield return StartCoroutine(RegisterLobbyOnServer(request));
     }
 
-    string hostId = PlayerPrefs.GetString("PlayerId", "");
-
-    var request = new LobbyRegistrationRequest
-    {
-        lobbyName = string.IsNullOrEmpty(nameInputField.text) ? "Lobby" : nameInputField.text,
-        hostIpAddress = ipLan,
-        hostPort = port,
-        maxPlayers = 6,
-        hostName = hostName
-    };
-
-    yield return StartCoroutine(RegisterLobbyOnServer(request));
-}
 
     private IEnumerator RegisterLobbyOnServer(LobbyRegistrationRequest request)
     {
@@ -321,6 +325,17 @@ public class ConnectionCanvas : BaseCanvas
             return;
         }
 
+        if (input.Length > 6)
+        {
+            Debug.LogWarning("Name cannot exceed 6 characters!");
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.SendNotification("Name cannot be longer than 6 characters");
+                UIManager.Instance.OpenNotification();
+            }
+            return;
+        }
+
         if (popupTitleText.text.Contains("lobby ID"))
         {
             string enteredLobbyId = input;
@@ -360,6 +375,7 @@ public class ConnectionCanvas : BaseCanvas
             pendingLobbyToJoin = null;
         }
     }
+
 
 
     private IEnumerator JoinLobbyRoutine(string lobbyId, string playerName)
