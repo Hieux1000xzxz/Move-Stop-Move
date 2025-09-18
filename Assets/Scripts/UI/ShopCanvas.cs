@@ -26,12 +26,41 @@ public class ShopCanvas : BaseCanvas
         selectButton.onClick.AddListener(OnSelectWeapon);
         closeButton.onClick.AddListener(CloseShop);
         InitializeWeaponsGrid();
-        
+        InitSelectedWeapon();
     }
+    private void InitSelectedWeapon()
+    {
+        string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
+        if (!string.IsNullOrEmpty(selectedWeaponName) && weaponItems.ContainsKey(selectedWeaponName))
+        {
+            WeaponItem selectedItem = weaponItems[selectedWeaponName];
+            selectedWeapon = selectedItem.WeaponData;
 
+            // Cập nhật hiển thị UI
+            foreach (var item in weaponItems.Values)
+            {
+                item.SetChosen(item == selectedItem);
+            }
+
+            // Cho preview hiển thị
+            if (previewPlayer != null)
+            {
+                previewPlayer.ShowWeapon(selectedWeapon);
+            }
+
+            UpdateButtons();
+        }
+        else
+        {
+            // Nếu chưa có vũ khí nào được chọn → chọn mặc định là vũ khí đầu tiên
+            if (weapons.Length > 0)
+            {
+                OnWeaponSelected(weapons[0]);
+            }
+        }
+    }
     private void InitializeWeaponsGrid()
     {
-        // Clear grid trước khi khởi tạo
         foreach (Transform child in weaponsGrid)
         {
             Destroy(child.gameObject);
@@ -39,7 +68,6 @@ public class ShopCanvas : BaseCanvas
 
         weaponItems.Clear();
 
-        // Tạo item cho mỗi vũ khí
         foreach (WeaponData weapon in weapons)
         {
             GameObject weaponItemObj = Instantiate(weaponItemPrefab, weaponsGrid);
