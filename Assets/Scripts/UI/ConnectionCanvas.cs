@@ -66,7 +66,7 @@ public class ConnectionCanvas : BaseCanvas
         while (true)
         {
             RefreshLobbyList();
-            yield return new WaitForSeconds(3f); // refresh mỗi 3 giây
+            yield return new WaitForSeconds(3f);
         }
     }
 
@@ -110,7 +110,7 @@ public class ConnectionCanvas : BaseCanvas
     // === HOST FUNCTIONS ===
     private void StartHost()
     {
-        isCreatingLobby = true; // đánh dấu đang tạo lobby
+        isCreatingLobby = true; 
         ShowJoinNamePopup(null);
     }
 
@@ -152,7 +152,6 @@ public class ConnectionCanvas : BaseCanvas
             networkManager.Shutdown();
         }
 
-        // Nếu là host → dừng heartbeat + poll
         if (wasHost)
         {
             if (heartbeatRoutine != null) StopCoroutine(heartbeatRoutine);
@@ -162,7 +161,6 @@ public class ConnectionCanvas : BaseCanvas
                 StartCoroutine(DeleteLobbyRoutine(lobbyId));
             }
         }
-        // Nếu là client → chỉ dừng poll khi rời lobby thành công
         else if (wasClient)
         {
             if (!string.IsNullOrEmpty(lobbyId) && !string.IsNullOrEmpty(playerId))
@@ -323,22 +321,17 @@ public class ConnectionCanvas : BaseCanvas
             return;
         }
 
-        // Nếu đang nhập ID
         if (popupTitleText.text.Contains("lobby ID"))
         {
-            // Lưu tạm Lobby ID
             string enteredLobbyId = input;
 
-            // Chuyển sang bước nhập tên
             popupTitleText.SetText("Enter your name");
             nameInputField.text = string.Empty;
 
-            // Ghi nhớ lobby để join sau
             pendingLobbyToJoin = new LobbyInfo { lobbyId = enteredLobbyId };
             return;
         }
 
-        // === Nếu đang nhập tên ===
         string playerName = input;
         localUserName = playerName;
         enterNamePopup.SetActive(false);
@@ -375,17 +368,44 @@ public class ConnectionCanvas : BaseCanvas
         {
             yield return checkWww.SendWebRequest();
 
-            if (checkWww.result == UnityWebRequest.Result.Success)
+            if (checkWww.result != UnityWebRequest.Result.Success)
             {
-                LobbyInfo lobbyCheck = JsonUtility.FromJson<LobbyInfo>(checkWww.downloadHandler.text);
-                if (lobbyCheck.isGameStarted)
+                if (UIManager.Instance != null)
                 {
-                    Debug.LogError("Cannot join - game has already started!");
-                    enterNamePopup.SetActive(false);
-                    yield break;
+                    UIManager.Instance.SendNotification("Lobby not found. Please check the ID.");
+                    UIManager.Instance.OpenNotification();
+
                 }
+                else
+                {
+                    Debug.LogWarning("NotificationCanvas not found. Lobby not found.");
+                }
+                yield break;
+            }
+
+            LobbyInfo lobbyCheck = JsonUtility.FromJson<LobbyInfo>(checkWww.downloadHandler.text);
+            if (lobbyCheck == null)
+            {
+                if (UIManager.Instance != null)
+                {
+                    UIManager.Instance.SendNotification("Lobby not found. Please check the ID.");
+                    UIManager.Instance.OpenNotification();
+                }
+                yield break;
+            }
+
+            if (lobbyCheck.isGameStarted)
+            {
+                if (UIManager.Instance != null)
+                {
+                    UIManager.Instance.SendNotification("This game has already started. You cannot join.");
+                    UIManager.Instance.OpenNotification();
+
+                }
+                yield break;
             }
         }
+
         string playerId = System.Guid.NewGuid().ToString();
         PlayerPrefs.SetString("PlayerId", playerId);
 
@@ -405,17 +425,24 @@ public class ConnectionCanvas : BaseCanvas
                 LobbyInfo lobby = JsonUtility.FromJson<LobbyInfo>(www.downloadHandler.text);
                 currentLobbyId = lobbyId;
                 localUserName = playerName;
-                
+
                 ShowLobbyUI(lobby);
                 JoinLobby(lobby.hostIpAddress, lobby.hostPort);
                 RefreshLobbyList();
             }
             else
             {
+                if (UIManager.Instance != null)
+                {
+                    UIManager.Instance.SendNotification("Failed to join lobby. Please try again.");
+                    UIManager.Instance.OpenNotification();
+
+                }
                 Debug.LogError($"Join lobby failed: {www.error}");
             }
         }
     }
+
 
     private IEnumerator LeaveLobbyRoutine(string lobbyId, UserInfo user)
     {
