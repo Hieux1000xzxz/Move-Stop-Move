@@ -36,7 +36,7 @@ public class Player : CharacterBase
             ChangeState(CharacterState.Move);
         }
 
-        if (currentState == CharacterState.Attack && !isAttacking)
+        if (currentState == CharacterState.Attack && !isAttacking) 
         {
             Debug.Log("Player Attack requested");
             RequestAttackServerRpc();

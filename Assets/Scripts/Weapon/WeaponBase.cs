@@ -93,8 +93,11 @@ public class WeaponBase : NetworkBehaviour
 
     protected virtual void ReturnToHand()
     {
-        Debug.Log($"{name} {(NetworkManager.Singleton.IsServer ? "[Server]" : "[Client]")} quay về tay owner={owner?.name}");
-        if (spawnPoint == null) return;
+        if (owner == null || owner.health.IsDead)
+        {
+            gameObject.SetActive(false); // 🔥 auto ẩn nếu chủ đã chết
+            return;
+        }
 
         StopRotation();
         isFlying = false;
@@ -195,19 +198,6 @@ public class WeaponBase : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        if (!IsServer)
-        {
-            CharacterBase ownerChar = GetComponentInParent<CharacterBase>();
-            if (ownerChar != null)
-            {
-                ownerChar.AssignWeapon(this); // this là WeaponBase, đúng type
-                Debug.Log($"{name} [Client] OnNetworkSpawn -> gán cho {ownerChar.name}");
-            }
-            else
-            {
-                Debug.LogWarning($"{name} [Client] OnNetworkSpawn nhưng KHÔNG tìm thấy CharacterBase cha!");
-            }
-        }
     }
     [ServerRpc(RequireOwnership = false)]
     private void ReturnToHandServerRpc()

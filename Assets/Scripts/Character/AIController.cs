@@ -33,10 +33,9 @@ public class AIController : CharacterBase
     protected override void Update()
     {
          if (!GameManager.Instance || !GameManager.Instance.IsGameStarted)
-        return;
+            return;
 
-    // ✅ Chỉ chạy logic AI ở server
-    if (!IsServer) return;
+        if (!IsServer) return;
         base.Update();
 
         if (Time.time - lastDecisionTime >= 1f)

@@ -81,10 +81,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (!GameManager.Instance || !GameManager.Instance.IsGameStarted)
             return;
-        if (IsClient && IsOwner)
-        {
-            Debug.Log($"{name} [Client] Update - State: {currentState}, AttackTarget: {attackTarget?.name}");
-        }
+        
         CheckForDead();
         if (isDead || health.IsDead)
         {
@@ -493,7 +490,6 @@ public abstract class CharacterBase : NetworkBehaviour
         characterCollider.enabled = true;
         if (currentWeapon != null)
         {
-            //currentWeapon.transform.SetParent(weaponSpawnPoint);
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.identity;
             currentWeapon.gameObject.SetActive(true);
@@ -555,6 +551,7 @@ public abstract class CharacterBase : NetworkBehaviour
         }
 
         // luôn sync weapon cho client
+        AssignWeapon(currentWeapon);
         SetWeaponClientRpc(netObj, this.NetworkObject);
 
     }
@@ -600,23 +597,40 @@ public abstract class CharacterBase : NetworkBehaviour
             }
             
             isDead = true;
-            gameObject.SetActive(false);
+
+            if (animator != null)
+            {
+                animator.SetBool("IsMoving", false);
+                animator.SetBool("IsAttacking", false);
+                animator.SetTrigger("Death");
+            }
+
+            if (IsServer)
+            {
+                PlayDeathAnimationClientRpc();
+            }
+
+            if (currentWeapon != null)
+            {
+                if (IsServer)
+                {
+                    ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
+                }
+                else
+                {
+                    currentWeapon.gameObject.SetActive(false);
+                }
+                currentWeapon = null;
+            }
+
+            StartCoroutine(DelayedDisable(1.5f));
         }
-
-        //if (currentWeapon != null)
-        //{
-        //    if (IsServer)
-        //    {
-        //        ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject); 
-        //    }
-        //    else
-        //    {
-        //        currentWeapon.gameObject.SetActive(false);
-        //    }
-        //    currentWeapon = null;
-        //}
     }
-
+    private IEnumerator DelayedDisable(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        gameObject.SetActive(false);
+    }
     protected virtual void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
@@ -823,26 +837,30 @@ private void SetWeaponClientRpc(NetworkObjectReference weaponRef, NetworkObjectR
     [ClientRpc]
     private void LaunchWeaponClientRpc(Vector3 dir, Quaternion rot, ClientRpcParams rpcParams = default)
     {
-        Debug.Log($"{name} [Client] nhận LaunchWeaponClientRpc từ server");
-
-        if (currentWeapon != null)
-        {
-            currentWeapon.transform.rotation = rot;
-            currentWeapon.Launch(dir, this.gameObject);
-            Debug.Log($"{name} [Client] bắt đầu Launch vũ khí với hướng: {dir}");
-        }
-        else
-        {
-            Debug.LogWarning($"{name} [Client] KHÔNG có vũ khí để bắn!");
-        }
+        StartCoroutine(WaitUntilWeaponReady(dir, rot));
     }
+    private IEnumerator WaitUntilWeaponReady(Vector3 dir, Quaternion rot)
+    {
+        yield return new WaitUntil(() => currentWeapon != null);
 
+        currentWeapon.transform.rotation = rot;
+        currentWeapon.Launch(dir, this.gameObject);
+    }
     [ServerRpc]
     public void RequestChangeWeaponServerRpc(WeaponType newWeaponType)
     {
         ChangeWeapon(newWeaponType); // Server trực tiếp spawn vũ khí
     }
-
+    [ClientRpc]
+    private void PlayDeathAnimationClientRpc()
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsMoving", false);
+            animator.SetBool("IsAttacking", false);
+            animator.SetTrigger("Death");
+        }
+    }
 
     #endregion
 }
