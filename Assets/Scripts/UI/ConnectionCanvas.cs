@@ -278,6 +278,10 @@ public class ConnectionCanvas : BaseCanvas
                 comp.Setup(user.userName, user.userId, user.clientId, this, canKick);
             }
         }
+        if (gameplayCanvas != null)
+        {
+            gameplayCanvas.UpdateExitButtonState(lobby);
+        }
     }
 
 
@@ -791,6 +795,13 @@ public class ConnectionCanvas : BaseCanvas
         // Có thể thêm popup thông báo ở đây
     }
 
+    public int GetCurrentPlayerCount(LobbyInfo lobby)
+    {
+        if (lobby == null || lobby.users == null)
+            return 0;
+
+        return lobby.users.Count;
+    }
 
 }
 

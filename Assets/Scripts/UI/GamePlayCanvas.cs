@@ -36,11 +36,24 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.onClick.AddListener(OnMenuOpen);
         exitGameButton.onClick.AddListener(OnExitGame);
         continueGameButton.onClick.AddListener(() => menuUI.SetActive(false));
-        if (NetworkManager.Singleton.IsHost)
+    }
+
+    public void UpdateExitButtonState(LobbyInfo lobby)
+    {
+        if (lobby == null) return;
+
+        int playerCount = lobby.users != null ? lobby.users.Count : 0;
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
         {
-           exitGameButton.interactable = false; 
+            exitGameButton.interactable = (playerCount <= 1);
+        }
+        else
+        {
+            exitGameButton.interactable = true;
         }
     }
+
     private void OnExitGame()
     {
         Debug.Log("Exit Match");
