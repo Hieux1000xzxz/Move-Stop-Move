@@ -25,8 +25,8 @@ public class ShopCanvas : BaseCanvas
         buyButton.onClick.AddListener(OnBuyWeapon);
         selectButton.onClick.AddListener(OnSelectWeapon);
         closeButton.onClick.AddListener(CloseShop);
-
         InitializeWeaponsGrid();
+        
     }
 
     private void InitializeWeaponsGrid()
@@ -49,11 +49,13 @@ public class ShopCanvas : BaseCanvas
             {
                 bool isBought = PlayerPrefs.GetInt("WeaponBought_" + weapon.weaponName, 0) == 1;
                 bool isSelected = PlayerPrefs.GetString("SelectedWeapon", "") == weapon.weaponName;
-
+               
                 weaponItem.Initialize(weapon, isBought, isSelected);
                 weaponItem.OnWeaponSelected += OnWeaponSelected;
 
                 weaponItems.Add(weapon.weaponName, weaponItem);
+                buyButton.interactable = !isBought;
+                selectButton.interactable = isBought && isSelected;
             }
         }
     }
