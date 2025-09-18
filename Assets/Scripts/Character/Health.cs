@@ -23,7 +23,6 @@ public class Health : NetworkBehaviour
         }
         else
         {
-            // 👉 Client đợi sync, không check chết trong lúc này
             Invoke(nameof(EnsureHealthSynced), 0.1f);
         }
 

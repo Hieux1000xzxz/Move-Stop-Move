@@ -566,13 +566,14 @@ MonoBehaviour:
   rangePerScore: 0.02
   moveSpeedPerScore: 0.05
   maxScale: 2.5
-  defaultWeapon: 1
+  defaultWeapon: 5
+  ownerType: 0
   Score:
     m_InternalValue: 0
   NetIsMoving:
     m_InternalValue: 0
   joystick: {fileID: 6433299856123335784, guid: 0bd3649e64dbcd840962fac485ab370f, type: 3}
-  isMovingInput: 1
+  isMovingInput: 0
 --- !u!114 &1186641312026304189
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -588,7 +589,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 1840719375837626499}
   maxHealth: 10
-  deadLayerName: Dead
+  deadLayerName: Death
   CurrentHealth:
     m_InternalValue: 0
 --- !u!120 &7545416753985370068

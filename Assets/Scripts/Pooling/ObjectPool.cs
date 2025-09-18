@@ -327,12 +327,12 @@ public class ObjectPool : Singleton<ObjectPool>
                 // ✅ Despawn khỏi mạng trước khi tắt
                 if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
                 {
-                    netObj.Despawn(true); // true = destroy trên client
+                    netObj.Despawn(false); // true = destroy trên client
                 }
                 else
                 {
                     // fallback nếu netmanager đã tắt
-                    netObj.Despawn(false);
+                    netObj.Despawn(true);
                 }
             }
 

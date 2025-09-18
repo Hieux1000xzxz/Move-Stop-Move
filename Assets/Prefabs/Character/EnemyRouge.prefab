@@ -563,7 +563,7 @@ MonoBehaviour:
   rangePerScore: 0.1
   moveSpeedPerScore: 0.05
   maxScale: 2.5
-  defaultWeapon: 4
+  defaultWeapon: 5
   ownerType: 1
   Score:
     m_InternalValue: 0
@@ -572,10 +572,10 @@ MonoBehaviour:
   patrolRadius: 10
   observeMinTime: 1
   observeMaxTime: 3
-  aggressionLevel: 0.7
-  curiosityLevel: 0.3
-  fearLevel: 0.6
-  attentionSpan: 1
+  aggressionLevel: 0
+  curiosityLevel: 0
+  fearLevel: 0
+  attentionSpan: 10
   rayOrigin: {fileID: 0}
   rayDistance: 2
   obstacleLayer:
@@ -596,7 +596,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 7106091414172362111}
   maxHealth: 10
-  deadLayerName: Dead
+  deadLayerName: Death
   CurrentHealth:
     m_InternalValue: 0
 --- !u!114 &-6433108579252654884
