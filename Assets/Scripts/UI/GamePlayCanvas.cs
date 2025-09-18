@@ -36,6 +36,10 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.onClick.AddListener(OnMenuOpen);
         exitGameButton.onClick.AddListener(OnExitGame);
         continueGameButton.onClick.AddListener(() => menuUI.SetActive(false));
+        if (NetworkManager.Singleton.IsHost)
+        {
+           exitGameButton.interactable = false; 
+        }
     }
     private void OnExitGame()
     {
