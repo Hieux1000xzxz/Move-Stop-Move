@@ -104,7 +104,8 @@ public class AISpawner : NetworkBehaviour
     private void SpawnAtPoint(Transform spawnPoint)
     {
         if (!GameManager.Instance.CanSpawnAI()) return;
-
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
+            return;
         // Lấy từ pool (server)
         GameObject enemy = ObjectPool.Instance.SpawnRandomEnemy();
         if (enemy == null) return;

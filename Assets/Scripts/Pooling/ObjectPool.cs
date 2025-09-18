@@ -314,15 +314,32 @@ public class ObjectPool : Singleton<ObjectPool>
     {
         for (int i = pooledGobjects.Count - 1; i >= 0; i--)
         {
-            if (pooledGobjects[i] == null)
+            var obj = pooledGobjects[i];
+            if (obj == null)
             {
-                pooledGobjects.RemoveAt(i); // bỏ hẳn object bị Destroy
+                pooledGobjects.RemoveAt(i);
                 continue;
             }
 
-            pooledGobjects[i].SetActive(false); // chỉ disable
+            var netObj = obj.GetComponent<NetworkObject>();
+            if (netObj != null && netObj.IsSpawned)
+            {
+                // ✅ Despawn khỏi mạng trước khi tắt
+                if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+                {
+                    netObj.Despawn(true); // true = destroy trên client
+                }
+                else
+                {
+                    // fallback nếu netmanager đã tắt
+                    netObj.Despawn(false);
+                }
+            }
+
+            obj.SetActive(false); // disable object trong pool
         }
     }
+
 
     public void ReleaseWeapon(GameObject obj)
     {
