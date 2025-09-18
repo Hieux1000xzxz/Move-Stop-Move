@@ -85,6 +85,7 @@ public class Player : CharacterBase
         {
             GameManager.Instance.BindCameraToPlayer(transform);
             GameManager.Instance.BindJoystick(this);
+            GameManager.Instance.BindKillScoreDisplay(scoreDisplay);
             ulong clientId = OwnerClientId;
             Vector3 spawnPos = Vector3.zero;
 
@@ -106,6 +107,11 @@ public class Player : CharacterBase
             }
 
             transform.position = spawnPos;
+        }
+
+        if (IsServer)
+        {
+            GameManager.Instance.RegisterPlayerInGame(this);
         }
     }
 

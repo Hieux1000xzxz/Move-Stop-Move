@@ -33,8 +33,30 @@ public class GameManager : NetworkBehaviour
 
     private Coroutine powerupRoutine;
     public FloatingJoystick mainJoystick;
-
     private List<GameObject> activeAIs = new List<GameObject>();
+    private List<Player> activePlayers = new List<Player>();
+
+    public IReadOnlyList<Player> ActivePlayers => activePlayers;
+
+    public void RegisterPlayerInGame(Player player)
+    {
+        if (!activePlayers.Contains(player))
+        {
+            activePlayers.Add(player);
+            Debug.Log($"✅ Player {player.name} đã đăng ký. Tổng: {activePlayers.Count}");
+        }
+    }
+
+    public void UnregisterPlayerInGame(Player player)
+    {
+        if (activePlayers.Remove(player))
+        {
+            Debug.Log($"❌ Player {player.name} đã rời game. Còn lại: {activePlayers.Count}");
+        }
+    }
+
+    public int GetPlayerCount() => activePlayers.Count;
+
     private int totalSpawned = 0;
     private int totalKilled = 0;
     private bool isGameStarted = false;
@@ -134,7 +156,7 @@ public class GameManager : NetworkBehaviour
     private void EnableGamePlaySystem()
     {
         aiSpawner.enabled = true;
-        zoomController.baseFOV = 40f;
+        zoomController.baseFOV = 60f;
         zoomController.baseFollowY = 15f;
         enemyIndicatorManager.enabled = true;
         interactionCanvas.Show();
@@ -147,6 +169,11 @@ public class GameManager : NetworkBehaviour
             mainCamera.Follow = player;
             mainCamera.LookAt = player;
         }
+    }
+
+    public void BindKillScoreDisplay(KillScoreDisplay killScore)
+    {
+        zoomController.SetUp(killScore);
     }
     public void ShowMainMenu()
     {

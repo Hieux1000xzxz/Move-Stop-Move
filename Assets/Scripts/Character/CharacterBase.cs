@@ -30,7 +30,7 @@ public abstract class CharacterBase : NetworkBehaviour
     protected WeaponBase currentWeapon;
 
     [Header("Score Settings")]
-    [SerializeField] private KillScoreDisplay scoreDisplay;
+    [SerializeField] protected KillScoreDisplay scoreDisplay;
     [SerializeField] private float sizePerScore = 0.05f;
     [SerializeField] private float rangePerScore = 0.1f;
     [SerializeField] private float moveSpeedPerScore = 0.1f;
