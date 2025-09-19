@@ -133,4 +133,18 @@ public class Player : CharacterBase
         joystick = js;
     }
 
+    private void OnDestroy()
+    {
+        if (IsServer)
+        {
+            GameManager.Instance.UnregisterPlayerInGame(this);
+        }
+    }
+    private void OnDisable()
+    {
+        if (IsServer)
+        {
+            GameManager.Instance.UnregisterPlayerInGame(this);
+        }
+    }
 }

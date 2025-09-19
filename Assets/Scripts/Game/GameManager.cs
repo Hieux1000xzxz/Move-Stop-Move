@@ -43,7 +43,6 @@ public class GameManager : NetworkBehaviour
         if (!activePlayers.Contains(player))
         {
             activePlayers.Add(player);
-            Debug.Log($"✅ Player {player.name} đã đăng ký. Tổng: {activePlayers.Count}");
         }
     }
 
@@ -51,7 +50,6 @@ public class GameManager : NetworkBehaviour
     {
         if (activePlayers.Remove(player))
         {
-            Debug.Log($"❌ Player {player.name} đã rời game. Còn lại: {activePlayers.Count}");
         }
     }
 
@@ -106,6 +104,7 @@ public class GameManager : NetworkBehaviour
     public int GetRemainingQuota() { return currentAIQuota; }
     public int GetTotalKilled() { return totalKilled; }
 
+    public int GetActivePlayerCount() { return activePlayers.Count; }
     public void ResetGame()
     {
         currentAIQuota = totalAIQuota;

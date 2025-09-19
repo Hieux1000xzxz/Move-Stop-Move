@@ -141,6 +141,7 @@ public class WeaponBase : NetworkBehaviour
                 ReturnToHandServerRpc();
             }
         }
+        
     }
 
 

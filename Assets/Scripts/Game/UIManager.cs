@@ -6,6 +6,7 @@ public class UIManager : Singleton<UIManager>
 {
     [Header("AI Counter")]
     [SerializeField] private TextMeshProUGUI aiCounterText;
+    [SerializeField] private TextMeshProUGUI alivePlayerCountText;
     [SerializeField] private string displayFormat = "Enemies Left: {0}";
 
     [Header("Canvases")]
@@ -26,7 +27,7 @@ public class UIManager : Singleton<UIManager>
         int remainingAI = GameManager.Instance.GetRemainingQuota();
         int activeAI = GameManager.Instance.GetActiveAICount();
         int totalRemaining = remainingAI + activeAI;
-
+        alivePlayerCountText.text = "Alive Players: " + GameManager.Instance.GetActivePlayerCount();
         if (totalRemaining <= 0)
         {
             aiCounterText.text = "All Enemies Defeated!";

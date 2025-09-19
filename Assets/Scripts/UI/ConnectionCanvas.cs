@@ -477,6 +477,7 @@ public class ConnectionCanvas : BaseCanvas
                 localUserName = playerName;
                 ShowLobbyUI(lobby);
                 JoinLobby(lobby.hostIpAddress, lobby.hostPort);
+                mainPanel.SetActive(false);
                 RefreshLobbyList();
             }
             else
@@ -588,7 +589,6 @@ public class ConnectionCanvas : BaseCanvas
                 StartCoroutine(LeaveLobbyRoutine(currentLobbyId, user));
             }
         }
-
         ResetState();
         ResetUIState();
         RefreshLobbyList();
