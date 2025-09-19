@@ -107,7 +107,6 @@ public class AISpawner : NetworkBehaviour
     {
         if (!GameManager.Instance.CanSpawnAI())
         {
-            Debug.Log("❌ Quota full");
             return;
         }
 

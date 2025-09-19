@@ -34,6 +34,8 @@ public class GameManager : NetworkBehaviour
     public FloatingJoystick mainJoystick;
     private List<GameObject> activeAIs = new List<GameObject>();
     private List<Player> activePlayers = new List<Player>();
+    private List<NetworkObject> activeEntities = new List<NetworkObject>();
+
 
     public NetworkVariable<int> ActiveAICount = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -111,6 +113,11 @@ public class GameManager : NetworkBehaviour
             totalSpawned++;
             ActiveAICount.Value = activeAIs.Count;
             RemainingAIQuota.Value = currentAIQuota;
+            var netObj = ai.GetComponent<NetworkObject>();
+            if (netObj != null && !activeEntities.Contains(netObj))
+            {
+                activeEntities.Add(netObj);
+            }
         }
     }
   
@@ -121,6 +128,12 @@ public class GameManager : NetworkBehaviour
         {
             totalKilled++;
             ActiveAICount.Value = activeAIs.Count;
+            var netObj = ai.GetComponent<NetworkObject>();
+            if (netObj != null)
+            {
+                activeEntities.Remove(netObj);
+            }
+            CheckLastSurvivor();
         }
     }
 
@@ -128,6 +141,11 @@ public class GameManager : NetworkBehaviour
     {
         activePlayers.Add(player);
         ActivePlayerCount.Value = activePlayers.Count;
+        var netObj = player.GetComponent<NetworkObject>();
+        if (netObj != null && !activeEntities.Contains(netObj))
+        {
+            activeEntities.Add(netObj);
+        }
     }
 
     public void UnregisterPlayerInGame(Player player)
@@ -135,8 +153,41 @@ public class GameManager : NetworkBehaviour
         if (activePlayers.Remove(player))
         {
             ActivePlayerCount.Value = activePlayers.Count;
+            var netObj = player.GetComponent<NetworkObject>();
+            if (netObj != null)
+            {
+                activeEntities.Remove(netObj);
+            }
+            CheckLastSurvivor();
         }
     }
+    private void CheckLastSurvivor()
+    {
+        if (!IsServer) return;
+
+        if (activeEntities.Count == 1)
+        {
+            var lastNetObj = activeEntities[0];
+            if (lastNetObj != null)
+            {
+                FocusCameraOnTargetClientRpc(lastNetObj);
+            }
+        }
+    }
+
+    [ClientRpc]
+    private void FocusCameraOnTargetClientRpc(NetworkObjectReference targetRef)
+    {
+        if (targetRef.TryGet(out NetworkObject netObj))
+        {
+            Transform t = netObj.transform;
+            if (t != null)
+            {
+                BindCameraToPlayer(t);
+            }
+        }
+    }
+
 
     public int GetRemainingQuota() { return currentAIQuota; }
     public int GetTotalKilled() { return totalKilled; }
