@@ -30,7 +30,6 @@ public class WeaponBase : NetworkBehaviour
     {
         owner = character;
         spawnPoint = hand;
-        Debug.Log($"{name} Init cho owner={owner.name}, IsServer={NetworkManager.Singleton.IsServer}, IsClient={NetworkManager.Singleton.IsClient}");
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.Euler(handRotationOffset);
 
@@ -38,7 +37,6 @@ public class WeaponBase : NetworkBehaviour
         if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
         {
             netObj.Spawn(true);
-              Debug.Log($"{name} được Server spawn NetworkObject");
         }
 
         isFollowing = true;
@@ -62,17 +60,13 @@ public class WeaponBase : NetworkBehaviour
         bool isServer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
         bool isClient = NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient;
 
-        Debug.Log($"{name} {(isServer ? "[Server]" : "[Client]")} bắt đầu Launch từ {transform.position} hướng {dir}");
-
         if (isFlying)
         {
-            Debug.LogWarning($"{name} đang bay rồi, không thể bắn lại!");
             return;
         }
 
         if (rb == null)
         {
-            Debug.LogError($"{name} KHÔNG có Rigidbody!");
             return;
         }
 
@@ -83,19 +77,14 @@ public class WeaponBase : NetworkBehaviour
         transform.position = spawnPoint.position;
         transform.rotation = Quaternion.LookRotation(-dir) * Quaternion.Euler(handRotationOffset);
         rb.linearVelocity = dir * speed;
-
-
-        Debug.Log($"{name} được bắn từ vị trí {spawnPoint.position} theo hướng {dir}, tốc độ {speed}");
         launchPos = transform.position;
-
-        //StartRotation();
     }
 
     protected virtual void ReturnToHand()
     {
         if (owner == null || owner.health.IsDead)
         {
-            gameObject.SetActive(false); // 🔥 auto ẩn nếu chủ đã chết
+            gameObject.SetActive(false); 
             return;
         }
 
@@ -115,7 +104,7 @@ public class WeaponBase : NetworkBehaviour
 
     protected virtual void Update()
     {
-        if (!NetworkManager.Singleton.IsServer) return; // chỉ server tính toán
+        if (!NetworkManager.Singleton.IsServer) return; 
         if (isFlying && owner != null)
         {
             float dist = Vector3.Distance(launchPos, transform.position);
@@ -133,7 +122,6 @@ public class WeaponBase : NetworkBehaviour
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
         {
-            Debug.Log($"{name} hit {victim.name}, gửi NotifyHitServerRpc()");
             NotifyHitServerRpc(victim.NetworkObject);
 
             if (NetworkManager.Singleton.IsServer)
@@ -193,7 +181,6 @@ public class WeaponBase : NetworkBehaviour
         {
             victim.characterCollider.enabled = false;
         }
-        Debug.Log($"{name} [Server] NotifyHitServerRpc: {victim.name}, damage={damage}");
     }
     public override void OnNetworkSpawn()
     {
@@ -224,12 +211,10 @@ public class WeaponBase : NetworkBehaviour
         {
             spawnPoint = newOwner.weaponSpawnPoint;
         }
-        Debug.Log($"{name} SetOwner -> {newOwner?.name}");
     }
 
     public void ClearOwner()
     {
-        Debug.Log($"{name} ClearOwner từ {owner?.name}");
         owner = null;
         spawnPoint = null;
     }

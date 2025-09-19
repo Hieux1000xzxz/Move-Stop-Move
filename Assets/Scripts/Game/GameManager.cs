@@ -118,7 +118,6 @@ public class GameManager : NetworkBehaviour
         if (isGameStarted) return;
         isGameStarted = true;
 
-        Debug.Log("GameOver called on this client");
         UIManager.Instance.CloseAllUI();
         GameOver();
     }
@@ -194,7 +193,6 @@ public class GameManager : NetworkBehaviour
 
         if (powerupRoutine == null)
         {
-            Debug.Log("▶️ Bắt đầu coroutine spawn powerups...");
             powerupRoutine = StartCoroutine(SpawnPowerupRoutine());
         }
     }
@@ -205,7 +203,6 @@ public class GameManager : NetworkBehaviour
 
         if (powerupRoutine != null)
         {
-            Debug.Log("⏹ Dừng coroutine spawn powerups");
             StopCoroutine(powerupRoutine);
             powerupRoutine = null;
         }
@@ -213,11 +210,11 @@ public class GameManager : NetworkBehaviour
 
     private IEnumerator SpawnPowerupRoutine()
     {
-        yield return new WaitForSeconds(5f); // delay ban đầu
+        yield return new WaitForSeconds(5f); 
         while (true)
         {
             SpawnPowerup();
-            yield return new WaitForSeconds(12f); // chu kỳ spawn
+            yield return new WaitForSeconds(12f); 
         }
     }
 
@@ -226,7 +223,6 @@ public class GameManager : NetworkBehaviour
         if (!IsServer) return;
         if (spawnPoints.Length == 0)
         {
-            Debug.LogError("❌ Không có spawnPoints nào trong GameManager!");
             return;
         }
 
@@ -238,7 +234,6 @@ public class GameManager : NetworkBehaviour
         if (obj == null) return;
 
         obj.GetComponent<Powerup>().SetType(type);
-        Debug.Log($"✅ Spawn {type} tại {spawnPoint.position}");
     }
 
     public void HidePlayerPreview()
@@ -258,7 +253,7 @@ public class GameManager : NetworkBehaviour
 
     public void SpawnOnlineAI(Vector3 pos)
     {
-        if (!IsServer) return; // chỉ Host/Server spawn
+        if (!IsServer) return;
 
         GameObject aiObj = ObjectPool.Instance.SpawnRandomEnemy(pos);
         if (aiObj != null)
@@ -266,11 +261,10 @@ public class GameManager : NetworkBehaviour
             var netObj = aiObj.GetComponent<NetworkObject>();
             if (netObj != null && !netObj.IsSpawned)
             {
-                netObj.Spawn(true); // sync xuống tất cả client
+                netObj.Spawn(true); 
             }
 
             RegisterAI(aiObj);
-            Debug.Log($"✅ [Online] Spawned AI tại {pos}");
         }
     }
 

@@ -31,7 +31,6 @@ public class PowerupSpawner : NetworkBehaviour
 
     private void SpawnAtPoint(Transform point)
     {
-        // Nếu network chưa chạy thì bỏ qua
         if (!IsServer || !NetworkManager.Singleton.IsListening)
             return;
 

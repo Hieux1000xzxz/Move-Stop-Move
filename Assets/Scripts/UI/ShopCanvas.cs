@@ -31,7 +31,6 @@ public class ShopCanvas : BaseCanvas
 
     private void InitializeWeaponsGrid()
     {
-        // Clear grid trước khi khởi tạo
         foreach (Transform child in weaponsGrid)
         {
             Destroy(child.gameObject);
@@ -39,7 +38,6 @@ public class ShopCanvas : BaseCanvas
 
         weaponItems.Clear();
 
-        // Tạo item cho mỗi vũ khí
         foreach (WeaponData weapon in weapons)
         {
             GameObject weaponItemObj = Instantiate(weaponItemPrefab, weaponsGrid);
@@ -83,12 +81,8 @@ public class ShopCanvas : BaseCanvas
         bool isBought = PlayerPrefs.GetInt("WeaponBought_" + selectedWeapon.weaponName, 0) == 1;
         bool isSelected = PlayerPrefs.GetString("SelectedWeapon", "") == selectedWeapon.weaponName;
 
-        // Chưa mua → có thể bấm nút mua
-        // Đã mua → nút mua bị disable
         buyButton.interactable = !isBought;
 
-        // Đã mua nhưng chưa chọn → có thể bấm nút chọn
-        // Đang chọn → nút chọn bị disable
         selectButton.interactable = isBought && !isSelected;
     }
 
