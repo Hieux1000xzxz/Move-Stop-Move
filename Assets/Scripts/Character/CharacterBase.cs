@@ -51,7 +51,7 @@ public abstract class CharacterBase : NetworkBehaviour
     protected bool isDead = false;
     private Vector3 lastPosition;
     private Coroutine attackRoutine;
-
+    private bool hasSpawnedBefore = false;
 
     public float currentAttackRange => attackRange;
     public WeaponBase currentWeaponPublic => currentWeapon;
@@ -490,12 +490,8 @@ public abstract class CharacterBase : NetworkBehaviour
         characterCollider.enabled = true;
 
         //Weapon bug; 
-        if (currentWeapon != null)
+        if (IsServer && hasSpawnedBefore)
         {
-            //currentWeapon.transform.localPosition = Vector3.zero;
-            ////currentWeapon.transform.localRotation = Quaternion.identity;
-            //currentWeapon.gameObject.SetActive(true);
-
             ChangeWeapon(weaponType);
         }
 
@@ -517,6 +513,7 @@ public abstract class CharacterBase : NetworkBehaviour
             agent.velocity = Vector3.zero;
         }
 
+        hasSpawnedBefore = true;
     }
 
     public void ChangeWeapon(WeaponType newWeaponType)
