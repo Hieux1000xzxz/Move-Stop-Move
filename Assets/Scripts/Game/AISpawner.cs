@@ -82,6 +82,8 @@ public class AISpawner : NetworkBehaviour
         {
             if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
                 SpawnAtPoint(point);
+            else
+                break;
         }
     }
 
@@ -103,6 +105,12 @@ public class AISpawner : NetworkBehaviour
 
     private void SpawnAtPoint(Transform spawnPoint)
     {
+        if (!GameManager.Instance.CanSpawnAI())
+        {
+            Debug.Log("❌ Quota full");
+            return;
+        }
+
         if (!GameManager.Instance.CanSpawnAI()) return;
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
             return;
@@ -110,22 +118,32 @@ public class AISpawner : NetworkBehaviour
         GameObject enemy = ObjectPool.Instance.SpawnRandomEnemy();
         if (enemy == null) return;
 
-        var character = enemy.GetComponent<CharacterBase>();
+        CharacterBase character = enemy.GetComponent<CharacterBase>();
+
+        //Check1
         if (character != null) character.ResetState();
 
+
+        //CHECK 2: NavMesh
         var agent = enemy.GetComponent<NavMeshAgent>();
 
         if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
         {
+
             if (agent != null)
             {
                 agent.enabled = false;
                 enemy.transform.position = hit.position;
                 agent.enabled = true;
 
-                if (agent.isOnNavMesh)
+                if (agent != null &&  agent.isOnNavMesh)
+                {   
                     agent.Warp(hit.position);
+                    agent.isStopped = false;
+                }
+                 
             }
+
             else
             {
                 enemy.transform.position = hit.position;
@@ -135,7 +153,7 @@ public class AISpawner : NetworkBehaviour
 
             var netObj = enemy.GetComponent<NetworkObject>();
             if (netObj != null && !netObj.IsSpawned)
-                netObj.Spawn(true); // sync đến tất cả client
+                netObj.Spawn(true);
 
             spawnPointAIs[spawnPoint] = enemy;
             GameManager.Instance.RegisterAI(enemy);
@@ -145,21 +163,11 @@ public class AISpawner : NetworkBehaviour
             enemy.SetActive(false);
         }
     }
-
-
-
-
     public int GetActiveAICount()
     {
         int count = 0;
         foreach (var ai in spawnPointAIs.Values)
             if (ai != null) count++;
         return count;
-    }
-
-    private void OnDestroy()
-    {
-        if (spawnCoroutine != null)
-            StopCoroutine(spawnCoroutine);
     }
 }

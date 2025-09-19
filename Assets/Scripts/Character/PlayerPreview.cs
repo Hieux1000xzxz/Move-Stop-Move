@@ -3,8 +3,8 @@
 public class PlayerPreview : MonoBehaviour
 {
     [SerializeField] private Transform weaponSpawnPoint;
-    [SerializeField] private Vector3 weaponRotationOffset;
-    [SerializeField] private Vector3 weaponPositionOffset;
+    [SerializeField] private Vector3 weaponRotationOffset; 
+    [SerializeField] private Vector3 weaponPositionOffset; 
 
     private GameObject currentWeaponObj;
 

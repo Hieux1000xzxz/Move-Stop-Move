@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerAttackRange : NetworkBehaviour
 {
     [Header("References")]
-    [SerializeField] private LineRenderer line;          // Serialize để gán trong Inspector
+    [SerializeField] private LineRenderer line;        
     [SerializeField] private CharacterBase character;
 
 

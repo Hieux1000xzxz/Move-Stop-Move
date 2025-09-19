@@ -59,7 +59,6 @@ public class ObjectPool : Singleton<ObjectPool>
             {
                 GameObject obj = CreateGobject(item.gameObject);
 
-                // đảm bảo tắt ngay lập tức
                 obj.SetActive(false);
                 pooledGobjects.Add(obj);
             }
@@ -159,7 +158,6 @@ public class ObjectPool : Singleton<ObjectPool>
 
         obj.SetActive(true);
 
-        // ✅ Nếu có NetworkObject thì spawn trước
         var netObj = obj.GetComponent<NetworkObject>();
         if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
@@ -191,11 +189,11 @@ public class ObjectPool : Singleton<ObjectPool>
             {
                 foreach (var pre in preAllocations)
                 {
-                    if (pre.type == objType && pre.weaponType == type &&
-                        obj.name.Contains(pre.gameObject.name))
+                    if (pre.type == objType && pre.weaponType == type && obj.name.StartsWith(pre.gameObject.name))
                     {
                         return obj;
                     }
+
                 }
             }
         }

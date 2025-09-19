@@ -95,10 +95,8 @@ public class AIController : CharacterBase
     {
         lastDecisionTime = Time.time;
 
-        // ❌ Nếu chưa có target
         if (detectedTarget == null || !detectedTarget.gameObject.activeInHierarchy)
         {
-            // ✅ Chỉ gọi remainingDistance khi agent hợp lệ
             if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
             {
                 if (!isObserving && (!agent.pathPending && agent.remainingDistance <= 0.5f))
@@ -107,7 +105,6 @@ public class AIController : CharacterBase
             return;
         }
 
-        // Nếu có target
         float distance = Vector3.Distance(transform.position, detectedTarget.position);
         float timeSinceFound = Time.time - targetFoundTime;
 
