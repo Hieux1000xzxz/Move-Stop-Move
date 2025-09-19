@@ -623,9 +623,31 @@ public abstract class CharacterBase : NetworkBehaviour
                 currentWeapon = null;
             }
 
+            HideOrReleaseWeapon();
+
             StartCoroutine(DelayedDisable(1.5f));
         }
     }
+
+    private void HideOrReleaseWeapon()
+    {
+        if (currentWeapon == null) return;
+
+        if (ownerType == OwnerType.Player)
+        {
+            currentWeapon.gameObject.SetActive(false);
+        }
+        else 
+        {
+            if (IsServer)
+                ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
+            else
+                currentWeapon.gameObject.SetActive(false);
+        }
+
+        currentWeapon = null;
+    }
+
     private IEnumerator DelayedDisable(float delay)
     {
         yield return new WaitForSeconds(delay);
@@ -696,20 +718,13 @@ public abstract class CharacterBase : NetworkBehaviour
     [ServerRpc]
     public void RequestAttackServerRpc()
     {
-        Debug.Log($"{name} [Server] nhận RequestAttackServerRpc từ ClientId={OwnerClientId}, State={currentState}, isDead={isDead}");
-
+        
         if (isDead || currentState != CharacterState.Idle) return;
 
         if (!isAttacking && hasWeapon)
         {
-            Debug.Log($"{name} [Server] hợp lệ để Attack => gọi PerformAttack()");
             PerformAttack();
             PlayAttackAnimationClientRpc();
-        }
-
-        else
-        {
-            Debug.LogWarning($"{name} [Server] không hợp lệ để Attack: isAttacking={isAttacking}, hasWeapon={hasWeapon}");
         }
     }
 

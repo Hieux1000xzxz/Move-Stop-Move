@@ -106,20 +106,17 @@ public class AISpawner : NetworkBehaviour
         if (!GameManager.Instance.CanSpawnAI()) return;
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
             return;
-        // Lấy từ pool (server)
+
         GameObject enemy = ObjectPool.Instance.SpawnRandomEnemy();
         if (enemy == null) return;
 
-        // Hard reset state AI sau khi lấy từ pool
         var character = enemy.GetComponent<CharacterBase>();
         if (character != null) character.ResetState();
 
         var agent = enemy.GetComponent<NavMeshAgent>();
 
-        // Snap vào NavMesh gần điểm spawn
         if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
         {
-            // 👉 Reset NavMeshAgent để chắc chắn hoạt động
             if (agent != null)
             {
                 agent.enabled = false;
