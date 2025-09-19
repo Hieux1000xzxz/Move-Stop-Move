@@ -70,6 +70,8 @@ public class GameManager : NetworkBehaviour
         currentAIQuota = totalAIQuota;
         shopCanvas.LoadSelectedWeapon();
         DisableGamePlaySystem();
+        Application.targetFrameRate = 60;
+        QualitySettings.vSyncCount = 0;
     }
     
     public override void OnNetworkSpawn()

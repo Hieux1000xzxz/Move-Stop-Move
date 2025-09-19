@@ -31,14 +31,18 @@ public class ShopCanvas : BaseCanvas
     public void InitSelectedWeapon()
     {
         string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
+
         if (!string.IsNullOrEmpty(selectedWeaponName) && weaponItems.ContainsKey(selectedWeaponName))
         {
+            // Đã có vũ khí được chọn từ trước
             WeaponItem selectedItem = weaponItems[selectedWeaponName];
             selectedWeapon = selectedItem.WeaponData;
 
             foreach (var item in weaponItems.Values)
             {
-                item.SetChosen(item == selectedItem);
+                bool isSelected = item == selectedItem;
+                item.SetChosen(isSelected);
+                item.SetSelected(isSelected);
             }
 
             if (previewPlayer != null)
@@ -50,13 +54,38 @@ public class ShopCanvas : BaseCanvas
         }
         else
         {
-            // Nếu chưa có vũ khí nào được chọn → chọn mặc định là vũ khí đầu tiên
+            // 🔥 Lần đầu vào game -> mặc định lấy vũ khí đầu tiên trong danh sách
             if (weapons.Length > 0)
             {
-                OnWeaponSelected(weapons[0]);
+                WeaponData defaultWeapon = weapons[0]; // vũ khí đầu tiên
+                selectedWeapon = defaultWeapon;
+
+                // Cập nhật PlayerPrefs để lưu lại
+                PlayerPrefs.SetString("SelectedWeapon", defaultWeapon.weaponName);
+                PlayerPrefs.SetInt("WeaponBought_" + defaultWeapon.weaponName, 1); // coi như đã mua
+                PlayerPrefs.Save();
+
+                // Cập nhật UI
+                foreach (var item in weaponItems.Values)
+                {
+                    bool isSelected = item.WeaponData.weaponName == defaultWeapon.weaponName;
+                    item.SetBought(isSelected);   // vũ khí đầu tiên đã mua
+                    item.SetSelected(isSelected); // vũ khí đầu tiên được chọn
+                    item.SetChosen(isSelected);
+                }
+
+                if (previewPlayer != null)
+                {
+                    previewPlayer.ShowWeapon(defaultWeapon);
+                }
+
+                UpdateButtons();
             }
         }
     }
+
+
+
     private void InitializeWeaponsGrid()
     {
         foreach (Transform child in weaponsGrid)
@@ -109,12 +138,8 @@ public class ShopCanvas : BaseCanvas
         bool isBought = PlayerPrefs.GetInt("WeaponBought_" + selectedWeapon.weaponName, 0) == 1;
         bool isSelected = PlayerPrefs.GetString("SelectedWeapon", "") == selectedWeapon.weaponName;
 
-        // Chưa mua → có thể bấm nút mua
-        // Đã mua → nút mua bị disable
         buyButton.interactable = !isBought;
 
-        // Đã mua nhưng chưa chọn → có thể bấm nút chọn
-        // Đang chọn → nút chọn bị disable
         selectButton.interactable = isBought && !isSelected;
     }
 
@@ -123,7 +148,6 @@ public class ShopCanvas : BaseCanvas
     {
         if (selectedWeapon == null) return;
 
-        // Kiểm tra đủ tiền (nếu cần)
         // int currentCoins = PlayerPrefs.GetInt("Coins", 0);
         // if (currentCoins >= selectedWeapon.price)
         // {
@@ -133,7 +157,6 @@ public class ShopCanvas : BaseCanvas
         PlayerPrefs.SetInt("WeaponBought_" + selectedWeapon.weaponName, 1);
         PlayerPrefs.Save();
 
-        // Cập nhật UI
         weaponItems[selectedWeapon.weaponName].SetBought(true);
         UpdateButtons();
         // }
@@ -150,14 +173,12 @@ public class ShopCanvas : BaseCanvas
         PlayerPrefs.SetString("SelectedWeapon", selectedWeapon.weaponName);
         PlayerPrefs.Save();
 
-        // Cập nhật tất cả items
         foreach (var item in weaponItems.Values)
         {
             bool isSelected = item.WeaponData.weaponName == selectedWeapon.weaponName;
             item.SetSelected(isSelected);
         }
 
-        // Áp dụng vũ khí cho player
         if (player != null)
         {
             CharacterBase netChar = player.GetComponent<CharacterBase>();
