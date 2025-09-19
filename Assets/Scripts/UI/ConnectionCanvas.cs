@@ -89,7 +89,7 @@ public class ConnectionCanvas : BaseCanvas
         exitButton.onClick.AddListener(OnExitClicked);
         joinByIdButton.onClick.AddListener(() => ShowJoinNamePopup(null, "EnterID"));
         confirmNameButton.onClick.AddListener(OnConfirmName);
-        closeEnterNamePanelButton.onClick.AddListener(() => enterNamePopup.SetActive(false));
+        closeEnterNamePanelButton.onClick.AddListener(CloseNamePopup);
     }
 
     private void InitializeNetworkCallbacks()
@@ -337,13 +337,23 @@ public class ConnectionCanvas : BaseCanvas
             gameplayCanvas.UpdateExitButtonState(lobby);
         }
     }
+    private void CloseNamePopup()
+    {
+        enterNamePopup.SetActive(false);
+        ResetPopupState();
+    }
 
+    private void ResetPopupState()
+    {
+        currentPopupMode = NamePopupMode.None;
+        pendingLobbyName = string.Empty;
+        pendingLobbyToJoin = null;
+        isCreatingLobby = false;
+    }
     private void OnConfirmName()
     {
         string input = nameInputField.text.Trim();
-
-        if (string.IsNullOrEmpty(input))
-            return;
+        if (string.IsNullOrEmpty(input)) return;
 
         if (input.Length > 8)
         {
@@ -355,48 +365,51 @@ public class ConnectionCanvas : BaseCanvas
         switch (currentPopupMode)
         {
             case NamePopupMode.EnterLobbyName:
-                pendingLobbyName = input.Length > 8 ? input.Substring(0, 8) : input;
+                pendingLobbyName = input;
                 currentPopupMode = NamePopupMode.EnterPlayerName;
                 ShowNamePopup("Enter your name");
                 break;
 
             case NamePopupMode.EnterPlayerName:
-                localUserName = input.Length > 8 ? input.Substring(0, 8) : input;
+                localUserName = input;
                 enterNamePopup.SetActive(false);
-
-                string hostId = System.Guid.NewGuid().ToString();
-                PlayerPrefs.SetString("PlayerId", hostId);
-                PlayerPrefs.SetString("PlayerName", localUserName);
-
+                SavePlayerPrefs(localUserName);
                 isCreatingLobby = false;
-                StopAllCoroutines();
                 mainPanel.SetActive(false);
-
                 StartCoroutine(StartHostRoutine(localUserName, pendingLobbyName));
-                pendingLobbyName = string.Empty;
+                // RESET
+                pendingLobbyName = "";
                 currentPopupMode = NamePopupMode.None;
                 break;
 
             case NamePopupMode.EnterLobbyId:
-                string enteredLobbyId = input;
-                pendingLobbyToJoin = new LobbyInfo { lobbyId = enteredLobbyId };
+                pendingLobbyToJoin = new LobbyInfo { lobbyId = input };
                 currentPopupMode = NamePopupMode.JoinLobby;
                 ShowNamePopup("Enter your name");
                 break;
 
             case NamePopupMode.JoinLobby:
-                localUserName = input.Length > 8 ? input.Substring(0, 8) : input;
+                localUserName = input;
                 enterNamePopup.SetActive(false);
+                SavePlayerPrefs(localUserName);
                 if (pendingLobbyToJoin != null)
                 {
-                    string lobbyId = pendingLobbyToJoin.lobbyId;
-                    StartCoroutine(JoinLobbyRoutine(lobbyId, localUserName));
-                    pendingLobbyToJoin = null;
+                    StartCoroutine(JoinLobbyRoutine(pendingLobbyToJoin.lobbyId, localUserName));
                 }
+                // RESET
+                pendingLobbyToJoin = null;
                 currentPopupMode = NamePopupMode.None;
                 break;
         }
     }
+
+    private void SavePlayerPrefs(string playerName)
+    {
+        string playerId = System.Guid.NewGuid().ToString();
+        PlayerPrefs.SetString("PlayerId", playerId);
+        PlayerPrefs.SetString("PlayerName", playerName);
+    }
+
 
     private IEnumerator StartHostRoutine(string hostName, string lobbyName)
     {
