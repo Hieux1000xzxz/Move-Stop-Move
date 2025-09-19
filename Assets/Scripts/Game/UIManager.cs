@@ -15,35 +15,50 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] private ConnectionCanvas connectionCanvas;
     [SerializeField] private LoadingCanvas loadingCanvas;
     [SerializeField] private NotificationCanvas notificationCanvas;
-    private void Update()
-    {
-        UpdateAICounter();
-    }
 
-    private void UpdateAICounter()
+    public void SendQuotaUpdate(int quota)
     {
-        if (GameManager.Instance == null || aiCounterText == null) return;
+        if (aiCounterText == null) return;
 
-        int remainingAI = GameManager.Instance.GetRemainingQuota();
-        int activeAI = GameManager.Instance.GetActiveAICount();
-        int totalRemaining = remainingAI + activeAI;
-        alivePlayerCountText.text = "Alive Players: " + GameManager.Instance.GetActivePlayerCount();
-        if (totalRemaining <= 0)
+        if (quota <= 0)
         {
             aiCounterText.text = "All Enemies Defeated!";
             aiCounterText.color = Color.green;
         }
         else
         {
-            aiCounterText.text = string.Format(displayFormat, totalRemaining);
-            aiCounterText.color = totalRemaining <= 10 ? Color.red : Color.white;
+            aiCounterText.text = string.Format(displayFormat, quota);
+            aiCounterText.color = quota <= 10 ? Color.red : Color.white;
         }
+    }
+
+    public void SendAICountUpdate(int activeAI)
+    {
+        //if (aiCounterText == null) return;
+        //int remainingAI = GameManager.Instance.GetRemainingQuota();
+        //int totalRemaining = remainingAI + activeAI;
+
+        //if (totalRemaining <= 0)
+        //{
+        //    aiCounterText.text = "All Enemies Defeated!";
+        //    aiCounterText.color = Color.green;
+        //}
+        //else
+        //{
+        //    aiCounterText.text = string.Format(displayFormat, totalRemaining);
+        //    aiCounterText.color = totalRemaining <= 10 ? Color.red : Color.white;
+        //}
+    }
+
+    public void SendPlayerCountUpdate(int current)
+    {
+        if (alivePlayerCountText == null) return;
+        alivePlayerCountText.text = "Alive Players: " + current;
     }
 
     public void OpenUI(BaseCanvas canvas)
     {
         if (canvas == null) return;
-
         CloseAllUI();
         canvas.Show();
     }
@@ -59,26 +74,24 @@ public class UIManager : Singleton<UIManager>
         if (shopCanvas != null) shopCanvas.Hide();
         if (connectionCanvas != null) connectionCanvas.Hide();
     }
+
     public void StartGame()
     {
         mainMenuCanvas.Hide();
         shopCanvas.Hide();
-
-        if(NetworkManager.Singleton.IsServer)
+        if (NetworkManager.Singleton.IsServer)
         {
             GameManager.Instance.StartGame();
             GameManager.Instance.StartGameClientRpc();
         }
-
         else
         {
             GameManager.Instance.RequestStartGameServerRpc();
         }
     }
-    public void OpenNoti(BaseCanvas canvas)
-    {
-        canvas.Show();
-    }
+
+    public void OpenNoti(BaseCanvas canvas) => canvas.Show();
+
     public void SendNotification(string message)
     {
         if (notificationCanvas != null)
@@ -86,6 +99,7 @@ public class UIManager : Singleton<UIManager>
             notificationCanvas.SetText(message);
         }
     }
+
     public void OpenLoadingCanvas() => OpenUI(loadingCanvas);
     public void OpenMainMenu() => OpenUI(mainMenuCanvas);
     public void OpenShop() => OpenUI(shopCanvas);
@@ -95,5 +109,5 @@ public class UIManager : Singleton<UIManager>
     public void CloseMainMenu() => CloseUI(mainMenuCanvas);
     public void CloseShop() => CloseUI(shopCanvas);
     public void CloseNetwork() => CloseUI(connectionCanvas);
-    public void CloseNotification() => CloseUI(notificationCanvas); 
+    public void CloseNotification() => CloseUI(notificationCanvas);
 }

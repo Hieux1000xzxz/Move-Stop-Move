@@ -30,22 +30,17 @@ public class GameManager : NetworkBehaviour
     [Header("UI / Preview")]
     [SerializeField] private GameObject playerPreview;
 
-    // Network Variables để đồng bộ
-    private NetworkVariable<int> syncedPlayerCount = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private NetworkVariable<int> syncedAICount = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private NetworkVariable<int> syncedKillCount = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
     private Coroutine powerupRoutine;
     public FloatingJoystick mainJoystick;
     private List<GameObject> activeAIs = new List<GameObject>();
     private List<Player> activePlayers = new List<Player>();
 
-    public IReadOnlyList<Player> ActivePlayers => activePlayers;
-
-    // Properties để truy cập số lượng đồng bộ
-    public int PlayerCount => syncedPlayerCount.Value;
-    public int AICount => syncedAICount.Value;
-    public int KillCount => syncedKillCount.Value;
+    public NetworkVariable<int> ActiveAICount = new NetworkVariable<int>(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> ActivePlayerCount = new NetworkVariable<int>(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> RemainingAIQuota = new NetworkVariable<int>(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private int totalSpawned = 0;
     private int totalKilled = 0;
@@ -67,41 +62,41 @@ public class GameManager : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        if (IsServer)
+        if (IsClient)
         {
-            UpdateSyncedCounts();
+            ActiveAICount.OnValueChanged += OnAICountChanged;
+            ActivePlayerCount.OnValueChanged += OnPlayerCountChanged;
+            RemainingAIQuota.OnValueChanged += OnQuotaChanged;
+            //UIManager.Instance?.SendAICountUpdate(ActiveAICount.Value);
+            UIManager.Instance?.SendPlayerCountUpdate(ActivePlayerCount.Value);
+            UIManager.Instance?.SendQuotaUpdate(RemainingAIQuota.Value);
         }
     }
 
-    // Cập nhật tất cả network variables (chỉ server)
-    private void UpdateSyncedCounts()
+    private void OnDestroy()
     {
-        if (!IsServer) return;
-
-        syncedPlayerCount.Value = activePlayers.Count;
-        syncedAICount.Value = activeAIs.Count;
-        syncedKillCount.Value = totalKilled;
-    }
-
-    public void RegisterPlayerInGame(Player player)
-    {
-        if (!activePlayers.Contains(player))
+        if (IsClient)
         {
-            activePlayers.Add(player);
-            if (IsServer) UpdateSyncedCounts();
+            ActiveAICount.OnValueChanged -= OnAICountChanged;
+            ActivePlayerCount.OnValueChanged -= OnPlayerCountChanged;
+            RemainingAIQuota.OnValueChanged -= OnQuotaChanged;
         }
     }
 
-    public void UnregisterPlayerInGame(Player player)
+    private void OnAICountChanged(int prev, int current)
     {
-        if (activePlayers.Remove(player))
-        {
-            if (IsServer) UpdateSyncedCounts();
-        }
+        UIManager.Instance?.SendAICountUpdate(current);
     }
 
-    public int GetPlayerCount() => PlayerCount;
+    private void OnPlayerCountChanged(int prev, int current)
+    {
+        UIManager.Instance?.SendPlayerCountUpdate(current);
+    }
 
+    private void OnQuotaChanged(int prev, int current)
+    {
+        UIManager.Instance?.SendQuotaUpdate(current);
+    }
     public bool CanSpawnAI()
     {
         return currentAIQuota > 0;
@@ -109,43 +104,57 @@ public class GameManager : NetworkBehaviour
 
     public void RegisterAI(GameObject ai)
     {
-        if (!IsServer) return;
-        if (currentAIQuota > 0)
+        if (IsServer && currentAIQuota > 0)
         {
             activeAIs.Add(ai);
             currentAIQuota--;
             totalSpawned++;
-            if (IsServer) UpdateSyncedCounts();
+            ActiveAICount.Value = activeAIs.Count;
+            RemainingAIQuota.Value = currentAIQuota;
         }
     }
+  
 
     public void UnregisterAI(GameObject ai)
     {
-        if (activeAIs.Remove(ai))
+        if (IsServer && activeAIs.Remove(ai))
         {
             totalKilled++;
-            if (IsServer) UpdateSyncedCounts();
+            ActiveAICount.Value = activeAIs.Count;
         }
     }
 
-    public int GetActiveAICount() => AICount;
-    public int GetRemainingQuota() => currentAIQuota;
-    public int GetTotalKilled() => KillCount;
-    public int GetActivePlayerCount() => PlayerCount;
+    public void RegisterPlayerInGame(Player player)
+    {
+        activePlayers.Add(player);
+        ActivePlayerCount.Value = activePlayers.Count;
+    }
 
+    public void UnregisterPlayerInGame(Player player)
+    {
+        if (activePlayers.Remove(player))
+        {
+            ActivePlayerCount.Value = activePlayers.Count;
+        }
+    }
+
+    public int GetRemainingQuota() { return currentAIQuota; }
+    public int GetTotalKilled() { return totalKilled; }
+
+    public int GetRemainingPlayerCount() { return activePlayers.Count; }
     public void ResetGame()
     {
         currentAIQuota = totalAIQuota;
         totalSpawned = 0;
         totalKilled = 0;
-
         foreach (var ai in activeAIs)
         {
             if (ai != null) ai.SetActive(false);
         }
         activeAIs.Clear();
-
-        if (IsServer) UpdateSyncedCounts();
+        ActiveAICount.Value = 0;
+        ActivePlayerCount.Value = activePlayers.Count;
+        RemainingAIQuota.Value = currentAIQuota;
     }
 
     public void StartGame()
@@ -169,8 +178,6 @@ public class GameManager : NetworkBehaviour
     {
         if (isGameStarted) return;
         isGameStarted = true;
-
-        Debug.Log("GameOver called on this client");
         UIManager.Instance.CloseAllUI();
         GameOver();
     }
@@ -228,7 +235,6 @@ public class GameManager : NetworkBehaviour
         player.SetJoystick(mainJoystick);
     }
 
-    #region NETCODE
     [ServerRpc(RequireOwnership = false)]
     public void RequestStartGameServerRpc(ServerRpcParams rpcParams = default)
     {
@@ -247,15 +253,12 @@ public class GameManager : NetworkBehaviour
             StartGame();
         }
     }
-    #endregion
 
     public void StartPowerupSpawning()
     {
         if (!IsServer) return;
-
         if (powerupRoutine == null)
         {
-            Debug.Log("▶️ Bắt đầu coroutine spawn powerups...");
             powerupRoutine = StartCoroutine(SpawnPowerupRoutine());
         }
     }
@@ -263,10 +266,8 @@ public class GameManager : NetworkBehaviour
     public void StopPowerupSpawning()
     {
         if (!IsServer) return;
-
         if (powerupRoutine != null)
         {
-            Debug.Log("⏹ Dừng coroutine spawn powerups");
             StopCoroutine(powerupRoutine);
             powerupRoutine = null;
         }
@@ -285,21 +286,13 @@ public class GameManager : NetworkBehaviour
     private void SpawnPowerup()
     {
         if (!IsServer) return;
-        if (spawnPoints.Length == 0)
-        {
-            Debug.LogError("❌ Không có spawnPoints nào trong GameManager!");
-            return;
-        }
-
+        if (spawnPoints.Length == 0) return;
         int index = Random.Range(0, spawnPoints.Length);
         Transform spawnPoint = spawnPoints[index];
-
         PowerupType type = (Random.value > 0.5f) ? PowerupType.SpeedBoost : PowerupType.WeaponGrow;
         GameObject obj = ObjectPool.Instance.SpawnPowerup(type, spawnPoint.position, Quaternion.identity);
         if (obj == null) return;
-
         obj.GetComponent<Powerup>().SetType(type);
-        Debug.Log($"✅ Spawn {type} tại {spawnPoint.position}");
     }
 
     public void HidePlayerPreview()
@@ -320,7 +313,6 @@ public class GameManager : NetworkBehaviour
     public void SpawnOnlineAI(Vector3 pos)
     {
         if (!IsServer) return;
-
         GameObject aiObj = ObjectPool.Instance.SpawnRandomEnemy(pos);
         if (aiObj != null)
         {
@@ -329,7 +321,7 @@ public class GameManager : NetworkBehaviour
             {
                 netObj.Spawn(true);
             }
-            Debug.Log($"✅ [Online] Spawned AI tại {pos}");
+            RegisterAI(aiObj);
         }
     }
 }
