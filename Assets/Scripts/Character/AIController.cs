@@ -32,6 +32,10 @@ public class AIController : CharacterBase
     }
     protected override void Update()
     {
+         if (!GameManager.Instance || !GameManager.Instance.IsGameStarted)
+            return;
+
+        if (!IsServer) return;
         base.Update();
 
         if (Time.time - lastDecisionTime >= 1f)
@@ -91,23 +95,36 @@ public class AIController : CharacterBase
     {
         lastDecisionTime = Time.time;
 
+        // ❌ Nếu chưa có target
         if (detectedTarget == null || !detectedTarget.gameObject.activeInHierarchy)
         {
-            if (!isObserving && (!agent.pathPending && agent.remainingDistance <= 0.5f))
-                DecideWhenIdle();
+            // ✅ Chỉ gọi remainingDistance khi agent hợp lệ
+            if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+            {
+                if (!isObserving && (!agent.pathPending && agent.remainingDistance <= 0.5f))
+                    DecideWhenIdle();
+            }
             return;
         }
 
+        // Nếu có target
         float distance = Vector3.Distance(transform.position, detectedTarget.position);
         float timeSinceFound = Time.time - targetFoundTime;
 
         if (distance <= attackRange)
+        {
             DecideInCombat();
+        }
         else if (timeSinceFound <= attentionSpan)
+        {
             DecideNearTarget();
+        }
         else
+        {
             StartWandering();
+        }
     }
+
 
     private void DecideInCombat()
     {
@@ -249,6 +266,7 @@ public class AIController : CharacterBase
 
     protected override void CheckForAttack()
     {
+        base.CheckForAttack();
     }
 
     protected override void EndAttack()
@@ -270,4 +288,6 @@ public class AIController : CharacterBase
             Gizmos.DrawWireSphere(lastInterestPoint, 1f);
         }
     }
+
+
 }

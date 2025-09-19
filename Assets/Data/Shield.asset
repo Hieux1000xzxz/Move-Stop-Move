@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponType: 4
   weaponName: Shield
-  weaponIcon: {fileID: 21300000, guid: ff5955e4a9197b44e939da1ee80c210f, type: 3}
+  weaponIcon: {fileID: 21300000, guid: 8aa20c3f500ea164f9667d316c8c0ae7, type: 3}
   price: 0
   description: 'Speed: 14,   Medium Aoe,   Return '
+  previewPrefab: {fileID: 533960458729293413, guid: 8de5761b479ae544ab47a059cb66b6c1, type: 3}
   speed: 12
   damage: 1
+  weaponPrefab: {fileID: 7795159553526056017, guid: c7b098950134fa04382bfaefc205536b, type: 3}

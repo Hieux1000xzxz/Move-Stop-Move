@@ -272,6 +272,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   type: 1
-  duration: 2.94
+  duration: 1
   triggerCollider: {fileID: 5756172552621933500}
   netObject: {fileID: -174085888974915855}

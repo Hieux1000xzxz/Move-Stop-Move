@@ -4,14 +4,10 @@ using UnityEngine;
 [RequireComponent(typeof(LineRenderer))]
 public class PlayerAttackRange : NetworkBehaviour
 {
-    private LineRenderer line;
-    private CharacterBase character;
+    [Header("References")]
+    [SerializeField] private LineRenderer line;          // Serialize để gán trong Inspector
+    [SerializeField] private CharacterBase character;
 
-    private void Awake()
-    {
-        line = GetComponent<LineRenderer>();
-        character = GetComponent<CharacterBase>();
-    }
 
     private void Update()
     {
@@ -29,7 +25,7 @@ public class PlayerAttackRange : NetworkBehaviour
     {
         int points = 50;
         line.positionCount = points + 1;
-        line.useWorldSpace = true;
+        line.useWorldSpace = true; 
 
         Vector3 center = transform.position;
 
@@ -40,7 +36,6 @@ public class PlayerAttackRange : NetworkBehaviour
             float z = Mathf.Sin(angle) * radius;
             line.SetPosition(i, new Vector3(center.x + x, center.y + 0.05f, center.z + z));
         }
-        Debug.Log($"Drawing circle with {points} points at {center} radius {radius}");
         line.widthMultiplier = 0.05f;
     }
 

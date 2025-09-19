@@ -4,7 +4,6 @@ using Unity.Cinemachine;
 public class CinemachineZoomController : MonoBehaviour
 {
     [SerializeField] private CinemachineCamera virtualCamera;
-    [SerializeField] private KillScoreDisplay scoreDisplay;
     [SerializeField] public float baseFOV = 60f;
     [SerializeField] private float fovPerScore = 2f;
     [SerializeField] private float maxFOV = 90f;
@@ -16,7 +15,11 @@ public class CinemachineZoomController : MonoBehaviour
     [SerializeField] private float maxFollowY = 15f;
     [SerializeField] private CinemachineFollow transposer;
 
-
+    private KillScoreDisplay scoreDisplay;
+    public void SetUp(KillScoreDisplay killScore)
+    {
+        this.scoreDisplay = killScore;
+    }
     private void Update()
     {
         if (scoreDisplay == null || virtualCamera == null || transposer == null) return;

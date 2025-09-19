@@ -52,8 +52,31 @@ public class GameNetworkManager : MonoBehaviour
         }
 
         response.Approved = true;
-        response.CreatePlayerObject = true;   
+        response.CreatePlayerObject = false;   
         response.Position = spawnPos;
         response.Rotation = Quaternion.identity;
     }
+
+    private void OnEnable()
+    {
+        NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
+    }
+
+    private void OnDisable()
+    {
+        if (NetworkManager.Singleton != null)
+            NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
+    }
+
+    private void HandleClientConnected(ulong clientId)
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+
+        Vector3 spawnPos = SpawnPlayerManager.Instance.GetSpawnPosition(clientId);
+        GameObject playerPrefab = NetworkManager.Singleton.NetworkConfig.PlayerPrefab;
+        GameObject playerObj = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
+
+        playerObj.GetComponent<NetworkObject>().SpawnWithOwnership(clientId);
+    }
+
 }

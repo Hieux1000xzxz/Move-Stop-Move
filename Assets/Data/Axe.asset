@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponType: 2
   weaponName: Axe
-  weaponIcon: {fileID: 21300000, guid: adcde282b4c1b9445a3421cf589b2e19, type: 3}
+  weaponIcon: {fileID: 21300000, guid: 7f394d24ce679db4d8b5291863a14644, type: 3}
   price: 0
   description: 'Speed: 13,   Wide AoE'
+  previewPrefab: {fileID: 533960458729293413, guid: 8de5761b479ae544ab47a059cb66b6c1, type: 3}
   speed: 12
   damage: 1
+  weaponPrefab: {fileID: 7795159553526056017, guid: a8af49be756ce4342b0528b5cb473968, type: 3}

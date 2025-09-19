@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponType: 1
   weaponName: Arrow
-  weaponIcon: {fileID: 21300000, guid: db50cdf103caa3b4db26089cae5e0897, type: 3}
+  weaponIcon: {fileID: 21300000, guid: cdd40f93c80f37441a2cd77fe65feff0, type: 3}
   price: 0
   description: 'Speed: 14,   Small Aoe'
+  previewPrefab: {fileID: 533960458729293413, guid: 8de5761b479ae544ab47a059cb66b6c1, type: 3}
   speed: 12
   damage: 1
+  weaponPrefab: {fileID: 7795159553526056017, guid: 0b9cf42ee1efd974c8d2c242dd2ca171, type: 3}

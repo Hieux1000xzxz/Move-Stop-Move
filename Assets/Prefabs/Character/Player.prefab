@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7101475273743860029}
   m_Layer: 3
-  m_Name: weapon
+  m_Name: HandWeapon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -559,18 +559,21 @@ MonoBehaviour:
   characterCollider: {fileID: 7201976662141129627}
   weaponSpawnPoint: {fileID: 7101475273743860029}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
-  attackDelay: 0
+  attackDelay: 0.03
   weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
   sizePerScore: 0.05
   rangePerScore: 0.02
   moveSpeedPerScore: 0.05
   maxScale: 2.5
+  defaultWeapon: 5
+  ownerType: 0
   Score:
     m_InternalValue: 0
   NetIsMoving:
     m_InternalValue: 0
   joystick: {fileID: 6433299856123335784, guid: 0bd3649e64dbcd840962fac485ab370f, type: 3}
+  isMovingInput: 0
 --- !u!114 &1186641312026304189
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -586,7 +589,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 1840719375837626499}
   maxHealth: 10
-  deadLayerName: Dead
+  deadLayerName: Death
   CurrentHealth:
     m_InternalValue: 0
 --- !u!120 &7545416753985370068
@@ -709,6 +712,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  line: {fileID: 7545416753985370068}
+  character: {fileID: 3008413264066109357}
 --- !u!114 &746300112721650876
 MonoBehaviour:
   m_ObjectHideFlags: 0

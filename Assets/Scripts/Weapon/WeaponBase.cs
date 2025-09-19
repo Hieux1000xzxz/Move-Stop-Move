@@ -1,8 +1,10 @@
 ﻿using DG.Tweening;
+using System;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 
-public class WeaponBase : MonoBehaviour
+public class WeaponBase : NetworkBehaviour 
 {
     [Header("Weapon Settings")]
     [SerializeField] protected float speed = 12f;
@@ -15,78 +17,111 @@ public class WeaponBase : MonoBehaviour
     [SerializeField] protected RotateMode rotateMode = RotateMode.FastBeyond360;
 
     [SerializeField] protected Rigidbody rb;
-    //[SerializeField] private NetworkObject netObj;
     protected CharacterBase owner;
     protected Transform spawnPoint;
-    protected Vector3 originalPos;
-    protected Quaternion originalRot;
-    protected bool isFlying;
     protected Vector3 launchPos;
     protected Tween rotateTween;
-
+    public bool isFlying;
     public bool IsFlying => isFlying;
 
-    //public NetworkObject NetObj => netObj;  
-    //protected virtual void Awake()
-    //{
-    //    if (netObj == null)
-    //        netObj = GetComponent<NetworkObject>();
-    //}
+    private bool isFollowing = false;
+
     public virtual void Init(CharacterBase character, Transform hand)
     {
         owner = character;
         spawnPoint = hand;
-
-        //transform.SetParent(spawnPoint, false);
+        Debug.Log($"{name} Init cho owner={owner.name}, IsServer={NetworkManager.Singleton.IsServer}, IsClient={NetworkManager.Singleton.IsClient}");
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.Euler(handRotationOffset);
 
-        originalRot = transform.localRotation;
+        var netObj = GetComponent<NetworkObject>();
+        if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
+        {
+            netObj.Spawn(true);
+              Debug.Log($"{name} được Server spawn NetworkObject");
+        }
+
+        isFollowing = true;
+        isFlying = false;
+
+        rb.isKinematic = true;
+
     }
+
+    private void LateUpdate()
+    {
+        if (isFollowing && !isFlying && spawnPoint != null)
+        {
+            transform.position = spawnPoint.position;
+            transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
+        }
+    }
+
     public virtual void Launch(Vector3 dir, GameObject shooter)
     {
-        if (isFlying) return;
+        bool isServer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+        bool isClient = NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient;
 
-        //if (NetworkManager.Singleton.IsServer) NetObj.TrySetParent((Transform)null, false);
-        //transform.SetParent(null, true);
+        Debug.Log($"{name} {(isServer ? "[Server]" : "[Client]")} bắt đầu Launch từ {transform.position} hướng {dir}");
+
+        if (isFlying)
+        {
+            Debug.LogWarning($"{name} đang bay rồi, không thể bắn lại!");
+            return;
+        }
+
+        if (rb == null)
+        {
+            Debug.LogError($"{name} KHÔNG có Rigidbody!");
+            return;
+        }
+
+        isFlying = true;
+        isFollowing = false;
 
         rb.isKinematic = false;
         transform.position = spawnPoint.position;
-        transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
+        transform.rotation = Quaternion.LookRotation(-dir) * Quaternion.Euler(handRotationOffset);
         rb.linearVelocity = dir * speed;
 
+
+        Debug.Log($"{name} được bắn từ vị trí {spawnPoint.position} theo hướng {dir}, tốc độ {speed}");
         launchPos = transform.position;
-        isFlying = true;
-        StartRotation();
+
+        //StartRotation();
     }
 
     protected virtual void ReturnToHand()
     {
-        if (spawnPoint == null) return;
+        if (owner == null || owner.health.IsDead)
+        {
+            gameObject.SetActive(false); // 🔥 auto ẩn nếu chủ đã chết
+            return;
+        }
 
-        rb.isKinematic = true;
         StopRotation();
-
-        //transform.SetParent(spawnPoint, false);
-        transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.Euler(handRotationOffset);
-
-        //if (NetworkManager.Singleton.IsServer) NetObj.TrySetParent(spawnPoint, false);
-
         isFlying = false;
+        isFollowing = true;
+
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.isKinematic = true;
+
+        transform.position = spawnPoint.position;
+        transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
+
         owner?.OnWeaponReturned();
     }
 
-
-
     protected virtual void Update()
     {
+        if (!NetworkManager.Singleton.IsServer) return; // chỉ server tính toán
         if (isFlying && owner != null)
         {
             float dist = Vector3.Distance(launchPos, transform.position);
             if (dist >= owner.currentAttackRange)
             {
-                ReturnToHand();
+                ReturnToHandServerRpc();
             }
         }
     }
@@ -98,10 +133,16 @@ public class WeaponBase : MonoBehaviour
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
         {
+            Debug.Log($"{name} hit {victim.name}, gửi NotifyHitServerRpc()");
             NotifyHitServerRpc(victim.NetworkObject);
-            ReturnToHand();
+
+            if (NetworkManager.Singleton.IsServer)
+            {
+                ReturnToHandServerRpc();
+            }
         }
     }
+
 
     public virtual void ResetWeapon()
     {
@@ -152,5 +193,45 @@ public class WeaponBase : MonoBehaviour
         {
             victim.characterCollider.enabled = false;
         }
+        Debug.Log($"{name} [Server] NotifyHitServerRpc: {victim.name}, damage={damage}");
     }
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void ReturnToHandServerRpc()
+    {
+        ReturnToHand();
+        ReturnToHandClientRpc();
+    }
+
+    [ClientRpc]
+    private void ReturnToHandClientRpc()
+    {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            ReturnToHand();
+        }
+    }
+
+    // WeaponBase.cs
+
+    public void SetOwner(CharacterBase newOwner)
+    {
+        owner = newOwner;
+        if (newOwner != null)
+        {
+            spawnPoint = newOwner.weaponSpawnPoint;
+        }
+        Debug.Log($"{name} SetOwner -> {newOwner?.name}");
+    }
+
+    public void ClearOwner()
+    {
+        Debug.Log($"{name} ClearOwner từ {owner?.name}");
+        owner = null;
+        spawnPoint = null;
+    }
+
 }

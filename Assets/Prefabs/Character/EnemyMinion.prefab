@@ -365,7 +365,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_TagString
-      value: Enemy
+      value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 3296884638839033065, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_Layer
@@ -476,6 +476,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       insertIndex: -1
       addedObject: {fileID: -3577197991604517564}
+    - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -987044938739341330}
+    - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9087496472815790999}
   m_SourcePrefab: {fileID: 100100000, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
 --- !u!4 &2766019337173118189 stripped
 Transform:
@@ -543,21 +549,25 @@ MonoBehaviour:
   weaponSpawnPoint: {fileID: 7073988956984485799}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.3
-  weaponType: 3
+  weaponType: 6
   scoreDisplay: {fileID: 8459014451873918741}
   sizePerScore: 0.05
   rangePerScore: 0.1
   moveSpeedPerScore: 0.05
   maxScale: 2.5
+  defaultWeapon: 5
+  ownerType: 1
   Score:
+    m_InternalValue: 0
+  NetIsMoving:
     m_InternalValue: 0
   patrolRadius: 10
   observeMinTime: 1
   observeMaxTime: 3
-  aggressionLevel: 0.4
-  curiosityLevel: 0.7
-  fearLevel: 0.3
-  attentionSpan: 1
+  aggressionLevel: 0
+  curiosityLevel: 0
+  fearLevel: 0
+  attentionSpan: 10
   rayOrigin: {fileID: 0}
   rayDistance: 2
   obstacleLayer:
@@ -578,9 +588,70 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 888152990171484203}
   maxHealth: 10
-  deadLayerName: Dead
+  deadLayerName: Death
   CurrentHealth:
     m_InternalValue: 0
+--- !u!114 &-987044938739341330
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7193694367047912757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac31dc6908d324742a0c0ef7dcf1e8b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
+  AuthorityMode: 0
+  TickSyncChildren: 0
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  SwitchTransformSpaceWhenParented: 0
+  Interpolate: 1
+  SlerpPosition: 0
+--- !u!114 &9087496472815790999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7193694367047912757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  TransitionStateInfoList: []
+  m_Animator: {fileID: 888152990171484203}
 --- !u!1 &7612066945078981596 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3296884638839033065, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}

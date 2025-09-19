@@ -1,112 +1,177 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 public class ShopCanvas : BaseCanvas
 {
     [Header("UI References")]
-    [SerializeField] private Image weaponImage;
-    [SerializeField] private TextMeshProUGUI weaponNameText;
-    [SerializeField] private TextMeshProUGUI weaponPriceText;
-    [SerializeField] private TextMeshProUGUI weaponDescriptionText;
-
+    [SerializeField] private Transform weaponsGrid;
+    [SerializeField] private GameObject weaponItemPrefab;
     [SerializeField] private Button buyButton;
     [SerializeField] private Button selectButton;
-    [SerializeField] private Button leftArrowButton;
-    [SerializeField] private Button rightArrowButton;
     [SerializeField] private Button closeButton;
 
     [Header("Weapons Data")]
     [SerializeField] private WeaponData[] weapons;
     [SerializeField] private Player player;
+    [SerializeField] private PlayerPreview previewPlayer;
 
-    private int currentIndex = 0;
-
+    private WeaponData selectedWeapon;
+    private Dictionary<string, WeaponItem> weaponItems = new Dictionary<string, WeaponItem>();
+  
     private void Start()
     {
         buyButton.onClick.AddListener(OnBuyWeapon);
         selectButton.onClick.AddListener(OnSelectWeapon);
-        leftArrowButton.onClick.AddListener(ShowPreviousWeapon);
-        rightArrowButton.onClick.AddListener(ShowNextWeapon);
         closeButton.onClick.AddListener(CloseShop);
-        UpdateUI();
-
+        InitializeWeaponsGrid();
+        InitSelectedWeapon();
     }
-
-    private void UpdateUI()
+    public void InitSelectedWeapon()
     {
-        if (weapons.Length == 0) return;
-
-        WeaponData weapon = weapons[currentIndex];
-
-        weaponImage.sprite = weapon.weaponIcon;
-        weaponNameText.text = weapon.weaponName;
-        weaponPriceText.text = "" + weapon.price;
-        weaponDescriptionText.text = weapon.description;
-
-        bool isBought = PlayerPrefs.GetInt("WeaponBought_" + weapon.weaponName, 0) == 1;
-        string selectedWeapon = PlayerPrefs.GetString("SelectedWeapon", "");
-
-        if (isBought)
+        string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
+        if (!string.IsNullOrEmpty(selectedWeaponName) && weaponItems.ContainsKey(selectedWeaponName))
         {
-            buyButton.interactable = false;
+            WeaponItem selectedItem = weaponItems[selectedWeaponName];
+            selectedWeapon = selectedItem.WeaponData;
 
-            if (selectedWeapon == weapon.weaponName)
+            foreach (var item in weaponItems.Values)
             {
-                selectButton.interactable = false;
+                item.SetChosen(item == selectedItem);
             }
-            else
+
+            if (previewPlayer != null)
             {
-                selectButton.interactable = true;
+                previewPlayer.ShowWeapon(selectedWeapon);
             }
+
+            UpdateButtons();
         }
         else
         {
-            buyButton.interactable = true;
-            selectButton.interactable = false;
+            // Nếu chưa có vũ khí nào được chọn → chọn mặc định là vũ khí đầu tiên
+            if (weapons.Length > 0)
+            {
+                OnWeaponSelected(weapons[0]);
+            }
+        }
+    }
+    private void InitializeWeaponsGrid()
+    {
+        foreach (Transform child in weaponsGrid)
+        {
+            Destroy(child.gameObject);
+        }
+
+        weaponItems.Clear();
+
+        foreach (WeaponData weapon in weapons)
+        {
+            GameObject weaponItemObj = Instantiate(weaponItemPrefab, weaponsGrid);
+            WeaponItem weaponItem = weaponItemObj.GetComponent<WeaponItem>();
+
+            if (weaponItem != null)
+            {
+                bool isBought = PlayerPrefs.GetInt("WeaponBought_" + weapon.weaponName, 0) == 1;
+                bool isSelected = PlayerPrefs.GetString("SelectedWeapon", "") == weapon.weaponName;
+               
+                weaponItem.Initialize(weapon, isBought, isSelected);
+                weaponItem.OnWeaponSelected += OnWeaponSelected;
+
+                weaponItems.Add(weapon.weaponName, weaponItem);
+                buyButton.interactable = !isBought;
+                selectButton.interactable = isBought && isSelected;
+            }
         }
     }
 
-
-    private void ShowPreviousWeapon()
+    private void OnWeaponSelected(WeaponData weapon)
     {
-        currentIndex--;
-        if (currentIndex < 0) currentIndex = weapons.Length - 1;
-        UpdateUI();
+        selectedWeapon = weapon;
+        UpdateButtons();
+
+        foreach (var item in weaponItems.Values)
+        {
+            item.SetChosen(item.WeaponData == weapon);
+        }
+
+        if (previewPlayer != null)
+        {
+            previewPlayer.ShowWeapon(weapon);
+        }
     }
 
-    private void ShowNextWeapon()
+    private void UpdateButtons()
     {
-        currentIndex++;
-        if (currentIndex >= weapons.Length) currentIndex = 0;
-        UpdateUI();
+        if (selectedWeapon == null) return;
+
+        bool isBought = PlayerPrefs.GetInt("WeaponBought_" + selectedWeapon.weaponName, 0) == 1;
+        bool isSelected = PlayerPrefs.GetString("SelectedWeapon", "") == selectedWeapon.weaponName;
+
+        // Chưa mua → có thể bấm nút mua
+        // Đã mua → nút mua bị disable
+        buyButton.interactable = !isBought;
+
+        // Đã mua nhưng chưa chọn → có thể bấm nút chọn
+        // Đang chọn → nút chọn bị disable
+        selectButton.interactable = isBought && !isSelected;
     }
+
 
     private void OnBuyWeapon()
     {
-        WeaponData weapon = weapons[currentIndex];
-        PlayerPrefs.SetInt("WeaponBought_" + weapon.weaponName, 1);
+        if (selectedWeapon == null) return;
+
+        // Kiểm tra đủ tiền (nếu cần)
+        // int currentCoins = PlayerPrefs.GetInt("Coins", 0);
+        // if (currentCoins >= selectedWeapon.price)
+        // {
+        //     currentCoins -= selectedWeapon.price;
+        //     PlayerPrefs.SetInt("Coins", currentCoins);
+
+        PlayerPrefs.SetInt("WeaponBought_" + selectedWeapon.weaponName, 1);
         PlayerPrefs.Save();
 
-        UpdateUI();
+        // Cập nhật UI
+        weaponItems[selectedWeapon.weaponName].SetBought(true);
+        UpdateButtons();
+        // }
+        // else
+        // {
+        //     Debug.Log("Không đủ tiền!");
+        // }
     }
 
     private void OnSelectWeapon()
     {
-        WeaponData weapon = weapons[currentIndex];
+        if (selectedWeapon == null) return;
 
-        PlayerPrefs.SetString("SelectedWeapon", weapon.weaponName);
+        PlayerPrefs.SetString("SelectedWeapon", selectedWeapon.weaponName);
         PlayerPrefs.Save();
-        Debug.Log("Selected weapon: " + weapon.weaponName);
 
+        // Cập nhật tất cả items
+        foreach (var item in weaponItems.Values)
+        {
+            bool isSelected = item.WeaponData.weaponName == selectedWeapon.weaponName;
+            item.SetSelected(isSelected);
+        }
+
+        // Áp dụng vũ khí cho player
         if (player != null)
         {
-            player.ChangeWeapon(weapon.weaponType);
+            CharacterBase netChar = player.GetComponent<CharacterBase>();
+            if (netChar != null && netChar.IsOwner)
+            {
+                netChar.RequestChangeWeaponServerRpc(selectedWeapon.weaponType);
+            }
         }
         else
         {
             Debug.LogWarning("Player not found in scene!");
         }
+
+        UpdateButtons();
     }
 
     public void LoadSelectedWeapon()
@@ -121,11 +186,9 @@ public class ShopCanvas : BaseCanvas
                 {
                     player.ChangeWeapon(weapon.weaponType);
                     Debug.Log("Loaded selected weapon: " + weapon.weaponName);
-
                     return;
                 }
             }
-
             Debug.LogWarning("Selected weapon not found: " + selectedWeaponName);
         }
         else if (player == null)
@@ -136,8 +199,19 @@ public class ShopCanvas : BaseCanvas
 
     private void CloseShop()
     {
-        gameObject.SetActive(false);
+        root.SetActive(false);
+        InitSelectedWeapon();
         UIManager.Instance.OpenMainMenu();
     }
 
+    private void OnDestroy()
+    {
+        foreach (var item in weaponItems.Values)
+        {
+            if (item != null)
+            {
+                item.OnWeaponSelected -= OnWeaponSelected;
+            }
+        }
+    }
 }

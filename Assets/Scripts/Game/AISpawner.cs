@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using UnityEngine.AI;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.AI;
 
-public class AISpawner : MonoBehaviour
+public class AISpawner : NetworkBehaviour
 {
     [Header("Spawn Settings")]
     [SerializeField] private Transform[] spawnPoints;
@@ -18,6 +19,7 @@ public class AISpawner : MonoBehaviour
 
     private void Start()
     {
+        if (!IsServer) return;
         foreach (Transform point in spawnPoints)
             spawnPointAIs[point] = null;
 
@@ -27,6 +29,7 @@ public class AISpawner : MonoBehaviour
 
     private void Update()
     {
+        if (!IsServer) return;
         CleanupDeadAIs();
 
         if (HasEmptyPoints() && GameManager.Instance.CanSpawnAI() && spawnCoroutine == null)
@@ -72,12 +75,13 @@ public class AISpawner : MonoBehaviour
         }
     }
 
+
     private void FillAllPoints()
     {
         foreach (Transform point in spawnPoints)
         {
-            //if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
-            //    SpawnAtPoint(point);
+            if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
+                SpawnAtPoint(point);
         }
     }
 
@@ -89,7 +93,7 @@ public class AISpawner : MonoBehaviour
         {
             if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
             {
-                //SpawnAtPoint(point);
+                SpawnAtPoint(point);
                 yield return new WaitForSeconds(delay);
             }
         }
@@ -97,28 +101,53 @@ public class AISpawner : MonoBehaviour
         spawnCoroutine = null;
     }
 
-    //private void SpawnAtPoint(Transform spawnPoint)
-    //{
-    //    if (!GameManager.Instance.CanSpawnAI()) return;
+    private void SpawnAtPoint(Transform spawnPoint)
+    {
+        if (!GameManager.Instance.CanSpawnAI()) return;
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
+            return;
 
-    //    GameObject enemy = ObjectPool.Instance.SpawnRandom(ObjectType.Enemy);
-    //    if (enemy == null) return;
+        GameObject enemy = ObjectPool.Instance.SpawnRandomEnemy();
+        if (enemy == null) return;
 
-    //    CharacterBase character = enemy.GetComponent<CharacterBase>();
-    //    if (character != null) character.ResetState();
+        var character = enemy.GetComponent<CharacterBase>();
+        if (character != null) character.ResetState();
 
-    //    if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
-    //    {
-    //        enemy.transform.position = hit.position;
-    //        enemy.transform.rotation = spawnPoint.rotation;
-    //        spawnPointAIs[spawnPoint] = enemy;
-    //        GameManager.Instance.RegisterAI(enemy);
-    //    }
-    //    else
-    //    {
-    //        enemy.SetActive(false);
-    //    }
-    //}
+        var agent = enemy.GetComponent<NavMeshAgent>();
+
+        if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+        {
+            if (agent != null)
+            {
+                agent.enabled = false;
+                enemy.transform.position = hit.position;
+                agent.enabled = true;
+
+                if (agent.isOnNavMesh)
+                    agent.Warp(hit.position);
+            }
+            else
+            {
+                enemy.transform.position = hit.position;
+            }
+
+            enemy.transform.rotation = spawnPoint.rotation;
+
+            var netObj = enemy.GetComponent<NetworkObject>();
+            if (netObj != null && !netObj.IsSpawned)
+                netObj.Spawn(true); // sync đến tất cả client
+
+            spawnPointAIs[spawnPoint] = enemy;
+            GameManager.Instance.RegisterAI(enemy);
+        }
+        else
+        {
+            enemy.SetActive(false);
+        }
+    }
+
+
+
 
     public int GetActiveAICount()
     {

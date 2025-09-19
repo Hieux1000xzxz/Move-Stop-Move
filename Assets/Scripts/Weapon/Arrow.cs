@@ -3,5 +3,4 @@ using DG.Tweening;
 
 public class Arrow : WeaponBase
 {
-    
 }

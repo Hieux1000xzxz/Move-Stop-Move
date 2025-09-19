@@ -9,7 +9,7 @@ public class Player : CharacterBase
 {
     [SerializeField] private FloatingJoystick joystick;
     public FloatingJoystick Joystick => joystick;
-    private bool isMovingInput;
+    public bool isMovingInput;
     protected override void Start()
     {
         base.Start();
@@ -36,7 +36,7 @@ public class Player : CharacterBase
             ChangeState(CharacterState.Move);
         }
 
-        if (currentState == CharacterState.Attack && !isAttacking)
+        if (currentState == CharacterState.Attack && !isAttacking) 
         {
             Debug.Log("Player Attack requested");
             RequestAttackServerRpc();
@@ -85,6 +85,7 @@ public class Player : CharacterBase
         {
             GameManager.Instance.BindCameraToPlayer(transform);
             GameManager.Instance.BindJoystick(this);
+            GameManager.Instance.BindKillScoreDisplay(scoreDisplay);
             ulong clientId = OwnerClientId;
             Vector3 spawnPos = Vector3.zero;
 
@@ -106,6 +107,11 @@ public class Player : CharacterBase
             }
 
             transform.position = spawnPos;
+        }
+
+        if (IsServer)
+        {
+            GameManager.Instance.RegisterPlayerInGame(this);
         }
     }
 

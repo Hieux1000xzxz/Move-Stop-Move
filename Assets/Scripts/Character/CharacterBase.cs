@@ -3,13 +3,15 @@ using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
-using Unity.Netcode;
 using UnityEngine.Splines;
+using static UnityEngine.Rendering.DebugUI.Table;
 
 public enum CharacterState { Idle, Move, Attack }
 
 public abstract class CharacterBase : NetworkBehaviour
 {
+    public enum OwnerType { Player, AI }
+
     [Header("Character Settings")]
     [SerializeField] public float moveSpeed = 5f;
     [SerializeField] public NavMeshAgent agent;
@@ -21,18 +23,24 @@ public abstract class CharacterBase : NetworkBehaviour
     [SerializeField] public Collider characterCollider;
 
     [Header("Weapon Settings")]
-    [SerializeField] protected Transform weaponSpawnPoint;
+    [SerializeField] public Transform weaponSpawnPoint;
     [SerializeField] protected Vector3 weaponRotationOffset = Vector3.zero;
     [SerializeField] protected float attackDelay = 0.3f;
-    [SerializeField] protected WeaponType weaponType;
+    [SerializeField] public WeaponType weaponType;
     protected WeaponBase currentWeapon;
 
     [Header("Score Settings")]
-    [SerializeField] private KillScoreDisplay scoreDisplay;
+    [SerializeField] protected KillScoreDisplay scoreDisplay;
     [SerializeField] private float sizePerScore = 0.05f;
     [SerializeField] private float rangePerScore = 0.1f;
     [SerializeField] private float moveSpeedPerScore = 0.1f;
     [SerializeField] private float maxScale = 3f;
+
+    [Header("Default Weapon")]
+    [SerializeField] private WeaponType defaultWeapon = WeaponType.Knife;
+
+    [Header("Character Owner")]
+    [SerializeField] public OwnerType ownerType = OwnerType.Player;
 
     protected CharacterState currentState = CharacterState.Idle;
     protected Transform attackTarget;
@@ -49,9 +57,9 @@ public abstract class CharacterBase : NetworkBehaviour
     public WeaponBase currentWeaponPublic => currentWeapon;
 
     public NetworkVariable<int> Score = new NetworkVariable<int>(
-    0, NetworkVariableReadPermission.Everyone, 
+    0, NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server);
-    
+
     public NetworkVariable<bool> NetIsMoving = new NetworkVariable<bool>(
     false,
     NetworkVariableReadPermission.Everyone,
@@ -65,10 +73,7 @@ public abstract class CharacterBase : NetworkBehaviour
             lastPosition = transform.position;
         }
 
-        //if (IsServer)
-        //{
-        //    RequestSetWeaponServerRpc(WeaponType.Knife);
-        //}
+
         OnWeaponReturned();
     }
 
@@ -76,6 +81,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (!GameManager.Instance || !GameManager.Instance.IsGameStarted)
             return;
+        
         CheckForDead();
         if (isDead || health.IsDead)
         {
@@ -102,7 +108,6 @@ public abstract class CharacterBase : NetworkBehaviour
         }
 
         UpdateAnimator();
-        Debug.Log($"Position of the hand: {weaponSpawnPoint.position}");
     }
 
     protected virtual void UpdateRadar()
@@ -173,7 +178,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
         foreach (var target in targets)
         {
-            
+
             if (target.transform == transform || !target.gameObject.activeInHierarchy)
                 continue;
 
@@ -195,6 +200,11 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected void ChangeState(CharacterState newState)
     {
+        if (newState == CharacterState.Attack && currentState == CharacterState.Move)
+        {
+            Debug.Log($"{name} đang di chuyển, bỏ qua yêu cầu chuyển sang Attack");
+            return;
+        }
         if (currentState == newState) return;
 
         if (currentState == CharacterState.Attack)
@@ -245,10 +255,31 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             PerformAttack();
         }
+
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+            agent.velocity = Vector3.zero;
+        }
+
+        FaceTarget(attackTarget.position);
+
+        if (!isAttacking)
+        {
+            PerformAttack();
+        }
     }
 
     protected virtual void CheckForAttack()
     {
+        if (currentState == CharacterState.Move) return; 
+
+        if (this is Player player && player.isMovingInput)
+        {
+            return;
+        }
+
         if (attackTarget != null && attackTarget != detectedTarget)
         {
             float distanceToAttackTarget = Vector3.Distance(transform.position, attackTarget.position);
@@ -283,19 +314,25 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected virtual void PerformAttack()
     {
+        Debug.Log($"{name} PerformAttack: isAttacking={isAttacking}, hasWeapon={hasWeapon}, currentWeapon={currentWeapon?.name}");
+        if (currentState != CharacterState.Idle && currentState != CharacterState.Attack)
+        {
+            return;
+        }
+        if (currentWeapon == null)
+            return;
         if (!hasWeapon)
         {
-            DOVirtual.DelayedCall(attackDuration, () =>
-            {
-                if (animator != null)
-                {
-                    animator.SetBool("IsAttacking", false);
-                }
-            });
+            return;
         }
-        if (currentWeapon == null || !hasWeapon) return;
-        if (currentWeapon.IsFlying) return;
-        if (Time.time < nextAttackTime) return;
+        if (currentWeapon.IsFlying)
+        {
+            return;
+        }
+        if (Time.time < nextAttackTime)
+        {
+            return;
+        }
 
         isAttacking = true;
         hasWeapon = false;
@@ -310,18 +347,20 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             StopCoroutine(attackRoutine);
         }
-        attackRoutine = StartCoroutine(AttackRoutine());
+        attackRoutine = StartCoroutine(AttackRoutine()); Debug.Log($"{name} PerformAttack: isAttacking={isAttacking}, hasWeapon={hasWeapon}, currentWeapon={currentWeapon?.name}");
     }
 
     private IEnumerator AttackRoutine()
     {
         yield return new WaitForSeconds(attackDelay);
-
-        if (currentWeapon != null && attackTarget != null)
+        if (IsOwner)  // chỉ owner gửi request lên server
         {
-            ThrowWeapon();
+            RequestLaunchServerRpc();
         }
-
+        else
+        {
+            Debug.Log($"{name} không phải Owner, không gửi yêu cầu bắn");
+        }
         yield return new WaitForSeconds(0.1f);
 
         if (animator != null)
@@ -330,8 +369,11 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
+
+
     public virtual void OnWeaponReturned()
     {
+        Debug.Log($"{name} nhận OnWeaponReturned từ {currentWeapon?.name}");
         isAttacking = false;
         hasWeapon = true;
     }
@@ -344,7 +386,7 @@ public abstract class CharacterBase : NetworkBehaviour
             Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(weaponRotationOffset);
             currentWeapon.transform.rotation = rot;
 
-            if(IsServer)
+            if (IsServer)
             {
                 currentWeapon.Launch(dir, this.gameObject);
 
@@ -356,6 +398,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected virtual void EndAttack()
     {
+        Debug.Log($"{name} EndAttack: reset trạng thái, vũ khí={(currentWeapon != null ? currentWeapon.name : "null")}");
         if (attackRoutine != null)
         {
             StopCoroutine(attackRoutine);
@@ -369,8 +412,14 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             currentWeapon.ResetWeapon();
         }
+        
+        if (agent != null && agent.isActiveAndEnabled && !isDead)
+        {
+            agent.isStopped = false;
+        }
 
         nextAttackTime = Time.time;
+
     }
 
     protected virtual void Move(Vector3 direction)
@@ -403,8 +452,8 @@ public abstract class CharacterBase : NetworkBehaviour
 
     public void AddScore(int value)
     {
-       if(!IsServer) return;
-       Score.Value += value;
+        if (!IsServer) return;
+        Score.Value += value;
     }
 
     private void UpdateCharacterStats()
@@ -413,7 +462,12 @@ public abstract class CharacterBase : NetworkBehaviour
 
         float newScale = Mathf.Min(1f + scoreDisplay.CurrentScore * sizePerScore, maxScale);
         transform.localScale = Vector3.one * newScale;
-        currentWeapon.transform.localScale = Vector3.one * newScale;
+
+        if (currentWeapon != null)
+        {
+            currentWeapon.transform.localScale = Vector3.one * newScale;
+        }
+
         attackRange += scoreDisplay.CurrentScore * rangePerScore;
         moveSpeed += moveSpeedPerScore;
 
@@ -436,7 +490,6 @@ public abstract class CharacterBase : NetworkBehaviour
         characterCollider.enabled = true;
         if (currentWeapon != null)
         {
-            //currentWeapon.transform.SetParent(weaponSpawnPoint);
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.identity;
             currentWeapon.gameObject.SetActive(true);
@@ -459,35 +512,49 @@ public abstract class CharacterBase : NetworkBehaviour
             agent.ResetPath();
             agent.velocity = Vector3.zero;
         }
-       
+
     }
 
     public void ChangeWeapon(WeaponType newWeaponType)
     {
+        if (!IsServer) return;
+
         if (currentWeapon != null)
         {
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
+            currentWeapon.ClearOwner();
             currentWeapon = null;
         }
 
-        var go = ObjectPool.Instance.SpawnWeaponByType(newWeaponType);
+        GameObject go = null;
+
+        // Phân biệt Player và Enemy
+        if (ownerType == OwnerType.Player)
+        {
+            go = ObjectPool.Instance.SpawnPlayerWeaponByType(newWeaponType, weaponSpawnPoint);
+        }
+        else if (ownerType == OwnerType.AI)
+        {
+            go = ObjectPool.Instance.SpawnAIWeaponByType(newWeaponType, weaponSpawnPoint);
+        }
+
+        if (go == null) return;
+
         currentWeapon = go.GetComponent<WeaponBase>();
-
-        //currentWeapon.transform.SetParent(weaponSpawnPoint, false);
-        currentWeapon.transform.localPosition = Vector3.zero;
-        currentWeapon.transform.localRotation = Quaternion.Euler(weaponRotationOffset);
-
-        //if (IsServer && !currentWeapon.NetObj.IsSpawned)
-        //    currentWeapon.NetObj.Spawn(true);
-        //AttachWeaponClientRpc(currentWeapon.NetObj, newWeaponType);
-        //if (IsServer) currentWeapon.NetObj.TrySetParent(weaponSpawnPoint, false);
-
         currentWeapon.Init(this, weaponSpawnPoint);
+        currentWeapon.SetOwner(this);
+
+        var netObj = currentWeapon.GetComponent<NetworkObject>();
+        if (netObj != null && !netObj.IsSpawned)
+        {
+            netObj.Spawn(true);
+        }
+
+        // luôn sync weapon cho client
+        AssignWeapon(currentWeapon);
+        SetWeaponClientRpc(netObj, this.NetworkObject);
+
     }
-
-
-
-
 
     protected virtual void OnDisable()
     {
@@ -528,25 +595,91 @@ public abstract class CharacterBase : NetworkBehaviour
                 agent.velocity = Vector3.zero;
                 agent.ResetPath();
             }
+            
             isDead = true;
+
+            if (animator != null)
+            {
+                animator.SetBool("IsMoving", false);
+                animator.SetBool("IsAttacking", false);
+                animator.SetTrigger("Death");
+            }
+
+            if (IsServer)
+            {
+                PlayDeathAnimationClientRpc();
+            }
+
+            if (currentWeapon != null)
+            {
+                if (IsServer)
+                {
+                    ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
+                }
+                else
+                {
+                    currentWeapon.gameObject.SetActive(false);
+                }
+                currentWeapon = null;
+            }
+
+            HideOrReleaseWeapon();
+
+            StartCoroutine(DelayedDisable(1.5f));
         }
     }
 
+    private void HideOrReleaseWeapon()
+    {
+        if (currentWeapon == null) return;
+
+        if (ownerType == OwnerType.Player)
+        {
+            currentWeapon.gameObject.SetActive(false);
+        }
+        else 
+        {
+            if (IsServer)
+                ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
+            else
+                currentWeapon.gameObject.SetActive(false);
+        }
+
+        currentWeapon = null;
+    }
+
+    private IEnumerator DelayedDisable(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        gameObject.SetActive(false);
+    }
     protected virtual void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+    }
+    public void AssignWeapon(WeaponBase weapon)
+    {
+        currentWeapon = weapon;
+        currentWeapon.Init(this, weaponSpawnPoint);
+        Debug.Log($"{name} AssignWeapon -> currentWeapon={weapon.name}");
     }
 
     #region Network Methods
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        if (IsOwner)
+        {
+            string savedWeapon = PlayerPrefs.GetString("SelectedWeapon", WeaponType.Knife1.ToString());
 
-        //if(IsServer)
-        //{
-        //    RequestSetWeaponServerRpc(WeaponType.Shield);
-        //}
+            if (!System.Enum.TryParse(savedWeapon, out WeaponType weaponType))
+                weaponType = WeaponType.Knife1;
+
+            RequestSetWeaponServerRpc(weaponType);
+        }
+
+
 
         if (scoreDisplay != null)
         {
@@ -566,6 +699,8 @@ public abstract class CharacterBase : NetworkBehaviour
                 animator.SetBool("IsMoving", newVal);
             }
         };
+
+
     }
 
     public override void OnNetworkDespawn()
@@ -583,7 +718,8 @@ public abstract class CharacterBase : NetworkBehaviour
     [ServerRpc]
     public void RequestAttackServerRpc()
     {
-        if (isDead) return;
+        
+        if (isDead || currentState != CharacterState.Idle) return;
 
         if (!isAttacking && hasWeapon)
         {
@@ -601,12 +737,33 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-    //Weapon Change 
     [ServerRpc]
     public void RequestSetWeaponServerRpc(WeaponType selectedWeapon)
     {
         ChangeWeapon(selectedWeapon);
+
+        //// Gửi vũ khí về client
+        //SetWeaponClientRpc(selectedWeapon);
     }
+
+   [ClientRpc]
+private void SetWeaponClientRpc(NetworkObjectReference weaponRef, NetworkObjectReference ownerRef)
+{
+    if (weaponRef.TryGet(out NetworkObject weaponObj) && 
+        ownerRef.TryGet(out NetworkObject ownerObj))
+    {
+        var weapon = weaponObj.GetComponent<WeaponBase>();
+        var ownerChar = ownerObj.GetComponent<CharacterBase>();
+
+        if (weapon != null && ownerChar != null)
+        {
+            ownerChar.AssignWeapon(weapon);
+            weapon.SetOwner(ownerChar);
+            Debug.Log($"[Client] Weapon {weapon.name} được gán cho {ownerChar.name}");
+        }
+    }
+}
+
 
     [ClientRpc]
     private void LaunchWeaponClientRPC(Vector3 dir)
@@ -666,6 +823,58 @@ public abstract class CharacterBase : NetworkBehaviour
 
         if (currentWeaponPublic != null)
             weaponTransform.localScale = oldScale;
+    }
+
+    #endregion
+    #region Attack Animation Event
+    [ServerRpc]
+    private void RequestLaunchServerRpc(ServerRpcParams rpcParams = default)
+    {
+        Debug.Log($"{name} [Server] nhận RequestLaunchServerRpc");
+        if (isDead || currentWeapon == null || attackTarget == null)
+        {
+            Debug.LogWarning($"{name} [Server] không thể Launch: chết={isDead}, weapon={(currentWeapon == null)}, target={(attackTarget == null)}");
+            return;
+        }
+        Vector3 dir = (attackTarget.position - weaponSpawnPoint.position).normalized;
+        Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(weaponRotationOffset);
+
+        Debug.Log($"{name} [Server] bắn vũ khí về hướng: {dir}");
+
+        currentWeapon.transform.rotation = rot;
+        // Server bắn
+        currentWeapon.Launch(dir, this.gameObject);
+
+        // Sync cho toàn bộ client
+        LaunchWeaponClientRpc(dir, rot);
+    }
+
+    [ClientRpc]
+    private void LaunchWeaponClientRpc(Vector3 dir, Quaternion rot, ClientRpcParams rpcParams = default)
+    {
+        StartCoroutine(WaitUntilWeaponReady(dir, rot));
+    }
+    private IEnumerator WaitUntilWeaponReady(Vector3 dir, Quaternion rot)
+    {
+        yield return new WaitUntil(() => currentWeapon != null);
+
+        currentWeapon.transform.rotation = rot;
+        currentWeapon.Launch(dir, this.gameObject);
+    }
+    [ServerRpc]
+    public void RequestChangeWeaponServerRpc(WeaponType newWeaponType)
+    {
+        ChangeWeapon(newWeaponType); // Server trực tiếp spawn vũ khí
+    }
+    [ClientRpc]
+    private void PlayDeathAnimationClientRpc()
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsMoving", false);
+            animator.SetBool("IsAttacking", false);
+            animator.SetTrigger("Death");
+        }
     }
 
     #endregion

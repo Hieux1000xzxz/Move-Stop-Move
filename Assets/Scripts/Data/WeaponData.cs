@@ -8,8 +8,12 @@ public class WeaponData : ScriptableObject
     public Sprite weaponIcon;
     public int price;
     public string description;
+    public GameObject previewPrefab;
 
     [Header("Stats")]
     public float speed = 12f;
     public int damage = 1;
+
+    [Header("Prefab")]
+    public GameObject weaponPrefab;
 }
