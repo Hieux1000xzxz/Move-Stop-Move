@@ -75,7 +75,7 @@ public class WeaponBase : NetworkBehaviour
 
         rb.isKinematic = false;
         transform.position = spawnPoint.position;
-        transform.rotation = Quaternion.LookRotation(-dir) * Quaternion.Euler(handRotationOffset);
+        transform.rotation = Quaternion.LookRotation(dir) * Quaternion.Euler(handRotationOffset);
         rb.linearVelocity = dir * speed;
         launchPos = transform.position;
     }
