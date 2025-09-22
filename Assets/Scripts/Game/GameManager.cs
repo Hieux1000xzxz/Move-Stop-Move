@@ -35,7 +35,7 @@ public class GameManager : NetworkBehaviour
     private List<GameObject> activeAIs = new List<GameObject>();
     private List<Player> activePlayers = new List<Player>();
     private List<NetworkObject> activeEntities = new List<NetworkObject>();
-
+    private int spectatorIndex = 0;
 
     public NetworkVariable<int> ActiveAICount = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -120,7 +120,7 @@ public class GameManager : NetworkBehaviour
             }
         }
     }
-  
+
 
     public void UnregisterAI(GameObject ai)
     {
@@ -219,18 +219,8 @@ public class GameManager : NetworkBehaviour
 
     public void GameOver()
     {
-        isGameStarted = false;
         DisableGamePlaySystem();
         gamePlayCanvas.OnGameOver();
-    }
-
-    [ClientRpc]
-    public void GameOverClientRpc(ClientRpcParams clientRpcParams = default)
-    {
-        if (isGameStarted) return;
-        isGameStarted = true;
-        UIManager.Instance.CloseAllUI();
-        GameOver();
     }
 
     private void DisableGamePlaySystem()
@@ -238,7 +228,6 @@ public class GameManager : NetworkBehaviour
         aiSpawner.enabled = false;
         enemyIndicatorManager.enabled = false;
         interactionCanvas.Hide();
-        gamePlayCanvas.Hide();
     }
 
     private void EnableGamePlaySystem()
@@ -333,6 +322,98 @@ public class GameManager : NetworkBehaviour
             yield return new WaitForSeconds(12f);
         }
     }
+    // Lấy danh sách entity còn sống (ưu tiên player, nếu không có thì lấy AI)
+    public List<Transform> GetAliveSpectatorTargets()
+    {
+        List<Transform> targets = new List<Transform>();
+
+        // Player còn sống
+        foreach (var p in activePlayers)
+        {
+            if (p != null)
+            {
+                var health = p.GetComponent<Health>();
+                if (health != null && !health.IsDead)
+                    targets.Add(p.transform);
+            }
+        }
+
+        // Nếu không còn player thì lấy AI
+        if (targets.Count == 0)
+        {
+            foreach (var ai in activeAIs) // bạn cần duy trì danh sách AI giống player
+            {
+                if (ai != null)
+                {
+                    var health = ai.GetComponent<Health>();
+                    if (health != null && !health.IsDead)
+                        targets.Add(ai.transform);
+                }
+            }
+        }
+
+        return targets;
+    }
+
+    public void EnableSpectatorMode()
+    {
+        var alive = GetAliveSpectatorTargets();
+        if (alive.Count == 0)
+        {
+            Debug.Log("Không còn ai để spectate.");
+            return;
+        }
+
+        spectatorIndex = 0;
+        FocusCameraOnTarget(alive[spectatorIndex]);
+    }
+    public void NextSpectatorTarget()
+    {
+        var alive = GetAliveSpectatorTargets();
+        if (alive.Count == 0)
+        {
+            Debug.Log("Không còn ai để spectate.");
+            return;
+        }
+
+        spectatorIndex = (spectatorIndex + 1) % alive.Count;
+        FocusCameraOnTarget(alive[spectatorIndex]);
+    }
+
+    public void PreviousSpectatorTarget()
+    {
+        var alive = GetAliveSpectatorTargets();
+        if (alive.Count == 0)
+        {
+            Debug.Log("Không còn ai để spectate.");
+            return;
+        }
+
+        spectatorIndex--;
+        if (spectatorIndex < 0) spectatorIndex = alive.Count - 1;
+        FocusCameraOnTarget(alive[spectatorIndex]);
+    }
+    public void SwitchSpectatorTarget()
+    {
+        var alive = GetAliveSpectatorTargets();
+        if (alive.Count == 0)
+        {
+            Debug.Log("Không còn ai để spectate.");
+            return;
+        }
+
+        int index = Random.Range(0, alive.Count);
+        FocusCameraOnTarget(alive[index]);
+    }
+
+    private void FocusCameraOnTarget(Transform target)
+    {
+        if (mainCamera != null && target != null)
+        {
+            mainCamera.Follow = target;
+            mainCamera.LookAt = target;
+        }
+    }
 
     private void SpawnPowerup()
     {
@@ -358,6 +439,11 @@ public class GameManager : NetworkBehaviour
             playerPreview.SetActive(true);
     }
 
+    [ClientRpc]
+    public void GameOverTargetClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        GameOver();
+    }
 
     public void SpawnOnlineAI(Vector3 pos)
     {
@@ -373,4 +459,63 @@ public class GameManager : NetworkBehaviour
             RegisterAI(aiObj);
         }
     }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestNextSpectatorTargetServerRpc(ServerRpcParams rpcParams = default)
+    {
+        var alive = GetAliveSpectatorTargets();
+        if (alive.Count == 0) return;
+
+        spectatorIndex = (spectatorIndex + 1) % alive.Count;
+
+        var netObj = alive[spectatorIndex].GetComponent<NetworkObject>();
+        if (netObj != null)
+        {
+            // Gửi target mới về đúng client đang yêu cầu
+            var senderId = rpcParams.Receive.SenderClientId;
+            var clientRpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = new[] { senderId } }
+            };
+            FocusCameraOnTargetClientRpc(netObj, clientRpcParams);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestPreviousSpectatorTargetServerRpc(ServerRpcParams rpcParams = default)
+    {
+        var alive = GetAliveSpectatorTargets();
+        if (alive.Count == 0) return;
+
+        spectatorIndex--;
+        if (spectatorIndex < 0) spectatorIndex = alive.Count - 1;
+
+        var netObj = alive[spectatorIndex].GetComponent<NetworkObject>();
+        if (netObj != null)
+        {
+            var senderId = rpcParams.Receive.SenderClientId;
+            var clientRpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = new[] { senderId } }
+            };
+            FocusCameraOnTargetClientRpc(netObj, clientRpcParams);
+        }
+    }
+
+    [ClientRpc]
+    private void FocusCameraOnTargetClientRpc(NetworkObjectReference targetRef, ClientRpcParams rpcParams = default)
+    {
+        if (targetRef.TryGet(out NetworkObject netObj))
+        {
+            Transform t = netObj.transform;
+            if (t != null)
+            {
+                mainCamera.Follow = t;
+                mainCamera.LookAt = t;
+            }
+        }
+    }
+
+
+
 }

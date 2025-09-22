@@ -64,8 +64,31 @@ public class Health : NetworkBehaviour
             gameObject.layer = deadLayer;
 
         if (IsServer)
+        {
+            Player player = GetComponent<Player>();
+            if (player != null)
+            {
+                // Lấy owner của player này
+                var ownerClientId = player.OwnerClientId;
+
+                // Gửi GameOver chỉ cho đúng client
+                GameManager.Instance.GameOverTargetClientRpc(new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new ulong[] { ownerClientId }
+                    }
+                });
+            }
+            else
+            {
+                GameManager.Instance.UnregisterAI(gameObject);
+            }
+
             DieClientRpc();
+        }
     }
+
 
     [ClientRpc]
     private void DieClientRpc()

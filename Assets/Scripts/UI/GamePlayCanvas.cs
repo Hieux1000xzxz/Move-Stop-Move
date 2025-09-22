@@ -8,12 +8,15 @@ public class GamePlayCanvas : BaseCanvas
     [SerializeField] GameObject gameOverUI;
     [SerializeField] GameObject gameWinUI;
     [SerializeField] GameObject menuUI;
+    [SerializeField] GameObject viewUI;
     [SerializeField] private Button menuButton;
     [SerializeField] private Button backToMenuButton;
-    [SerializeField] private Button backToMenu1Button;
+    [SerializeField] private Button backToMenuWinButton;
     [SerializeField] private Button exitGameButton;
     [SerializeField] private Button continueGameButton;
-
+    [SerializeField] private Button continueViewGameButton;
+    [SerializeField] private Button previousButton;
+    [SerializeField] private Button nextButton;
     private ConnectionCanvas connectionCanvas;
     private string lobbyId;
     private string playerName;
@@ -31,11 +34,14 @@ public class GamePlayCanvas : BaseCanvas
     }
     private void Start()
     {
-        backToMenuButton.onClick.AddListener(OnBackToMenu);
-        backToMenu1Button.onClick.AddListener(OnBackToMenu);
+        backToMenuButton.onClick.AddListener(OnExitGame);
+        backToMenuWinButton.onClick.AddListener(OnBackToMenu);
         menuButton.onClick.AddListener(OnMenuOpen);
         exitGameButton.onClick.AddListener(OnExitGame);
         continueGameButton.onClick.AddListener(() => menuUI.SetActive(false));
+        continueViewGameButton.onClick.AddListener(OnContinueView);
+        previousButton.onClick.AddListener(() => GameManager.Instance.RequestPreviousSpectatorTargetServerRpc());
+        nextButton.onClick.AddListener(() => GameManager.Instance.RequestNextSpectatorTargetServerRpc());
     }
 
     public void UpdateExitButtonState(LobbyInfo lobby)
@@ -47,10 +53,12 @@ public class GamePlayCanvas : BaseCanvas
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
         {
             exitGameButton.interactable = (playerCount <= 1);
+            backToMenuButton.interactable = (playerCount <= 1);
         }
         else
         {
             exitGameButton.interactable = true;
+            backToMenuButton.interactable = true;
         }
     }
 
@@ -61,14 +69,12 @@ public class GamePlayCanvas : BaseCanvas
         if (NetworkManager.Singleton == null) return;
         if (NetworkManager.Singleton.IsHost)
         {
-            // Host: shutdown toàn bộ
             NetworkManager.Singleton.Shutdown();
             Destroy(NetworkManager.Singleton.gameObject);
         }
         else if (NetworkManager.Singleton.IsClient)
         {
 
-            // Sau đó tự disconnect local
             NetworkManager.Singleton.Shutdown();
             Destroy(NetworkManager.Singleton.gameObject);
         }
@@ -79,6 +85,14 @@ public class GamePlayCanvas : BaseCanvas
         }
         UIManager.Instance.OpenLoadingCanvas();
         Invoke(nameof(OnBackToMenu), 2.4f);
+    }
+
+    private void OnContinueView()
+    {
+        GameManager.Instance.EnableSpectatorMode();
+        viewUI.SetActive(true);
+        gameOverUI.SetActive(false);
+        menuButton.gameObject.SetActive(true);
     }
 
     private void OnMenuOpen()
@@ -93,6 +107,7 @@ public class GamePlayCanvas : BaseCanvas
 
     public void OnGameOver()
     {
+        menuButton.gameObject.SetActive(false);
         gameOverUI.SetActive(true);
     }
 
