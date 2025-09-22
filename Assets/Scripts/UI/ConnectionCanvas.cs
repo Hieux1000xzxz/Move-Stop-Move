@@ -612,6 +612,7 @@ public class ConnectionCanvas : BaseCanvas
         HandleExitLogic();
         lobbyPanel.SetActive(false);
         enterNamePopup.SetActive(false);
+        GameManager.Instance.ShowPlayerPreview();
         UIManager.Instance?.CloseNetwork();
         UIManager.Instance?.OpenMainMenu();
     }

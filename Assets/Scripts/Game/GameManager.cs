@@ -348,18 +348,16 @@ public class GameManager : NetworkBehaviour
 
     public void HidePlayerPreview()
     {
-        if (IsServer)
-        {
-            HidePlayerPreviewClientRpc();
-        }
-    }
-
-    [ClientRpc]
-    private void HidePlayerPreviewClientRpc()
-    {
         if (playerPreview != null)
             playerPreview.SetActive(false);
     }
+
+    public void ShowPlayerPreview()
+    {
+        if (playerPreview != null)
+            playerPreview.SetActive(true);
+    }
+
 
     public void SpawnOnlineAI(Vector3 pos)
     {
