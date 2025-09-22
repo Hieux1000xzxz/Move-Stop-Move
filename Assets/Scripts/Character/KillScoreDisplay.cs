@@ -8,6 +8,7 @@ public class KillScoreDisplay : MonoBehaviour
     [SerializeField] private int score = 0;
     [SerializeField] private Color textColor = Color.yellow;
     [SerializeField] private int fontSize = 4;
+    [SerializeField] private TextMeshPro playerName;
 
     [Header("Position Settings")]
     [SerializeField] private Vector3 offset = new Vector3(0, 2f, 0);
@@ -50,5 +51,13 @@ public class KillScoreDisplay : MonoBehaviour
     {
         score = value;
         UpdateScoreText();
+    }
+
+    public void SetPlayerName(string name)
+    {
+        if (playerName != null)
+        {
+            playerName.text = name;
+        }
     }
 }

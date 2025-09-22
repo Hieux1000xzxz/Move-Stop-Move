@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using System.Collections;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
@@ -64,6 +65,11 @@ public abstract class CharacterBase : NetworkBehaviour
     false,
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Owner);
+
+    public NetworkVariable<FixedString32Bytes> PlayerName = new NetworkVariable<FixedString32Bytes>(
+    "Player",
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server);
 
     protected virtual void Start()
     {
@@ -682,27 +688,29 @@ public abstract class CharacterBase : NetworkBehaviour
             RequestSetWeaponServerRpc(weaponType);
         }
 
-
+        if (IsOwner && ownerType == OwnerType.Player)
+        {
+            string localName = PlayerPrefs.GetString("PlayerName", "Player");
+            SubmitPlayerNameServerRpc(localName);
+        }
 
         if (scoreDisplay != null)
         {
             scoreDisplay.SetScore(Score.Value);
 
-            Score.OnValueChanged += (oldValue, newValue) =>
+            PlayerName.OnValueChanged += (oldName, newName) =>
             {
-                scoreDisplay.SetScore(newValue);
-                UpdateCharacterStats();
+                scoreDisplay.SetPlayerName(newName.ToString());
             };
+
+            scoreDisplay.SetPlayerName(PlayerName.Value.ToString());
         }
 
-        NetIsMoving.OnValueChanged += (oldVal, newVal) =>
+        Score.OnValueChanged += (oldValue, newValue) =>
         {
-            if (animator != null)
-            {
-                animator.SetBool("IsMoving", newVal);
-            }
+            scoreDisplay.SetScore(newValue);
+            UpdateCharacterStats();
         };
-
 
     }
 
@@ -710,13 +718,22 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         base.OnNetworkDespawn();
 
+        if (IsOwner && ownerType == OwnerType.Player)
+        {
+            string localName = PlayerPrefs.GetString("PlayerName", "Player");
+            SubmitPlayerNameServerRpc(localName);
+        }
         Score.OnValueChanged -= (oldValue, newValue) =>
         {
             scoreDisplay.SetScore(newValue);
             UpdateCharacterStats();
         };
     }
-
+    [ServerRpc]
+    private void SubmitPlayerNameServerRpc(string newName)
+    {
+        PlayerName.Value = new FixedString32Bytes(newName);
+    }
     //Anim Attack
     [ServerRpc]
     public void RequestAttackServerRpc()

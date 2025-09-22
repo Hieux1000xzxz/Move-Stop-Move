@@ -2294,8 +2294,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 70
-  m_fontSizeBase: 70
+  m_fontSize: 60
+  m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -3820,8 +3820,8 @@ MonoBehaviour:
 
 '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 905653a9b70c177459f508dd5fad23ef, type: 2}
-  m_sharedMaterial: {fileID: -5466343542318523408, guid: 905653a9b70c177459f508dd5fad23ef, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
+  m_sharedMaterial: {fileID: -5466343542318523408, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3987,8 +3987,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: View
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 905653a9b70c177459f508dd5fad23ef, type: 2}
-  m_sharedMaterial: {fileID: -5466343542318523408, guid: 905653a9b70c177459f508dd5fad23ef, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
+  m_sharedMaterial: {fileID: -5466343542318523408, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -5817,6 +5817,7 @@ MonoBehaviour:
   interactionCanvas: {fileID: 58942454}
   mainMenuCanvas: {fileID: 2076837707}
   shopCanvas: {fileID: 1890431161}
+  killScoreDisplay: {fileID: 0}
   mainCamera: {fileID: 1246925138}
   speedPrefab: {fileID: 3703581492467372302, guid: 46787c0ca02578e40ab1a18b749a4ff1, type: 3}
   weaponGrowPrefab: {fileID: 7797295479864358708, guid: 73f30cb686b247f45bee3ef5ee46fedb, type: 3}
@@ -5887,7 +5888,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &901835148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6425,8 +6426,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: BACK
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: c00a2eb1cac8d82498fa0acd1ab94ab9, type: 2}
-  m_sharedMaterial: {fileID: -5466343542318523408, guid: c00a2eb1cac8d82498fa0acd1ab94ab9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
+  m_sharedMaterial: {fileID: -5466343542318523408, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -6950,8 +6951,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: SUBMIT
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 905653a9b70c177459f508dd5fad23ef, type: 2}
-  m_sharedMaterial: {fileID: -5466343542318523408, guid: 905653a9b70c177459f508dd5fad23ef, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
+  m_sharedMaterial: {fileID: -5466343542318523408, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -7206,8 +7207,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: CREATE
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 905653a9b70c177459f508dd5fad23ef, type: 2}
-  m_sharedMaterial: {fileID: -5466343542318523408, guid: 905653a9b70c177459f508dd5fad23ef, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
+  m_sharedMaterial: {fileID: -5466343542318523408, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -11042,8 +11043,8 @@ MonoBehaviour:
 
 '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 905653a9b70c177459f508dd5fad23ef, type: 2}
-  m_sharedMaterial: {fileID: -5466343542318523408, guid: 905653a9b70c177459f508dd5fad23ef, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
+  m_sharedMaterial: {fileID: -5466343542318523408, guid: 90c9840a3c0a4f240bc54da75d56b390, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -12502,8 +12503,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 70
-  m_fontSizeBase: 70
+  m_fontSize: 60
+  m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
