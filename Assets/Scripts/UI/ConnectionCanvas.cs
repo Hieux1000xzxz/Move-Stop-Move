@@ -46,7 +46,7 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private CinemachineCamera mainCamera;
     [SerializeField] private CinemachineZoomController cinemachineZoom;
 
-    private const string SERVER_URL = "http://192.168.1.32:5000/api/lobby";
+    private const string SERVER_URL = "http://192.168.0.103:5000/api/lobby";
     private string currentLobbyId = string.Empty;
     private string localUserName = string.Empty;
     private LobbyInfo pendingLobbyToJoin = null;
@@ -237,38 +237,6 @@ public class ConnectionCanvas : BaseCanvas
         mainPanel.SetActive(true);
     }
 
-    private IEnumerator StartHostRoutine(string hostName)
-    {
-        ushort port = 7777;
-        string ipLan = GetHostLANIP();
-        pendingLobbyToJoin = null;
-        transport.SetConnectionData("0.0.0.0", port);
-
-        if (!networkManager.StartHost())
-        {
-            UIManager.Instance?.SendNotification("Failed to start hosting. Please try again.");
-            UIManager.Instance?.OpenNotification();
-            isCreatingLobby = false;
-            ResetUIState();
-            yield break;
-        }
-
-        string hostId = PlayerPrefs.GetString("PlayerId", "");
-        string lobbyName = string.IsNullOrEmpty(nameInputField.text) ? "Lobby" : nameInputField.text;
-        if (lobbyName.Length > 6) lobbyName = lobbyName.Substring(0, 6);
-
-        var request = new LobbyRegistrationRequest
-        {
-            lobbyName = lobbyName,
-            hostIpAddress = ipLan,
-            hostPort = port,
-            maxPlayers = 6,
-            hostName = hostName.Length > 6 ? hostName.Substring(0, 6) : hostName
-        };
-
-        yield return StartCoroutine(RegisterLobbyOnServer(request));
-    }
-
     private IEnumerator RegisterLobbyOnServer(LobbyRegistrationRequest request)
     {
         string json = JsonUtility.ToJson(request);
@@ -293,20 +261,37 @@ public class ConnectionCanvas : BaseCanvas
             }
             else
             {
-                UIManager.Instance?.SendNotification("Failed to create lobby. Please check your connection and try again.");
-                UIManager.Instance?.OpenNotification();
+                Debug.LogWarning("⚠️ Could not reach lobby server, starting local offline host...");
 
-                if (networkManager != null && networkManager.IsListening)
-                {
-                    networkManager.Shutdown();
-                }
-
+                // fallback local host
+                currentLobbyId = "LOCAL";
+                localUserName = "Host";
                 isCreatingLobby = false;
-                ResetState();
-                ResetUIState();
+                enterNamePopup.SetActive(false);
+                mainPanel.SetActive(false);
+
+                // Cho phép chạy luôn vào lobby/game local
+                ShowOfflineLobbyUI();
             }
         }
     }
+
+    private void ShowOfflineLobbyUI()
+    {
+        lobbyPanel.SetActive(true);
+        lobbyId.text = "Offline Mode";
+        startGameButton.interactable = true; // host luôn được start game
+
+        // Add chính player local vào list
+        ClearContainer(playerListContainer);
+        var item = Instantiate(playerItemPrefab, playerListContainer);
+        var comp = item.GetComponent<PlayerItem>();
+        if (comp != null)
+        {
+            comp.Setup(localUserName, "LOCAL_ID", NetworkManager.Singleton.LocalClientId, this, false);
+        }
+    }
+
 
     private void ShowLobbyUI(LobbyInfo lobby)
     {
@@ -408,6 +393,7 @@ public class ConnectionCanvas : BaseCanvas
         string playerId = System.Guid.NewGuid().ToString();
         PlayerPrefs.SetString("PlayerId", playerId);
         PlayerPrefs.SetString("PlayerName", playerName);
+        PlayerPrefs.Save();
     }
 
 
@@ -803,14 +789,6 @@ public class ConnectionCanvas : BaseCanvas
         ResetState();
         ResetUIState();
         RefreshLobbyList();
-    }
-
-    public int GetCurrentPlayerCount(LobbyInfo lobby)
-    {
-        if (lobby == null || lobby.users == null)
-            return 0;
-
-        return lobby.users.Count;
     }
 }
 
