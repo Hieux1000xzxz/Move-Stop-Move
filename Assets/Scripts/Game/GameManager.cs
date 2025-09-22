@@ -18,6 +18,7 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private InteractionCanvas interactionCanvas;
     [SerializeField] private MainMenuCanvas mainMenuCanvas;
     [SerializeField] private ShopCanvas shopCanvas;
+    [SerializeField] private KillScoreDisplay killScoreDisplay;
 
     [Header("Camera")]
     [SerializeField] private CinemachineCamera mainCamera;
@@ -212,14 +213,17 @@ public class GameManager : NetworkBehaviour
     {
         isGameStarted = true;
         EnableGamePlaySystem();
-        ResetGame();
+        if (IsServer)
+        {
+            ResetGame();
+        }
         UIManager.Instance.CloseAllUI();
         HidePlayerPreview();
     }
 
     public void GameOver()
     {
-        DisableGamePlaySystem();
+        //DisableGamePlaySystem();
         gamePlayCanvas.OnGameOver();
     }
 
@@ -251,9 +255,10 @@ public class GameManager : NetworkBehaviour
 
     public void BindKillScoreDisplay(KillScoreDisplay killScore)
     {
+        killScoreDisplay = killScore;
         zoomController.SetUp(killScore);
     }
-
+   
     public void ShowMainMenu()
     {
         if (mainMenuCanvas != null)
@@ -322,12 +327,11 @@ public class GameManager : NetworkBehaviour
             yield return new WaitForSeconds(12f);
         }
     }
-    // Lấy danh sách entity còn sống (ưu tiên player, nếu không có thì lấy AI)
+
     public List<Transform> GetAliveSpectatorTargets()
     {
         List<Transform> targets = new List<Transform>();
 
-        // Player còn sống
         foreach (var p in activePlayers)
         {
             if (p != null)
@@ -338,10 +342,9 @@ public class GameManager : NetworkBehaviour
             }
         }
 
-        // Nếu không còn player thì lấy AI
         if (targets.Count == 0)
         {
-            foreach (var ai in activeAIs) // bạn cần duy trì danh sách AI giống player
+            foreach (var ai in activeAIs)
             {
                 if (ai != null)
                 {

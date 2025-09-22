@@ -31,7 +31,11 @@ public class AISpawner : NetworkBehaviour
     {
         if (!IsServer) return;
         CleanupDeadAIs();
-
+        if (!gameObject.activeInHierarchy)
+        {
+            Debug.LogError("AISpawner GameObject đã bị disable!");
+            return;
+        }
         if (HasEmptyPoints() && GameManager.Instance.CanSpawnAI() && spawnCoroutine == null)
         {
             SpawnWave();
@@ -124,7 +128,6 @@ public class AISpawner : NetworkBehaviour
 
         if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
         {
-            // Cập nhật position và rotation TRƯỚC khi spawn
             enemy.transform.position = hit.position;
             enemy.transform.rotation = spawnPoint.rotation;
 
@@ -137,7 +140,6 @@ public class AISpawner : NetworkBehaviour
                 agent.isStopped = false;
             }
 
-            // ✅ Spawn sau khi đặt đúng vị trí
             NetworkObject netObj = enemy.GetComponent<NetworkObject>();
             if (netObj != null && !netObj.IsSpawned)
                 netObj.Spawn(true);
