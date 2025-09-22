@@ -1,6 +1,7 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
+public class Singleton<T> : NetworkBehaviour where T : NetworkBehaviour
 {
     private static T instance;
     public static T Instance
@@ -8,14 +9,7 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
         get
         {
             if (instance == null)
-            {
                 instance = FindFirstObjectByType<T>();
-                if (instance == null)
-                {
-                    GameObject obj = new GameObject(typeof(T).Name);
-                    instance = obj.AddComponent<T>();
-                }
-            }
             return instance;
         }
     }
@@ -23,12 +17,8 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     protected virtual void Awake()
     {
         if (instance == null)
-        {
             instance = this as T;
-        }
         else if (instance != this)
-        {
             Destroy(gameObject);
-        }
     }
 }

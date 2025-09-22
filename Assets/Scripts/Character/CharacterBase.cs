@@ -318,6 +318,7 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             return;
         }
+        //Bug11: Null ref
         if (currentWeapon == null)
             return;
         if (!hasWeapon)
@@ -374,6 +375,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected virtual void ThrowWeapon()
     {
+
         if (currentWeapon != null && attackTarget != null)
         {
             Vector3 dir = (attackTarget.position - weaponSpawnPoint.position).normalized;
@@ -520,6 +522,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (!IsServer) return;
 
+        // Nếu đã có weapon cũ thì release trước
         if (currentWeapon != null)
         {
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
@@ -527,20 +530,17 @@ public abstract class CharacterBase : NetworkBehaviour
             currentWeapon = null;
         }
 
-        GameObject go = null;
-
-        if (ownerType == OwnerType.Player)
+        // Spawn weapon mới trực tiếp
+       
+        if (currentWeapon == null)
         {
-            go = ObjectPool.Instance.SpawnPlayerWeaponByType(newWeaponType, weaponSpawnPoint);
-        }
-        else if (ownerType == OwnerType.AI)
-        {
-            go = ObjectPool.Instance.SpawnAIWeaponByType(newWeaponType, weaponSpawnPoint);
+            var weaponObj = ObjectPool.Instance.SpawnPlayerWeaponByType(newWeaponType, this.ownerType, weaponSpawnPoint);
+            //if (weaponObj == null) return;
+
+            currentWeapon = weaponObj.GetComponent<WeaponBase>();
         }
 
-        if (go == null) return;
-
-        currentWeapon = go.GetComponent<WeaponBase>();
+        // Setup cho weapon
         currentWeapon.Init(this, weaponSpawnPoint);
         currentWeapon.SetOwner(this);
 
@@ -552,8 +552,8 @@ public abstract class CharacterBase : NetworkBehaviour
 
         AssignWeapon(currentWeapon);
         SetWeaponClientRpc(netObj, this.NetworkObject);
-
     }
+
 
     protected virtual void OnDisable()
     {
@@ -673,12 +673,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         base.OnNetworkSpawn();
         if (IsOwner)
-        {
-            string savedWeapon = PlayerPrefs.GetString("SelectedWeapon", WeaponType.Knife1.ToString());
-
-            if (!System.Enum.TryParse(savedWeapon, out WeaponType weaponType))
-                weaponType = WeaponType.Knife1;
-
+        { 
             RequestSetWeaponServerRpc(weaponType);
         }
 
@@ -746,22 +741,30 @@ public abstract class CharacterBase : NetworkBehaviour
         ChangeWeapon(selectedWeapon);
     }
 
-   [ClientRpc]
-private void SetWeaponClientRpc(NetworkObjectReference weaponRef, NetworkObjectReference ownerRef)
-{
-    if (weaponRef.TryGet(out NetworkObject weaponObj) && 
-        ownerRef.TryGet(out NetworkObject ownerObj))
+    [ClientRpc]
+    private void SetWeaponClientRpc(NetworkObjectReference weaponRef, NetworkObjectReference ownerRef)
     {
+        StartCoroutine(AssignWeaponWhenReady(weaponRef, ownerRef));
+    }
+
+    private System.Collections.IEnumerator AssignWeaponWhenReady(NetworkObjectReference weaponRef, NetworkObjectReference ownerRef)
+    {
+        NetworkObject weaponObj = null;
+        NetworkObject ownerObj = null;
+
+        // Đợi đến khi cả hai object đã spawn bên client
+        while (!weaponRef.TryGet(out weaponObj) || !ownerRef.TryGet(out ownerObj))
+            yield return null; // chờ 1 frame
+
         var weapon = weaponObj.GetComponent<WeaponBase>();
         var ownerChar = ownerObj.GetComponent<CharacterBase>();
-
         if (weapon != null && ownerChar != null)
         {
             ownerChar.AssignWeapon(weapon);
             weapon.SetOwner(ownerChar);
         }
     }
-}
+
 
 
     [ClientRpc]

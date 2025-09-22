@@ -255,7 +255,7 @@ MonoBehaviour:
   rangePerScore: 0.1
   moveSpeedPerScore: 0.05
   maxScale: 2.5
-  defaultWeapon: 5
+  defaultWeapon: 2
   ownerType: 1
   Score:
     m_InternalValue: 0
