@@ -114,5 +114,7 @@ public class GamePlayCanvas : BaseCanvas
     public void OnGameWin()
     {
         gameWinUI.SetActive(true);
+        gameOverUI.SetActive(false); 
+        Invoke(nameof(OnExitGame), 5f);
     }
 }

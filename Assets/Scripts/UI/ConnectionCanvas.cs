@@ -1,14 +1,15 @@
 ﻿using System;
-using System.Text;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
+using System.Text.RegularExpressions;
 using TMPro;
+using Unity.Cinemachine;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
-using Unity.Cinemachine;
 
 public class ConnectionCanvas : BaseCanvas
 {
@@ -347,6 +348,12 @@ public class ConnectionCanvas : BaseCanvas
             return;
         }
 
+        if (!Regex.IsMatch(input, @"^[a-zA-Z0-9]+$"))
+        {
+            UIManager.Instance?.SendNotification("Name cannot contain special characters or accents");
+            UIManager.Instance?.OpenNotification();
+            return;
+        }
         switch (currentPopupMode)
         {
             case NamePopupMode.EnterLobbyName:

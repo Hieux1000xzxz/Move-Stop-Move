@@ -172,10 +172,19 @@ public class GameManager : NetworkBehaviour
             if (lastNetObj != null)
             {
                 FocusCameraOnTargetClientRpc(lastNetObj);
+                GameWinClientRpc();
             }
         }
     }
-
+    [ClientRpc]
+    private void GameWinClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        if (gamePlayCanvas != null)
+        {
+            gamePlayCanvas.OnGameWin();
+            DisableGamePlaySystem();
+        }
+    }
     [ClientRpc]
     private void FocusCameraOnTargetClientRpc(NetworkObjectReference targetRef)
     {
