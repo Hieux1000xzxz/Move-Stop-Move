@@ -181,19 +181,17 @@ public class ShopCanvas : BaseCanvas
 
         if (player != null)
         {
-            CharacterBase netChar = player.GetComponent<CharacterBase>();
+            var netChar = player.GetComponent<CharacterBase>();
             if (netChar != null && netChar.IsOwner)
             {
+                // ✅ chỉ gọi ServerRpc, không gọi ChangeWeapon
                 netChar.RequestChangeWeaponServerRpc(selectedWeapon.weaponType);
             }
-        }
-        else
-        {
-            Debug.LogWarning("Player not found in scene!");
         }
 
         UpdateButtons();
     }
+
 
     public void LoadSelectedWeapon()
     {
@@ -205,8 +203,12 @@ public class ShopCanvas : BaseCanvas
             {
                 if (weapon.weaponName == selectedWeaponName)
                 {
-                    player.ChangeWeapon(weapon.weaponType);
-                    Debug.Log("Loaded selected weapon: " + weapon.weaponName);
+                    var netChar = player.GetComponent<CharacterBase>();
+                    if (netChar != null && netChar.IsOwner)
+                    {
+                        netChar.RequestChangeWeaponServerRpc(weapon.weaponType);
+                        Debug.Log("Loaded selected weapon: " + weapon.weaponName);
+                    }
                     return;
                 }
             }
@@ -217,6 +219,7 @@ public class ShopCanvas : BaseCanvas
             Debug.LogWarning("Player not found, cannot load selected weapon");
         }
     }
+
 
     private void CloseShop()
     {

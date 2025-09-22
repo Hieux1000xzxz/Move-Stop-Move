@@ -26,6 +26,7 @@ public class WeaponBase : NetworkBehaviour
 
     private bool isFollowing = false;
 
+    public CharacterBase Owner => owner;
     public virtual void Init(CharacterBase character, Transform hand)
     {
         owner = character;
@@ -75,7 +76,7 @@ public class WeaponBase : NetworkBehaviour
 
         rb.isKinematic = false;
         transform.position = spawnPoint.position;
-        transform.rotation = Quaternion.LookRotation(dir) * Quaternion.Euler(handRotationOffset);
+        transform.rotation = Quaternion.LookRotation(-dir) * Quaternion.Euler(handRotationOffset);
         rb.linearVelocity = dir * speed;
         launchPos = transform.position;
     }

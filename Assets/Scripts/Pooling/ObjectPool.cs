@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 using Unity.Netcode;
+using UnityEngine;
+using static CharacterBase;
 
 [System.Serializable]
 public class Preallocation
@@ -11,6 +12,7 @@ public class Preallocation
     public ObjectType type;
     public WeaponType weaponType;
     public PowerupType powerupType;
+    public WeaponOwner weaponOwner;
 }
 
 public enum WeaponOwner
@@ -23,7 +25,6 @@ public enum ObjectType
 {
     Enemy,
     Weapon,
-    Weapon1,
     Powerup,
     Other
 }
@@ -32,13 +33,9 @@ public enum WeaponType
 {
     None,
     Arrow,
-    Arrow1,
     Axe,
-    Axe1,
     Knife,
-    Knife1,
     Shield,
-    Shield1
 }
 
 public class ObjectPool : Singleton<ObjectPool>
@@ -135,26 +132,19 @@ public class ObjectPool : Singleton<ObjectPool>
     // ================== REGION: WEAPON ==================
     #region WEAPON
 
-    public GameObject SpawnPlayerWeaponByType(WeaponType type, Transform parent = null, bool attachToParent = true)
+    public GameObject SpawnPlayerWeaponByType(WeaponType type, OwnerType ownerType, Transform parent = null, bool attachToParent = true)
     {
-        return SpawnWeaponInternal(type, ObjectType.Weapon, parent, attachToParent);
+        return SpawnWeaponInternal(type, ObjectType.Weapon, ownerType, parent, attachToParent);
     }
 
-    public GameObject SpawnAIWeaponByType(WeaponType type, Transform parent = null, bool attachToParent = true)
+    private GameObject SpawnWeaponInternal(WeaponType type, ObjectType objType, CharacterBase.OwnerType ownerType, Transform parent, bool attachToParent)
     {
-        return SpawnWeaponInternal(type, ObjectType.Weapon1, parent, attachToParent);
-    }
+        GameObject obj = GetInactiveWeapon(type, objType, ownerType);
 
-    private GameObject SpawnWeaponInternal(WeaponType type, ObjectType objType, Transform parent, bool attachToParent)
-    {
-        GameObject obj = GetInactiveWeapon(type, objType);
-
-        if (obj == null)
+        if (obj == null )
         {
-            obj = ExpandWeapon(type, objType);
+            obj = ExpandWeapon(type, objType, ownerType);
         }
-
-        if (obj == null) return null;
 
         obj.SetActive(true);
 
@@ -174,7 +164,7 @@ public class ObjectPool : Singleton<ObjectPool>
     }
 
 
-    private GameObject GetInactiveWeapon(WeaponType type, ObjectType objType)
+    public GameObject GetInactiveWeapon(WeaponType type, ObjectType objType, CharacterBase.OwnerType ownerType)
     {
         for (int i = pooledGobjects.Count - 1; i >= 0; i--)
         {
@@ -189,30 +179,46 @@ public class ObjectPool : Singleton<ObjectPool>
             {
                 foreach (var pre in preAllocations)
                 {
-                    if (pre.type == objType && pre.weaponType == type && obj.name.StartsWith(pre.gameObject.name))
+                    if (pre.type == objType &&
+                        pre.weaponType == type &&
+                        ((ownerType == CharacterBase.OwnerType.Player && pre.weaponOwner == WeaponOwner.Player) ||
+                         (ownerType == CharacterBase.OwnerType.AI && pre.weaponOwner == WeaponOwner.AI)) &&
+                        obj.name.StartsWith(pre.gameObject.name))
                     {
                         return obj;
                     }
-
                 }
             }
         }
         return null;
     }
 
-    private GameObject ExpandWeapon(WeaponType type, ObjectType objType)
+
+    public GameObject ExpandWeapon(WeaponType type, ObjectType objType, CharacterBase.OwnerType ownerType)
     {
+        var desiredOwner = (ownerType == CharacterBase.OwnerType.Player)
+            ? WeaponOwner.Player
+            : WeaponOwner.AI;
+
         foreach (var pre in preAllocations)
         {
-            if (pre.type == objType && pre.weaponType == type && pre.expandable)
+            if (pre.type == objType &&
+                pre.weaponType == type &&
+                pre.weaponOwner == desiredOwner &&   // ✅ lọc đúng prefab của Player/AI
+                pre.expandable)
             {
+                Debug.Log("pre1");
                 GameObject newWeapon = CreateGobject(pre.gameObject);
                 pooledGobjects.Add(newWeapon);
                 return newWeapon;
             }
         }
+
+        // (tùy chọn) log cho dễ debug
+        Debug.LogWarning($"[ObjectPool] No expandable prefab for {type} / {ownerType}");
         return null;
     }
+
 
     #endregion
 
@@ -282,7 +288,7 @@ public class ObjectPool : Singleton<ObjectPool>
         return null;
     }
 
-    private GameObject ExpandPowerup(PowerupType type)
+    public GameObject ExpandPowerup(PowerupType type)
     {
         foreach (var pre in preAllocations)
         {
@@ -339,9 +345,22 @@ public class ObjectPool : Singleton<ObjectPool>
     }
 
 
+    //reaease
     public void ReleaseWeapon(GameObject obj)
     {
+        Debug.Log("RelseWeapon called");    
         if (obj == null) return;
+
+        var weapon = obj.GetComponent<WeaponBase>();
+        if (weapon != null && weapon.Owner != null)
+        {
+            // Nếu owner vẫn alive thì KHÔNG release
+            if (!weapon.Owner.health.IsDead)
+            {
+                Debug.LogWarning($"⚠️ Tried to release weapon of {weapon.Owner.name} nhưng owner chưa chết.");
+                return;
+            }
+        }
 
         var netObj = obj.GetComponent<NetworkObject>();
         if (netObj != null && netObj.IsSpawned && NetworkManager.Singleton.IsServer)
@@ -354,19 +373,26 @@ public class ObjectPool : Singleton<ObjectPool>
 
 
 
+
     // ================== REGION: HELPERS ==================
     #region HELPERS
     private GameObject CreateGobject(GameObject item)
     {
-        // ❌ Không parent trực tiếp vào ObjectPool để tránh lỗi Netcode
-        GameObject gobject = Instantiate(item);
+        if (!item.TryGetComponent<NetworkObject>(out var netObj))
+        {
+            Debug.LogError($"❌ Prefab {item.name} chưa có NetworkObject!");
+        }
+        else
+        {
+            //Debug.Log($"✅ Spawn prefab {item.name} với GlobalObjectIdHash {netObj.GlobalObjectIdHash}");
+        }
 
-        // Đưa ra xa khỏi scene để "ẩn"
+        GameObject gobject = Instantiate(item);
         gobject.transform.position = new Vector3(9999, 9999, 9999);
         gobject.SetActive(false);
-
         return gobject;
     }
+
 
     #endregion
 }

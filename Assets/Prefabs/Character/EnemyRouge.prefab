@@ -557,13 +557,13 @@ MonoBehaviour:
   weaponSpawnPoint: {fileID: 5560079348092688031}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.3
-  weaponType: 4
+  weaponType: 1
   scoreDisplay: {fileID: 8459014451873918741}
   sizePerScore: 0.05
   rangePerScore: 0.1
   moveSpeedPerScore: 0.05
   maxScale: 2.5
-  defaultWeapon: 5
+  defaultWeapon: 1
   ownerType: 1
   Score:
     m_InternalValue: 0
