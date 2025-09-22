@@ -118,39 +118,27 @@ public class AISpawner : NetworkBehaviour
         if (enemy == null) return;
 
         CharacterBase character = enemy.GetComponent<CharacterBase>();
-
-        //Check1
         if (character != null) character.ResetState();
 
-
-        //CHECK 2: NavMesh
-        var agent = enemy.GetComponent<NavMeshAgent>();
+        NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
 
         if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
         {
+            // Cập nhật position và rotation TRƯỚC khi spawn
+            enemy.transform.position = hit.position;
+            enemy.transform.rotation = spawnPoint.rotation;
 
             if (agent != null)
             {
                 agent.enabled = false;
-                enemy.transform.position = hit.position;
                 agent.enabled = true;
 
-                if (agent != null &&  agent.isOnNavMesh)
-                {   
-                    agent.Warp(hit.position);
-                    agent.isStopped = false;
-                }
-                 
+                agent.Warp(hit.position);
+                agent.isStopped = false;
             }
 
-            else
-            {
-                enemy.transform.position = hit.position;
-            }
-
-            enemy.transform.rotation = spawnPoint.rotation;
-
-            var netObj = enemy.GetComponent<NetworkObject>();
+            // ✅ Spawn sau khi đặt đúng vị trí
+            NetworkObject netObj = enemy.GetComponent<NetworkObject>();
             if (netObj != null && !netObj.IsSpawned)
                 netObj.Spawn(true);
 
@@ -161,6 +149,7 @@ public class AISpawner : NetworkBehaviour
         {
             enemy.SetActive(false);
         }
+
     }
     public int GetActiveAICount()
     {

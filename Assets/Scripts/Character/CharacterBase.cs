@@ -382,7 +382,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
             if (IsServer)
             {
-                currentWeapon.Launch(dir, this.gameObject);
+                currentWeapon.Launch(-dir, this.gameObject);
 
                 //Send event launch to all the different clients
                 LaunchWeaponClientRPC(dir);

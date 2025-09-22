@@ -121,13 +121,6 @@ public class ObjectPool : Singleton<ObjectPool>
         enemy.transform.rotation = rot;
         enemy.SetActive(true);
 
-        // spawn netcode nếu đang chạy multiplayer
-        var netObj = enemy.GetComponent<NetworkObject>();
-        if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
-        {
-            netObj.Spawn(true); // sync xuống client
-        }
-
         return enemy;
     }
     #endregion
@@ -157,12 +150,6 @@ public class ObjectPool : Singleton<ObjectPool>
         if (obj == null) return null;
 
         obj.SetActive(true);
-
-        var netObj = obj.GetComponent<NetworkObject>();
-        if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
-        {
-            netObj.Spawn(true);
-        }
 
         if (parent != null)
         {
