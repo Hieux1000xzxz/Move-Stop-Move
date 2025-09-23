@@ -102,7 +102,7 @@ public class GameManager : NetworkBehaviour
     }
     public bool CanSpawnAI()
     {
-        return currentAIQuota > 0;
+        return currentAIQuota - activeAIs.Count > 0;
     }
 
     public void RegisterAI(GameObject ai)
@@ -165,7 +165,7 @@ public class GameManager : NetworkBehaviour
     private void CheckLastSurvivor()
     {
         if (!IsServer) return;
-
+        if (currentAIQuota > 0) return;
         if (activeEntities.Count == 1)
         {
             var lastNetObj = activeEntities[0];

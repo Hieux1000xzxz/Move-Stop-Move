@@ -23,8 +23,6 @@ public class AISpawner : NetworkBehaviour
         foreach (Transform point in spawnPoints)
             spawnPointAIs[point] = null;
 
-        SpawnWave();
-        isFirstWave = false;
     }
 
     private void Update()
@@ -68,38 +66,39 @@ public class AISpawner : NetworkBehaviour
 
     private void SpawnWave()
     {
-        if (isFirstWave)
-        {
-            FillAllPoints();
-        }
-        else
-        {
-            waveCount++;
-            spawnCoroutine = StartCoroutine(DelayedSpawn());
-        }
-    }
+        waveCount++;
+        spawnCoroutine = StartCoroutine(DelayedSpawn());
 
-
-    private void FillAllPoints()
-    {
-        foreach (Transform point in spawnPoints)
-        {
-            if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
-                SpawnAtPoint(point);
-            else
-                break;
-        }
     }
 
     private IEnumerator DelayedSpawn()
     {
+        if (!GameManager.Instance.CanSpawnAI())
+        {
+            spawnCoroutine = null;
+            yield break;
+        }
+
         float delay = Mathf.Min(baseSpawnDelay + (waveCount - 1) * delayIncrement, maxSpawnDelay);
 
         foreach (Transform point in spawnPoints)
         {
-            if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
+            if (!GameManager.Instance.CanSpawnAI())
+            {
+                spawnCoroutine = null;
+                yield break;
+            }
+
+            if (spawnPointAIs[point] == null)
             {
                 SpawnAtPoint(point);
+
+                if (!GameManager.Instance.CanSpawnAI())
+                {
+                    spawnCoroutine = null;
+                    yield break;
+                }
+
                 yield return new WaitForSeconds(delay);
             }
         }
@@ -114,7 +113,6 @@ public class AISpawner : NetworkBehaviour
             return;
         }
 
-        if (!GameManager.Instance.CanSpawnAI()) return;
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
             return;
 

@@ -47,7 +47,7 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private CinemachineCamera mainCamera;
     [SerializeField] private CinemachineZoomController cinemachineZoom;
 
-    private const string SERVER_URL = "http://192.168.0.103:5000/api/lobby";
+    private const string SERVER_URL = "http://192.168.1.32:5000/api/lobby";
     private string currentLobbyId = string.Empty;
     private string localUserName = string.Empty;
     private LobbyInfo pendingLobbyToJoin = null;
@@ -403,7 +403,7 @@ public class ConnectionCanvas : BaseCanvas
         PlayerPrefs.Save();
     }
 
-
+    // Sửa lại StartHostRoutine
     private IEnumerator StartHostRoutine(string hostName, string lobbyName)
     {
         ushort port = 7777;
@@ -430,7 +430,36 @@ public class ConnectionCanvas : BaseCanvas
             hostName = hostName
         };
 
-        yield return StartCoroutine(RegisterLobbyOnServer(request));
+        // ✨ Kiểm tra server trước
+        bool serverAvailable = false;
+        yield return StartCoroutine(CheckServerAvailabilityCoroutine((result) => serverAvailable = result));
+
+        if (serverAvailable)
+        {
+            yield return StartCoroutine(RegisterLobbyOnServer(request));
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Server not available, starting offline mode...");
+
+            // Chạy offline mode ngay lập tức
+            currentLobbyId = "LOCAL";
+            localUserName = hostName;
+            isCreatingLobby = false;
+            enterNamePopup.SetActive(false);
+            mainPanel.SetActive(false);
+            ShowOfflineLobbyUI();
+        }
+    }
+
+    private IEnumerator CheckServerAvailabilityCoroutine(System.Action<bool> callback)
+    {
+        using (var www = UnityWebRequest.Get($"{SERVER_URL}/ping"))
+        {
+            www.timeout = 3;
+            yield return www.SendWebRequest();
+            callback(www.result == UnityWebRequest.Result.Success);
+        }
     }
 
     private IEnumerator JoinLobbyRoutine(string lobbyId, string playerName)

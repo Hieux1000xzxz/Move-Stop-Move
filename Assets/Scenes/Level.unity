@@ -5626,7 +5626,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  totalAIQuota: 7
+  totalAIQuota: 40
   currentAIQuota: 0
   aiSpawner: {fileID: 1639591196}
   zoomController: {fileID: 1246925140}
@@ -8918,7 +8918,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1406031923
 MonoBehaviour:
   m_ObjectHideFlags: 0
