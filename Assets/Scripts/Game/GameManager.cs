@@ -18,7 +18,6 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private InteractionCanvas interactionCanvas;
     [SerializeField] private MainMenuCanvas mainMenuCanvas;
     [SerializeField] private ShopCanvas shopCanvas;
-    [SerializeField] private KillScoreDisplay killScoreDisplay;
 
     [Header("Camera")]
     [SerializeField] private CinemachineCamera mainCamera;
@@ -105,37 +104,42 @@ public class GameManager : NetworkBehaviour
         return currentAIQuota - activeAIs.Count > 0;
     }
 
-    public void RegisterAI(GameObject ai)
+    public bool TryRegisterAI(GameObject ai)
     {
-        if (IsServer && currentAIQuota > 0)
-        {
-            activeAIs.Add(ai);
-            currentAIQuota--;
-            totalSpawned++;
-            ActiveAICount.Value = activeAIs.Count;
-            RemainingAIQuota.Value = currentAIQuota;
-            var netObj = ai.GetComponent<NetworkObject>();
-            if (netObj != null && !activeEntities.Contains(netObj))
-            {
-                activeEntities.Add(netObj);
-            }
-        }
-    }
+        if (!IsServer) return false;
 
+        if (activeAIs.Contains(ai))
+            return false;
+
+        activeAIs.Add(ai);
+        ActiveAICount.Value = activeAIs.Count;
+
+        var netObj = ai.GetComponent<NetworkObject>();
+        if (netObj != null && !activeEntities.Contains(netObj))
+        {
+            activeEntities.Add(netObj);
+        }
+
+        return true;
+    }
 
     public void UnregisterAI(GameObject ai)
     {
-        if (IsServer && activeAIs.Remove(ai))
+        if (!IsServer || ai == null) return;
+
+        if (activeAIs.Remove(ai))
         {
-            totalKilled++;
+            currentAIQuota--; 
             ActiveAICount.Value = activeAIs.Count;
-            var netObj = ai.GetComponent<NetworkObject>();
-            if (netObj != null)
-            {
-                activeEntities.Remove(netObj);
-            }
-            CheckLastSurvivor();
+            RemainingAIQuota.Value = currentAIQuota;
         }
+
+        var netObj = ai.GetComponent<NetworkObject>();
+        if (netObj != null)
+        {
+            activeEntities.Remove(netObj);
+        }
+        CheckLastSurvivor();
     }
 
     public void RegisterPlayerInGame(Player player)
@@ -182,7 +186,7 @@ public class GameManager : NetworkBehaviour
         if (gamePlayCanvas != null)
         {
             gamePlayCanvas.OnGameWin();
-            DisableGamePlaySystem();
+            //DisableGamePlaySystem();
         }
     }
     [ClientRpc]
@@ -227,7 +231,6 @@ public class GameManager : NetworkBehaviour
             ResetGame();
         }
         UIManager.Instance.CloseAllUI();
-        HidePlayerPreview();
     }
 
     public void GameOver()
@@ -264,7 +267,6 @@ public class GameManager : NetworkBehaviour
 
     public void BindKillScoreDisplay(KillScoreDisplay killScore)
     {
-        killScoreDisplay = killScore;
         zoomController.SetUp(killScore);
     }
    
@@ -372,7 +374,6 @@ public class GameManager : NetworkBehaviour
         var alive = GetAliveSpectatorTargets();
         if (alive.Count == 0)
         {
-            Debug.Log("Không còn ai để spectate.");
             return;
         }
 
@@ -384,7 +385,6 @@ public class GameManager : NetworkBehaviour
         var alive = GetAliveSpectatorTargets();
         if (alive.Count == 0)
         {
-            Debug.Log("Không còn ai để spectate.");
             return;
         }
 
@@ -397,7 +397,6 @@ public class GameManager : NetworkBehaviour
         var alive = GetAliveSpectatorTargets();
         if (alive.Count == 0)
         {
-            Debug.Log("Không còn ai để spectate.");
             return;
         }
 
@@ -410,7 +409,6 @@ public class GameManager : NetworkBehaviour
         var alive = GetAliveSpectatorTargets();
         if (alive.Count == 0)
         {
-            Debug.Log("Không còn ai để spectate.");
             return;
         }
 
@@ -457,21 +455,6 @@ public class GameManager : NetworkBehaviour
         GameOver();
     }
 
-    public void SpawnOnlineAI(Vector3 pos)
-    {
-        if (!IsServer) return;
-        GameObject aiObj = ObjectPool.Instance.SpawnRandomEnemy(pos);
-        if (aiObj != null)
-        {
-            var netObj = aiObj.GetComponent<NetworkObject>();
-            if (netObj != null && !netObj.IsSpawned)
-            {
-                netObj.Spawn(true);
-            }
-            RegisterAI(aiObj);
-        }
-    }
-
     [ServerRpc(RequireOwnership = false)]
     public void RequestNextSpectatorTargetServerRpc(ServerRpcParams rpcParams = default)
     {
@@ -483,7 +466,6 @@ public class GameManager : NetworkBehaviour
         var netObj = alive[spectatorIndex].GetComponent<NetworkObject>();
         if (netObj != null)
         {
-            // Gửi target mới về đúng client đang yêu cầu
             var senderId = rpcParams.Receive.SenderClientId;
             var clientRpcParams = new ClientRpcParams
             {

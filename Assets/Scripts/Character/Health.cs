@@ -68,10 +68,8 @@ public class Health : NetworkBehaviour
             Player player = GetComponent<Player>();
             if (player != null)
             {
-                // Lấy owner của player này
                 var ownerClientId = player.OwnerClientId;
 
-                // Gửi GameOver chỉ cho đúng client
                 GameManager.Instance.GameOverTargetClientRpc(new ClientRpcParams
                 {
                     Send = new ClientRpcSendParams

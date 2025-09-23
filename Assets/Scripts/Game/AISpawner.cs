@@ -109,9 +109,7 @@ public class AISpawner : NetworkBehaviour
     private void SpawnAtPoint(Transform spawnPoint)
     {
         if (!GameManager.Instance.CanSpawnAI())
-        {
             return;
-        }
 
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
             return;
@@ -120,7 +118,8 @@ public class AISpawner : NetworkBehaviour
         if (enemy == null) return;
 
         CharacterBase character = enemy.GetComponent<CharacterBase>();
-        if (character != null) character.ResetState();
+        if (character != null)
+            character.ResetState();
 
         NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
 
@@ -142,15 +141,27 @@ public class AISpawner : NetworkBehaviour
             if (netObj != null && !netObj.IsSpawned)
                 netObj.Spawn(true);
 
-            spawnPointAIs[spawnPoint] = enemy;
-            GameManager.Instance.RegisterAI(enemy);
+            bool registered = GameManager.Instance.TryRegisterAI(enemy);
+            if (registered)
+            {
+                spawnPointAIs[spawnPoint] = enemy;
+            }
+            else
+            {
+                if (netObj != null && netObj.IsSpawned)
+                    netObj.Despawn();
+                enemy.SetActive(false);
+
+                if (spawnPointAIs.ContainsKey(spawnPoint) && spawnPointAIs[spawnPoint] == enemy)
+                    spawnPointAIs.Remove(spawnPoint);
+            }
         }
         else
         {
             enemy.SetActive(false);
         }
-
     }
+
     public int GetActiveAICount()
     {
         int count = 0;

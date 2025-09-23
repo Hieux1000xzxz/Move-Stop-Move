@@ -20,6 +20,8 @@ public class GamePlayCanvas : BaseCanvas
     private ConnectionCanvas connectionCanvas;
     private string lobbyId;
     private string playerName;
+    private float winExitTimer = -1f;
+    private float winExitDelay = 5f;
 
     public void Init(ConnectionCanvas connection, string lobbyId, string playerName)
     {
@@ -31,7 +33,23 @@ public class GamePlayCanvas : BaseCanvas
     private void Awake()
     {
         gameOverUI.SetActive(false);
+        gameWinUI.SetActive(false);
+        menuUI.SetActive(false);
+        viewUI.SetActive(false);
     }
+    private void Update()
+    {
+        if (winExitTimer > 0)
+        {
+            winExitTimer -= Time.deltaTime;
+            if (winExitTimer <= 0)
+            {
+                OnExitGame();
+                winExitTimer = -1f;
+            }
+        }
+    }
+
     private void Start()
     {
         backToMenuButton.onClick.AddListener(OnExitGame);
@@ -66,7 +84,10 @@ public class GamePlayCanvas : BaseCanvas
     {
         Debug.Log("Exit Match");
 
-        if (NetworkManager.Singleton == null) return;
+        if (NetworkManager.Singleton == null) 
+            
+            return;
+
         if (NetworkManager.Singleton.IsHost)
         {
             NetworkManager.Singleton.Shutdown();
@@ -114,7 +135,7 @@ public class GamePlayCanvas : BaseCanvas
     public void OnGameWin()
     {
         gameWinUI.SetActive(true);
-        gameOverUI.SetActive(false); 
-        Invoke(nameof(OnExitGame), 5f);
+        gameOverUI.SetActive(false);
+        winExitTimer = winExitDelay;
     }
 }

@@ -264,14 +264,12 @@ public class ConnectionCanvas : BaseCanvas
             {
                 Debug.LogWarning("⚠️ Could not reach lobby server, starting local offline host...");
 
-                // fallback local host
                 currentLobbyId = "LOCAL";
                 localUserName = "Host";
                 isCreatingLobby = false;
                 enterNamePopup.SetActive(false);
                 mainPanel.SetActive(false);
 
-                // Cho phép chạy luôn vào lobby/game local
                 ShowOfflineLobbyUI();
             }
         }
@@ -281,9 +279,8 @@ public class ConnectionCanvas : BaseCanvas
     {
         lobbyPanel.SetActive(true);
         lobbyId.text = "Offline Mode";
-        startGameButton.interactable = true; // host luôn được start game
+        startGameButton.interactable = true;
 
-        // Add chính player local vào list
         ClearContainer(playerListContainer);
         var item = Instantiate(playerItemPrefab, playerListContainer);
         var comp = item.GetComponent<PlayerItem>();
