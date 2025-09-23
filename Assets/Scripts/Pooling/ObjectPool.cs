@@ -309,19 +309,17 @@ public class ObjectPool : Singleton<ObjectPool>
             var netObj = obj.GetComponent<NetworkObject>();
             if (netObj != null && netObj.IsSpawned)
             {
-                // ✅ Despawn khỏi mạng trước khi tắt
                 if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
                 {
-                    netObj.Despawn(false); // true = destroy trên client
+                    netObj.Despawn(false);
                 }
                 else
                 {
-                    // fallback nếu netmanager đã tắt
                     netObj.Despawn(true);
                 }
             }
 
-            obj.SetActive(false); // disable object trong pool
+            obj.SetActive(false);
         }
     }
 
@@ -333,7 +331,7 @@ public class ObjectPool : Singleton<ObjectPool>
         var netObj = obj.GetComponent<NetworkObject>();
         if (netObj != null && netObj.IsSpawned && NetworkManager.Singleton.IsServer)
         {
-            netObj.Despawn(true); // despawn khỏi mạng
+            netObj.Despawn(true);
         }
 
         obj.SetActive(false);

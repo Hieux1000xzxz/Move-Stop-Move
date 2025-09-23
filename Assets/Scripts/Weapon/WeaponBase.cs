@@ -82,11 +82,11 @@ public class WeaponBase : NetworkBehaviour
 
     protected virtual void ReturnToHand()
     {
-        if (owner == null || owner.health.IsDead)
-        {
-            gameObject.SetActive(false); 
-            return;
-        }
+        //if (owner == null || owner.health.IsDead)
+        //{
+        //    gameObject.SetActive(false); 
+        //    return;
+        //}
 
         StopRotation();
         isFlying = false;
