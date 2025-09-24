@@ -91,6 +91,8 @@ public class WeaponBase : NetworkBehaviour
         isFlying = false;
         isFollowing = true;
 
+        if (spawnPoint == null)
+            return;
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;

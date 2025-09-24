@@ -107,6 +107,18 @@ PrefabInstance:
       value: Axe
       objectReference: {fileID: 0}
     - target: {fileID: 4050550006519317102, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4050550006519317102, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4050550006519317102, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4050550006519317102, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -251,7 +263,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   speed: 14
   damage: 10
-  handRotationOffset: {x: 360, y: 0, z: 180}
+  handRotationOffset: {x: 0, y: 0, z: 190}
   rotateAxis: {x: -1, y: 0, z: 0}
   rotateSpeed: 1080
   rotateMode: 3
