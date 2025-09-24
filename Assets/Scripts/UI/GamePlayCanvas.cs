@@ -136,6 +136,7 @@ public class GamePlayCanvas : BaseCanvas
     {
         gameWinUI.SetActive(true);
         gameOverUI.SetActive(false);
+        menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
     }
 }

@@ -186,6 +186,9 @@ public class GameManager : NetworkBehaviour
         if (gamePlayCanvas != null)
         {
             gamePlayCanvas.OnGameWin();
+            UIManager.Instance.HideCountText();
+            zoomController.baseFOV = 35f;
+            zoomController.baseFollowY = 5f;
             //DisableGamePlaySystem();
         }
     }
@@ -202,11 +205,6 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-
-    public int GetRemainingQuota() { return currentAIQuota; }
-    public int GetTotalKilled() { return totalKilled; }
-
-    public int GetRemainingPlayerCount() { return activePlayers.Count; }
     public void ResetGame()
     {
         currentAIQuota = totalAIQuota;

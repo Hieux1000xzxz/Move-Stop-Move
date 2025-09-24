@@ -6,7 +6,6 @@ public class UIManager : Singleton<UIManager>
 {
     [Header("AI Counter")]
     [SerializeField] private TextMeshProUGUI aiCounterText;
-    [SerializeField] private TextMeshProUGUI alivePlayerCountText;
     [SerializeField] private string displayFormat = "Enemies Left: {0}";
 
     [Header("Canvases")]
@@ -15,20 +14,21 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] private ConnectionCanvas connectionCanvas;
     [SerializeField] private LoadingCanvas loadingCanvas;
     [SerializeField] private NotificationCanvas notificationCanvas;
-
+    private int currentQuota = -1;
+    private int currentAlivePlayers = -1;
     public void SendQuotaUpdate(int quota)
     {
         if (aiCounterText == null) return;
-
-        if (quota <= 0)
+        currentQuota = quota + currentAlivePlayers - 1;
+        if (currentQuota <= 0)
         {
             aiCounterText.text = "All Enemies Defeated!";
             aiCounterText.color = Color.green;
         }
         else
         {
-            aiCounterText.text = string.Format(displayFormat, quota);
-            aiCounterText.color = quota <= 10 ? Color.red : Color.white;
+            aiCounterText.text = string.Format(displayFormat, currentQuota);
+            aiCounterText.color = currentQuota <= 10 ? Color.red : Color.white;
         }
     }
 
@@ -49,11 +49,13 @@ public class UIManager : Singleton<UIManager>
         //    aiCounterText.color = totalRemaining <= 10 ? Color.red : Color.white;
         //}
     }
-
+    public void HideCountText() 
+    { 
+        aiCounterText.text = string.Empty;
+    }
     public void SendPlayerCountUpdate(int current)
     {
-        if (alivePlayerCountText == null) return;
-        alivePlayerCountText.text = "Alive Players: " + current;
+        currentAlivePlayers = current;
     }
 
     public void OpenUI(BaseCanvas canvas)
