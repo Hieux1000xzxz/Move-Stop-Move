@@ -5,38 +5,67 @@ using UnityEngine;
 public class PlayerAttackRange : NetworkBehaviour
 {
     [Header("References")]
-    [SerializeField] private LineRenderer line;        
+    [SerializeField] private LineRenderer line;
     [SerializeField] private CharacterBase character;
 
+    [Header("Settings")]
+    [SerializeField] private int circleResolution = 50; 
+    [SerializeField] private float lineWidth = 0.05f;
+
+    private float lastAttackRange = -1f; 
+    private Vector3[] unitCirclePoints;   
+
+    private void Awake()
+    {
+        if (line == null) line = GetComponent<LineRenderer>();
+        PrecomputeUnitCircle();
+        line.loop = true;
+        line.widthMultiplier = lineWidth;
+        line.enabled = false; 
+    }
 
     private void Update()
     {
-        if (!IsOwner) 
+        if (!IsOwner)
         {
             if (line.enabled) line.enabled = false;
             return;
         }
 
         if (!line.enabled) line.enabled = true;
-        DrawCircle(character.currentAttackRange);
-    }
 
-    private void DrawCircle(float radius)
-    {
-        int points = 50;
-        line.positionCount = points + 1;
-        line.useWorldSpace = true; 
+        float currentRange = character.currentAttackRange;
 
-        Vector3 center = transform.position;
-
-        for (int i = 0; i <= points; i++)
+        if (!Mathf.Approximately(currentRange, lastAttackRange))
         {
-            float angle = i * Mathf.PI * 2f / points;
-            float x = Mathf.Cos(angle) * radius;
-            float z = Mathf.Sin(angle) * radius;
-            line.SetPosition(i, new Vector3(center.x + x, center.y + 0.05f, center.z + z));
+            lastAttackRange = currentRange;
+            UpdateCircle(currentRange);
         }
-        line.widthMultiplier = 0.05f;
+
+        Vector3 offset = new Vector3(0, 0.05f, 0);
+        for (int i = 0; i < unitCirclePoints.Length; i++)
+        {
+            line.SetPosition(i, transform.position + offset + unitCirclePoints[i] * currentRange);
+        }
     }
 
+    private void PrecomputeUnitCircle()
+    {
+        unitCirclePoints = new Vector3[circleResolution];
+        for (int i = 0; i < circleResolution; i++)
+        {
+            float angle = i * Mathf.PI * 2f / circleResolution;
+            unitCirclePoints[i] = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
+        }
+        line.positionCount = circleResolution;
+    }
+
+    private void UpdateCircle(float radius)
+    {
+        Vector3 offset = new Vector3(0, 0.05f, 0);
+        for (int i = 0; i < unitCirclePoints.Length; i++)
+        {
+            line.SetPosition(i, transform.position + offset + unitCirclePoints[i] * radius);
+        }
+    }
 }
