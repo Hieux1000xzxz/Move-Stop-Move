@@ -34,7 +34,6 @@ public class ShopCanvas : BaseCanvas
 
         if (!string.IsNullOrEmpty(selectedWeaponName) && weaponItems.ContainsKey(selectedWeaponName))
         {
-            // Đã có vũ khí được chọn từ trước
             WeaponItem selectedItem = weaponItems[selectedWeaponName];
             selectedWeapon = selectedItem.WeaponData;
 
@@ -54,23 +53,20 @@ public class ShopCanvas : BaseCanvas
         }
         else
         {
-            // 🔥 Lần đầu vào game -> mặc định lấy vũ khí đầu tiên trong danh sách
             if (weapons.Length > 0)
             {
-                WeaponData defaultWeapon = weapons[0]; // vũ khí đầu tiên
+                WeaponData defaultWeapon = weapons[0];
                 selectedWeapon = defaultWeapon;
 
-                // Cập nhật PlayerPrefs để lưu lại
                 PlayerPrefs.SetString("SelectedWeapon", defaultWeapon.weaponName);
-                PlayerPrefs.SetInt("WeaponBought_" + defaultWeapon.weaponName, 1); // coi như đã mua
+                PlayerPrefs.SetInt("WeaponBought_" + defaultWeapon.weaponName, 1); 
                 PlayerPrefs.Save();
 
-                // Cập nhật UI
                 foreach (var item in weaponItems.Values)
                 {
                     bool isSelected = item.WeaponData.weaponName == defaultWeapon.weaponName;
-                    item.SetBought(isSelected);   // vũ khí đầu tiên đã mua
-                    item.SetSelected(isSelected); // vũ khí đầu tiên được chọn
+                    item.SetBought(isSelected);   
+                    item.SetSelected(isSelected); 
                     item.SetChosen(isSelected);
                 }
 
