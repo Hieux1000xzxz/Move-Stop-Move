@@ -21,8 +21,6 @@ public class Powerup : NetworkBehaviour
         CharacterBase character = other.GetComponent<CharacterBase>();
         if (character != null)
         {
-            // ❌ bỏ StartCoroutine trên server
-            // ✅ chỉ gọi RPC để mọi client (kể cả host) tự xử lý
             character.ApplyPowerupClientRpc(type, duration);
 
             ObjectPool.Instance.ReleasePowerup(gameObject, type);

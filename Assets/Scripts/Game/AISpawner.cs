@@ -31,7 +31,6 @@ public class AISpawner : NetworkBehaviour
         CleanupDeadAIs();
         if (!gameObject.activeInHierarchy)
         {
-            Debug.LogError("AISpawner GameObject đã bị disable!");
             return;
         }
         if (HasEmptyPoints() && GameManager.Instance.CanSpawnAI() && spawnCoroutine == null)

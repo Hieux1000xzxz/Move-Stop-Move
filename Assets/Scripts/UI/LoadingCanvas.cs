@@ -6,9 +6,9 @@ public class LoadingCanvas : BaseCanvas
 {
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI loadingText;
-    [SerializeField] private float bounceSpeed = 6f;   // tốc độ nảy
-    [SerializeField] private float bounceAmount = 20f; // biên độ nảy
-    [SerializeField] private float lifetime = 5f;      // thời gian tồn tại (giây)
+    [SerializeField] private float bounceSpeed = 6f;   
+    [SerializeField] private float bounceAmount = 20f; 
+    [SerializeField] private float lifetime = 5f;      
 
     private float timer;
     private string baseText = "Loading";
@@ -31,22 +31,22 @@ public class LoadingCanvas : BaseCanvas
     {
         if (!IsOpen || loadingText == null) return;
 
-        // hiệu ứng dấu ...
+       
         dotTimer += Time.deltaTime;
-        if (dotTimer >= 0.5f) // mỗi 0.5s thêm một dấu .
+        if (dotTimer >= 0.5f) 
         {
             dotTimer = 0f;
-            dotCount = (dotCount + 1) % 4; // 0 -> 1 -> 2 -> 3 rồi quay lại
+            dotCount = (dotCount + 1) % 4; 
         }
 
-        // cập nhật text
+        
         string currentText = baseText + new string('.', dotCount);
         loadingText.text = currentText;
 
-        // hiệu ứng nảy từng chữ
+        
         AnimateBounce(currentText);
 
-        // kiểm tra lifetime
+       
         timer += Time.deltaTime;
         if (timer >= lifetime)
         {
@@ -57,7 +57,7 @@ public class LoadingCanvas : BaseCanvas
     private void AnimateBounce(string text)
     {
         TMP_TextInfo textInfo = loadingText.textInfo;
-        loadingText.ForceMeshUpdate(); // cập nhật lưới chữ
+        loadingText.ForceMeshUpdate(); 
 
         for (int i = 0; i < textInfo.characterCount; i++)
         {
@@ -67,7 +67,7 @@ public class LoadingCanvas : BaseCanvas
             int materialIndex = textInfo.characterInfo[i].materialReferenceIndex;
             Vector3[] vertices = textInfo.meshInfo[materialIndex].vertices;
 
-            // nảy theo index
+           
             float offset = Mathf.Sin(Time.time * bounceSpeed + i * 0.3f) * bounceAmount;
 
             vertices[vertexIndex + 0].y += offset;
@@ -76,7 +76,7 @@ public class LoadingCanvas : BaseCanvas
             vertices[vertexIndex + 3].y += offset;
         }
 
-        // apply thay đổi
+        
         for (int i = 0; i < textInfo.meshInfo.Length; i++)
         {
             textInfo.meshInfo[i].mesh.vertices = textInfo.meshInfo[i].vertices;

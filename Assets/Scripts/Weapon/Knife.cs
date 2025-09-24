@@ -6,7 +6,7 @@ public class Knife : WeaponBase
     {
         base.Launch(dir, shooter);
 
-        // ✅ cho rìu xoay quanh trục bay khi bắn ra
+        
         if (rb != null)
         {
             rb.angularVelocity = transform.forward * rotateSpeed * Mathf.Deg2Rad;
@@ -17,7 +17,7 @@ public class Knife : WeaponBase
     {
         base.ReturnToHand();
 
-        // reset angularVelocity khi rìu trở về tay
+        
         if (rb != null)
         {
             rb.angularVelocity = Vector3.zero;

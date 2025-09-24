@@ -148,22 +148,11 @@ public class ShopCanvas : BaseCanvas
     {
         if (selectedWeapon == null) return;
 
-        // int currentCoins = PlayerPrefs.GetInt("Coins", 0);
-        // if (currentCoins >= selectedWeapon.price)
-        // {
-        //     currentCoins -= selectedWeapon.price;
-        //     PlayerPrefs.SetInt("Coins", currentCoins);
-
         PlayerPrefs.SetInt("WeaponBought_" + selectedWeapon.weaponName, 1);
         PlayerPrefs.Save();
 
         weaponItems[selectedWeapon.weaponName].SetBought(true);
         UpdateButtons();
-        // }
-        // else
-        // {
-        //     Debug.Log("Không đủ tiền!");
-        // }
     }
 
     private void OnSelectWeapon()
