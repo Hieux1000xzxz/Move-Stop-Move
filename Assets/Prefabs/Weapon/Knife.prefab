@@ -120,7 +120,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4050550006519317102, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4050550006519317102, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_LocalRotation.x
@@ -132,7 +132,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4050550006519317102, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4050550006519317102, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -144,7 +144,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4050550006519317102, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 180
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4902244865759134372, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_Size.x
@@ -249,11 +249,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  speed: 14
+  speed: 5
   damage: 10
-  handRotationOffset: {x: 90, y: 0, z: 90}
-  rotateAxis: {x: 1, y: 0, z: 0}
-  rotateSpeed: 1440
+  handRotationOffset: {x: 360, y: 0, z: 180}
+  rotateAxis: {x: -1, y: 0, z: 0}
+  rotateSpeed: 1080
   rotateMode: 3
   rb: {fileID: 3562958303719707135}
   isFlying: 0

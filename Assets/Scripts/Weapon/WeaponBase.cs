@@ -44,6 +44,8 @@ public class WeaponBase : NetworkBehaviour
 
         rb.isKinematic = true;
 
+        StartRotation();
+
     }
 
     private void LateUpdate()
@@ -77,17 +79,14 @@ public class WeaponBase : NetworkBehaviour
         transform.position = spawnPoint.position;
         transform.rotation = Quaternion.LookRotation(dir) * Quaternion.Euler(handRotationOffset);
         rb.linearVelocity = dir * speed;
+        rb.angularVelocity = dir.normalized * rotateSpeed * Mathf.Deg2Rad;
         launchPos = transform.position;
+
+        StartRotation();
     }
 
     protected virtual void ReturnToHand()
     {
-        //if (owner == null || owner.health.IsDead)
-        //{
-        //    gameObject.SetActive(false); 
-        //    return;
-        //}
-
         StopRotation();
         isFlying = false;
         isFollowing = true;
@@ -100,6 +99,8 @@ public class WeaponBase : NetworkBehaviour
         transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
 
         owner?.OnWeaponReturned();
+
+        StartRotation();
     }
 
     protected virtual void Update()

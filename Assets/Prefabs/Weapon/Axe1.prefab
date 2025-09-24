@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_Name
-      value: Axe
+      value: Axe1
       objectReference: {fileID: 0}
     - target: {fileID: 66507394972494504, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_IsActive
@@ -120,7 +120,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2489098013
+  GlobalObjectIdHash: 3104477953
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -146,10 +146,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  speed: 14
+  speed: 5
   damage: 10
-  handRotationOffset: {x: 0, y: 0, z: 90}
-  rotateAxis: {x: 0, y: 0, z: -1}
+  handRotationOffset: {x: 360, y: 90, z: 180}
+  rotateAxis: {x: 0, y: 0, z: 1}
   rotateSpeed: 1080
   rotateMode: 3
   rb: {fileID: 3562958303719707135}

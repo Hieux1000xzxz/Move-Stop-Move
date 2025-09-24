@@ -47,7 +47,7 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private CinemachineCamera mainCamera;
     [SerializeField] private CinemachineZoomController cinemachineZoom;
 
-    private const string SERVER_URL = "http://192.168.1.32:5000/api/lobby";
+    private const string SERVER_URL = "http://192.168.1.30:5000/api/lobby";
     private string currentLobbyId = string.Empty;
     private string localUserName = string.Empty;
     private LobbyInfo pendingLobbyToJoin = null;
