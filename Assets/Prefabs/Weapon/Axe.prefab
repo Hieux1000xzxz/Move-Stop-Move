@@ -146,7 +146,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  speed: 5
+  speed: 14
   damage: 10
   handRotationOffset: {x: 360, y: 90, z: 180}
   rotateAxis: {x: 0, y: 0, z: 1}
