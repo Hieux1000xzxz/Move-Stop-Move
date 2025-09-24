@@ -22,6 +22,7 @@ public abstract class CharacterBase : NetworkBehaviour
     [SerializeField] protected float attackDuration = 0.5f;
     [SerializeField] protected LayerMask targetLayer;
     [SerializeField] public Collider characterCollider;
+    [SerializeField] protected NetworkObject networkObject;
 
     [Header("Weapon Settings")]
     [SerializeField] public Transform weaponSpawnPoint;
@@ -593,7 +594,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
             if (IsServer)
             {
-                GameManager.Instance.UnregisterAI(this.gameObject);
+                GameManager.Instance.UnregisterAI(this.networkObject);
             }
 
             StopAllCoroutines();

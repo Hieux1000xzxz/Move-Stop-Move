@@ -119,7 +119,7 @@ public class Player : CharacterBase
     private IEnumerator DeferredRegister()
     {
         yield return null; 
-        GameManager.Instance.RegisterPlayerInGame(this);
+        GameManager.Instance.RegisterPlayerInGame(this.networkObject);
     }
     protected override void Move(Vector3 direction)
     {
@@ -143,14 +143,14 @@ public class Player : CharacterBase
     {
         if (IsServer)
         {
-            GameManager.Instance.UnregisterPlayerInGame(this);
+            GameManager.Instance.UnregisterPlayerInGame(this.networkObject);
         }
     }
     private void OnDisable()
     {
         if (IsServer)
         {
-            GameManager.Instance.UnregisterPlayerInGame(this);
+            GameManager.Instance.UnregisterPlayerInGame(this.networkObject);
         }
     }
 }

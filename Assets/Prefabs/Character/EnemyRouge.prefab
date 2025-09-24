@@ -554,6 +554,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 72
   characterCollider: {fileID: 7915159274365355493}
+  networkObject: {fileID: 5574279119974141978}
   weaponSpawnPoint: {fileID: 5560079348092688031}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.3

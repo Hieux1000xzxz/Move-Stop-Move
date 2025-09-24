@@ -80,7 +80,6 @@ public class Health : NetworkBehaviour
             }
             else
             {
-                GameManager.Instance.UnregisterAI(gameObject);
             }
 
             DieClientRpc();
