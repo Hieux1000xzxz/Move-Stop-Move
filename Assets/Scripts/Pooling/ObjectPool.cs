@@ -112,7 +112,6 @@ public class ObjectPool : Singleton<ObjectPool>
 
         if (enemy == null)
         {
-            Debug.LogError("❌ Không tìm thấy Enemy prefab trong ObjectPool!");
             return null;
         }
 

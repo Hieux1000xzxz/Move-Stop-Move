@@ -104,9 +104,5 @@ public class Health : NetworkBehaviour
 
     private void EnsureHealthSynced()
     {
-        if (CurrentHealth.Value <= 0 && !IsServer)
-        {
-            Debug.LogWarning($"{name} Client thấy health=0, nhưng chờ sync từ server...");
-        }
     }
 }

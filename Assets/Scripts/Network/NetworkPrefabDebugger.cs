@@ -10,7 +10,7 @@ public class NetworkPrefabDebugger : MonoBehaviour
         {
             if (entry.Prefab != null)
             {
-                // Lấy hash từ entry thay vì từ NetworkObject
+                
                 uint hash = entry.SourcePrefabGlobalObjectIdHash;
                 Debug.Log($"Prefab: {entry.Prefab.name} | Hash: {hash}");
             }
