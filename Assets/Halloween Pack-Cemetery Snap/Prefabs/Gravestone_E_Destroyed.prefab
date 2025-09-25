@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 197708118707486090}
   - component: {fileID: 3824046370508649007}
   - component: {fileID: 1366080113650353893}
-  - component: {fileID: -3235326237068738665}
   m_Layer: 7
   m_Name: Gravestone_E_Destroyed
   m_TagString: Untagged
@@ -87,25 +86,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &-3235326237068738665
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 717680720414598960}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 1910212949052340665, guid: 2e06af4cbf6bab446b6dd8cd1bec7eba, type: 3}

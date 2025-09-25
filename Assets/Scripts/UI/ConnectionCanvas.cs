@@ -14,10 +14,16 @@ using UnityEngine.UI;
 public class ConnectionCanvas : BaseCanvas
 {
     [Header("UI Panels")]
+    [SerializeField] private GameObject modePanel;
     [SerializeField] private GameObject lobbyPanel;
     [SerializeField] private GameObject mainPanel;
-    [SerializeField] private GameObject enterNamePopup;
+    [SerializeField] private GameObject playerInfoPanel;
     [SerializeField] private GamePlayCanvas gameplayCanvas;
+
+    [Header("Mode Panel")]
+    [SerializeField] private Button singleButton;
+    [SerializeField] private Button onlineButton;
+    [SerializeField] private Button backToMenuButton;
 
     [Header("Main Panel")]
     [SerializeField] private Button startHostButton;
@@ -33,11 +39,18 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private Button startGameButton;
     [SerializeField] private Button exitButton;
 
-    [Header("Name Popup")]
-    [SerializeField] private TMP_InputField nameInputField;
-    [SerializeField] private Button confirmNameButton;
-    [SerializeField] private TextMeshProUGUI popupTitleText;
-    [SerializeField] private Button closeEnterNamePanelButton;
+    [Header("Join by ID Panel")]
+    [SerializeField] private GameObject joinByIdPanel;
+    [SerializeField] private TMP_InputField lobbyIdInputField;
+    [SerializeField] private Button confirmJoinButton;
+    [SerializeField] private Button cancelJoinButton;
+
+    [Header("Player Info Panel")]
+    [SerializeField] private TMP_InputField playerNameInputField;
+    [SerializeField] private Transform avatarSelectionContainer;
+    [SerializeField] private GameObject avatarItemPrefab;
+    [SerializeField] private Button confirmPlayerInfoButton;
+    [SerializeField] private Button cancelPlayerInfoButton;
 
     [Header("Network")]
     [SerializeField] private NetworkManager networkManager;
@@ -45,34 +58,31 @@ public class ConnectionCanvas : BaseCanvas
 
     [SerializeField] private GameObject playerPreview;
     [SerializeField] private CinemachineCamera mainCamera;
-    [SerializeField] private CinemachineZoomController cinemachineZoom;
+    [SerializeField] private Sprite[] availableAvatars;
 
-    private const string SERVER_URL = "http://192.168.1.32:5000/api/lobby";
+    private const string SERVER_URL = "http://192.168.0.103:5000/api/lobby";
+    private const string DEFAULT_LOBBY_NAME = "Lobby";
+    private const string DEFAULT_PLAYER_NAME = "You";
+    private int selectedAvatarIndex = 0;
     private string currentLobbyId = string.Empty;
-    private string localUserName = string.Empty;
-    private LobbyInfo pendingLobbyToJoin = null;
+    private string localUserName = DEFAULT_PLAYER_NAME;
     private Coroutine heartbeatRoutine;
-    private bool isCreatingLobby = false;
-    private enum NamePopupMode
-    {
-        None,
-        EnterLobbyName,
-        EnterPlayerName,
-        EnterLobbyId,
-        JoinLobby
-    }
-
-    private NamePopupMode currentPopupMode = NamePopupMode.None;
-    private string pendingLobbyName = string.Empty;
+    private Coroutine pollLobbyRoutine;
+    private Coroutine autoRefreshLobbyRoutine;
+    private LobbyInfo pendingLobbyJoin;
+    private bool isSinglePlayerMode = false;
 
     private void Start()
     {
         InitializeButtons();
         InitializeNetworkCallbacks();
         SetInitialUIState();
+        LoadPlayerPrefs();
         RefreshLobbyList();
-        StartCoroutine(AutoRefreshLobbyList());
+        InitializeAvatarSelection();
+        autoRefreshLobbyRoutine = StartCoroutine(AutoRefreshLobbyList());
     }
+
     private IEnumerator AutoRefreshLobbyList()
     {
         while (true)
@@ -84,15 +94,117 @@ public class ConnectionCanvas : BaseCanvas
 
     private void InitializeButtons()
     {
-        backButton.onClick.AddListener(OnBackToMenu);
-        startHostButton.onClick.AddListener(StartHost);
+        singleButton.onClick.AddListener(OnSinglePlayerClicked);
+        onlineButton.onClick.AddListener(OnOnlineClicked);
+        backToMenuButton.onClick.AddListener(OnBackToMenu);
+
+        backButton.onClick.AddListener(OnBackToModePanel);
+        startHostButton.onClick.AddListener(OnStartHostClicked);
+        joinByIdButton.onClick.AddListener(ShowJoinByIdPanel);
+
         startGameButton.onClick.AddListener(OnStartGameClicked);
         exitButton.onClick.AddListener(OnExitClicked);
-        joinByIdButton.onClick.AddListener(() => ShowJoinNamePopup(null, "EnterID"));
-        confirmNameButton.onClick.AddListener(OnConfirmName);
-        closeEnterNamePanelButton.onClick.AddListener(CloseNamePopup);
+
+        confirmJoinButton.onClick.AddListener(OnConfirmJoinById);
+        cancelJoinButton.onClick.AddListener(CloseJoinByIdPanel);
+
+        confirmPlayerInfoButton.onClick.AddListener(OnConfirmPlayerInfo);
+        cancelPlayerInfoButton.onClick.AddListener(OnCancelPlayerInfo);
+
+    }
+    private void InitializeAvatarSelection()
+    {
+        if (avatarSelectionContainer == null)
+        {
+            Debug.LogError("Avatar Selection Container is not assigned in Inspector!");
+            return;
+        }
+
+        if (availableAvatars == null || availableAvatars.Length == 0)
+        {
+            Debug.LogWarning("No available avatars assigned. Using default colors instead.");
+            CreateDefaultAvatarSelection();
+            return;
+        }
+
+        if (avatarItemPrefab == null)
+        {
+            Debug.LogError("Avatar Item Prefab is not assigned in Inspector!");
+            return;
+        }
+
+        ClearContainer(avatarSelectionContainer);
+
+        for (int i = 0; i < availableAvatars.Length; i++)
+        {
+            var avatarItemObj = Instantiate(avatarItemPrefab, avatarSelectionContainer);
+
+            if (avatarItemObj == null) continue;
+
+            // Get AvatarItem component
+            var avatarItem = avatarItemObj.GetComponent<AvatarItem>();
+            if (avatarItem == null)
+            {
+                Debug.LogWarning("AvatarItem component not found on prefab!");
+                continue;
+            }
+
+            // Initialize với avatarItem component
+            avatarItem.Initialize(i, availableAvatars[i], SelectAvatar);
+        }
+
+        SelectAvatar(Mathf.Clamp(selectedAvatarIndex, 0, availableAvatars.Length - 1));
     }
 
+    private void CreateDefaultAvatarSelection()
+    {
+        if (avatarSelectionContainer == null) return;
+
+        for (int i = 0; i < 6; i++)
+        {
+            var avatarItemObj = Instantiate(avatarItemPrefab, avatarSelectionContainer);
+            if (avatarItemObj == null) continue;
+
+            var avatarItem = avatarItemObj.GetComponent<AvatarItem>();
+            if (avatarItem == null) continue;
+
+            //Sprite defaultSprite = CreateDefaultSprite(GetColorByIndex(i));
+            //avatarItem.Initialize(i, defaultSprite, SelectAvatar);
+        }
+    }
+
+    private void SelectAvatar(int index)
+    {
+        selectedAvatarIndex = index;
+        for (int i = 0; i < avatarSelectionContainer.childCount; i++)
+        {
+            var avatarItem = avatarSelectionContainer.GetChild(i).GetComponent<AvatarItem>();
+            if (avatarItem != null)
+            {
+                avatarItem.SetHighlight(i == index);
+            }
+        }
+    }
+
+    private void LoadPlayerPrefs()
+    {
+        // Load player name từ PlayerPrefs
+        localUserName = PlayerPrefs.GetString("PlayerName", DEFAULT_PLAYER_NAME);
+        selectedAvatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0);
+
+        if (playerNameInputField != null)
+        {
+            playerNameInputField.text = localUserName;
+        }
+        SelectAvatar(selectedAvatarIndex);
+    }
+
+    private void SavePlayerPrefs()
+    {
+        PlayerPrefs.SetString("PlayerName", localUserName);
+        PlayerPrefs.SetInt("PlayerAvatar", selectedAvatarIndex);
+        PlayerPrefs.Save();
+    }
     private void InitializeNetworkCallbacks()
     {
         if (networkManager != null)
@@ -103,14 +215,69 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
+    private void ShowPlayerInfoPanel(string purpose = "host")
+    {
+        if (playerInfoPanel != null)
+        {
+            playerInfoPanel.SetActive(true);
+        }
+    }
+    private void HidePlayerInfoPanel()
+    {
+        if (playerInfoPanel != null)
+        {
+            playerInfoPanel.SetActive(false);
+        }
+
+    }
+
+    private void OnConfirmPlayerInfo()
+    {
+        string newName = playerNameInputField != null ? playerNameInputField.text.Trim() : "";
+        if (string.IsNullOrEmpty(newName))
+        {
+            UIManager.Instance?.SendNotification("Please enter your name");
+            UIManager.Instance?.OpenNotification();
+            return;
+        }
+
+        localUserName = newName;
+
+        // Save PlayerId, name và avatar
+        SavePlayerPrefs(localUserName);
+
+        HidePlayerInfoPanel();
+
+        if (pendingLobbyJoin != null)
+        {
+            StartCoroutine(JoinLobbyRoutine(pendingLobbyJoin.lobbyId, localUserName));
+            pendingLobbyJoin = null;
+        }
+        else
+        {
+            StartHost();
+        }
+    }
+
+    private void OnCancelPlayerInfo()
+    {
+        HidePlayerInfoPanel();
+        pendingLobbyJoin = null;
+        mainPanel.SetActive(true);
+    }
+
     private void SetInitialUIState()
     {
+        modePanel.SetActive(true);
         lobbyPanel.SetActive(false);
-        enterNamePopup.SetActive(false);
+        mainPanel.SetActive(false);
+        if (joinByIdPanel != null) joinByIdPanel.SetActive(false);
     }
 
     private void OnDestroy()
     {
+        Application.quitting -= OnApplicationQuitting;
+
         if (networkManager != null)
         {
             networkManager.OnClientConnectedCallback -= OnClientConnected;
@@ -119,12 +286,129 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
+    private void OnApplicationQuitting()
+    {
+        HandleExitLogic();
+    }
+
+    private void OnSinglePlayerClicked()
+    {
+        isSinglePlayerMode = true;
+        localUserName = DEFAULT_PLAYER_NAME;
+        currentLobbyId = "SINGLE";
+
+        // Initialize single player mode
+        if (networkManager != null)
+        {
+            // Start as host for single player to enable spawning
+            transport.SetConnectionData("127.0.0.1", 7777);
+            networkManager.StartHost();
+        }
+
+        // Start game directly without network lobby
+        StartCoroutine(StartSinglePlayerGame());
+
+        modePanel.SetActive(false);
+    }
+
+    private IEnumerator StartSinglePlayerGame()
+    {
+        // Wait a frame for network to initialize
+        yield return null;
+
+        GameManager.Instance.StartGame();
+        GameManager.Instance.StartPowerupSpawning();
+
+        if (gameplayCanvas != null)
+        {
+            gameplayCanvas.Init(this, "SINGLE", localUserName);
+        }
+    }
+
+    private void OnOnlineClicked()
+    {
+        isSinglePlayerMode = false;
+        StartCoroutine(CheckNetworkAndShowMainPanel());
+    }
+
+    private IEnumerator CheckNetworkAndShowMainPanel()
+    {
+        //UIManager.Instance?.SendNotification("Checking network connection and server availability...");
+        //UIManager.Instance?.OpenNotification();
+
+        bool serverAvailable = false;
+        yield return StartCoroutine(CheckServerAvailabilityCoroutine((result) => serverAvailable = result));
+
+        if (serverAvailable)
+        {
+            //UIManager.Instance?.SendNotification("Server connection successful!");
+            //UIManager.Instance?.OpenNotification();
+            modePanel.SetActive(false);
+            mainPanel.SetActive(true);
+        }
+        else
+        {
+            UIManager.Instance?.SendNotification("Unable to connect to server. Please check your internet connection.");
+            UIManager.Instance?.OpenNotification();
+        }
+    }
+
+    private void OnBackToModePanel()
+    {
+        mainPanel.SetActive(false);
+        modePanel.SetActive(true);
+    }
+    private void OnStartHostClicked()
+    {
+        ShowPlayerInfoPanel("host");
+    }
+
     private void StartHost()
     {
-        isCreatingLobby = true;
-        currentPopupMode = NamePopupMode.EnterLobbyName;
-        ShowNamePopup("Enter lobby name to start");
+        StartCoroutine(StartHostRoutine(localUserName, DEFAULT_LOBBY_NAME));
+        mainPanel.SetActive(false);
+    }
 
+    public void ShowJoinByIdPanel()
+    {
+        if (joinByIdPanel != null)
+        {
+            joinByIdPanel.SetActive(true);
+            lobbyIdInputField.text = string.Empty;
+        }
+    }
+
+    private void CloseJoinByIdPanel()
+    {
+        if (joinByIdPanel != null)
+        {
+            joinByIdPanel.SetActive(false);
+        }
+    }
+
+    private void OnConfirmJoinById()
+    {
+        string lobbyId = lobbyIdInputField.text.Trim();
+        if (string.IsNullOrEmpty(lobbyId))
+        {
+            UIManager.Instance?.SendNotification("Please enter a lobby ID");
+            UIManager.Instance?.OpenNotification();
+            return;
+        }
+
+        CloseJoinByIdPanel();
+
+        var tmp = new LobbyInfo { lobbyId = lobbyId };
+        JoinLobbyDirect(tmp);
+    }
+
+
+    public void JoinLobbyDirect(LobbyInfo lobby)
+    {
+        if (lobby == null) return;
+
+        pendingLobbyJoin = lobby;
+        ShowPlayerInfoPanel("join");
     }
 
     private void OnStartGameClicked()
@@ -143,38 +427,6 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-
-
-    public void ShowJoinNamePopup(LobbyInfo lobby, string mode = "")
-    {
-        pendingLobbyToJoin = lobby;
-
-        if (isCreatingLobby && currentPopupMode == NamePopupMode.EnterLobbyName)
-        {
-            ShowNamePopup("Enter lobby name to start");
-        }
-        else if (isCreatingLobby && currentPopupMode == NamePopupMode.EnterPlayerName)
-        {
-            ShowNamePopup("Enter your name");
-        }
-        else if (lobby != null)
-        {
-            currentPopupMode = NamePopupMode.JoinLobby;
-            ShowNamePopup($"Enter name to join {lobby.lobbyName}");
-        }
-        else if (mode == "EnterID")
-        {
-            currentPopupMode = NamePopupMode.EnterLobbyId;
-            ShowNamePopup("Enter lobby ID");
-        }
-    }
-
-    private void ShowNamePopup(string title)
-    {
-        popupTitleText?.SetText(title);
-        nameInputField.text = string.Empty;
-        enterNamePopup.SetActive(true);
-    }
     private void OnExitClicked()
     {
         HandleExitLogic();
@@ -182,6 +434,19 @@ public class ConnectionCanvas : BaseCanvas
 
     public void HandleExitLogic()
     {
+        if (isSinglePlayerMode)
+        {
+            if (networkManager != null && networkManager.IsListening)
+            {
+                networkManager.Shutdown();
+            }
+
+            GameManager.Instance.StopPowerupSpawning();
+            ResetState();
+            modePanel.SetActive(true);
+            return;
+        }
+
         if (networkManager == null) return;
 
         bool wasHost = networkManager.IsHost;
@@ -227,15 +492,16 @@ public class ConnectionCanvas : BaseCanvas
     private void ResetState()
     {
         currentLobbyId = string.Empty;
-        localUserName = string.Empty;
-        pendingLobbyToJoin = null;
+        localUserName = DEFAULT_PLAYER_NAME;
+        isSinglePlayerMode = false;
     }
 
     private void ResetUIState()
     {
         lobbyPanel.SetActive(false);
-        enterNamePopup.SetActive(false);
+        if (joinByIdPanel != null) joinByIdPanel.SetActive(false);
         mainPanel.SetActive(true);
+        modePanel.SetActive(false);
     }
 
     private IEnumerator RegisterLobbyOnServer(LobbyRegistrationRequest request)
@@ -255,7 +521,7 @@ public class ConnectionCanvas : BaseCanvas
             {
                 var lobby = JsonUtility.FromJson<LobbyInfo>(www.downloadHandler.text);
                 currentLobbyId = lobby.lobbyId;
-                localUserName = "Host";
+                localUserName = DEFAULT_PLAYER_NAME;
                 ShowLobbyUI(lobby);
                 heartbeatRoutine = StartCoroutine(SendHeartbeatRoutine());
                 StartCoroutine(PollLobbyInfo());
@@ -265,32 +531,13 @@ public class ConnectionCanvas : BaseCanvas
                 Debug.LogWarning("⚠️ Could not reach lobby server, starting local offline host...");
 
                 currentLobbyId = "LOCAL";
-                localUserName = "Host";
-                isCreatingLobby = false;
-                enterNamePopup.SetActive(false);
+                localUserName = DEFAULT_PLAYER_NAME;
                 mainPanel.SetActive(false);
-
-                ShowOfflineLobbyUI();
             }
         }
     }
 
-    private void ShowOfflineLobbyUI()
-    {
-        lobbyPanel.SetActive(true);
-        lobbyId.text = "Offline Mode";
-        startGameButton.interactable = true;
-
-        ClearContainer(playerListContainer);
-        var item = Instantiate(playerItemPrefab, playerListContainer);
-        var comp = item.GetComponent<PlayerItem>();
-        if (comp != null)
-        {
-            comp.Setup(localUserName, "LOCAL_ID", NetworkManager.Singleton.LocalClientId, this, false);
-        }
-    }
-
-
+  
     private void ShowLobbyUI(LobbyInfo lobby)
     {
         lobbyPanel.SetActive(true);
@@ -311,107 +558,43 @@ public class ConnectionCanvas : BaseCanvas
             var comp = item.GetComponent<PlayerItem>();
             if (comp != null)
             {
-                bool canKick = NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost;
-                comp.Setup(user.userName, user.userId, user.clientId, this, canKick);
+                bool canKick = networkManager.IsHost;
+                Sprite avatar = null;
+                if (user.avatarIndex >= 0 && user.avatarIndex < availableAvatars.Length)
+                    avatar = availableAvatars[user.avatarIndex];
+
+                comp.Setup(user.userName, user.userId, user.clientId, this, canKick, avatar);
             }
         }
-        if (gameplayCanvas != null)
-        {
-            gameplayCanvas.UpdateExitButtonState(lobby);
-        }
-    }
-    private void CloseNamePopup()
-    {
-        enterNamePopup.SetActive(false);
-        ResetPopupState();
     }
 
-    private void ResetPopupState()
-    {
-        currentPopupMode = NamePopupMode.None;
-        pendingLobbyName = string.Empty;
-        pendingLobbyToJoin = null;
-        isCreatingLobby = false;
-    }
-    private void OnConfirmName()
-    {
-        string input = nameInputField.text.Trim();
-        if (string.IsNullOrEmpty(input)) return;
 
-        if (input.Length > 8)
-        {
-            UIManager.Instance?.SendNotification("Name cannot be longer than 8 characters");
-            UIManager.Instance?.OpenNotification();
-            return;
-        }
-
-        if (!Regex.IsMatch(input, @"^[a-zA-Z0-9]+$"))
-        {
-            UIManager.Instance?.SendNotification("Name cannot contain special characters or accents");
-            UIManager.Instance?.OpenNotification();
-            return;
-        }
-        switch (currentPopupMode)
-        {
-            case NamePopupMode.EnterLobbyName:
-                pendingLobbyName = input;
-                currentPopupMode = NamePopupMode.EnterPlayerName;
-                ShowNamePopup("Enter your name");
-                break;
-
-            case NamePopupMode.EnterPlayerName:
-                localUserName = input;
-                enterNamePopup.SetActive(false);
-                SavePlayerPrefs(localUserName);
-                isCreatingLobby = false;
-                mainPanel.SetActive(false);
-                StartCoroutine(StartHostRoutine(localUserName, pendingLobbyName));
-                // RESET
-                pendingLobbyName = "";
-                currentPopupMode = NamePopupMode.None;
-                break;
-
-            case NamePopupMode.EnterLobbyId:
-                pendingLobbyToJoin = new LobbyInfo { lobbyId = input };
-                currentPopupMode = NamePopupMode.JoinLobby;
-                ShowNamePopup("Enter your name");
-                break;
-
-            case NamePopupMode.JoinLobby:
-                localUserName = input;
-                enterNamePopup.SetActive(false);
-                SavePlayerPrefs(localUserName);
-                if (pendingLobbyToJoin != null)
-                {
-                    StartCoroutine(JoinLobbyRoutine(pendingLobbyToJoin.lobbyId, localUserName));
-                }
-                // RESET
-                pendingLobbyToJoin = null;
-                currentPopupMode = NamePopupMode.None;
-                break;
-        }
-    }
 
     private void SavePlayerPrefs(string playerName)
     {
-        string playerId = System.Guid.NewGuid().ToString();
-        PlayerPrefs.SetString("PlayerId", playerId);
+        string playerId = PlayerPrefs.GetString("PlayerId", "");
+        if (string.IsNullOrEmpty(playerId))
+        {
+            playerId = System.Guid.NewGuid().ToString();
+            PlayerPrefs.SetString("PlayerId", playerId);
+        }
+
         PlayerPrefs.SetString("PlayerName", playerName);
+        PlayerPrefs.SetInt("PlayerAvatar", selectedAvatarIndex);
         PlayerPrefs.Save();
     }
+
 
     private IEnumerator StartHostRoutine(string hostName, string lobbyName)
     {
         ushort port = 7777;
         string ipLan = GetHostLANIP();
-        pendingLobbyToJoin = null;
         transport.SetConnectionData("0.0.0.0", port);
 
         if (!networkManager.StartHost())
         {
             UIManager.Instance?.SendNotification("Failed to start hosting. Please try again.");
             UIManager.Instance?.OpenNotification();
-            isCreatingLobby = false;
             ResetUIState();
             yield break;
         }
@@ -423,7 +606,8 @@ public class ConnectionCanvas : BaseCanvas
             hostIpAddress = ipLan,
             hostPort = port,
             maxPlayers = 6,
-            hostName = hostName
+            hostName = hostName,
+            AvatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0)
         };
 
         bool serverAvailable = false;
@@ -439,12 +623,31 @@ public class ConnectionCanvas : BaseCanvas
 
             currentLobbyId = "LOCAL";
             localUserName = hostName;
-            isCreatingLobby = false;
-            enterNamePopup.SetActive(false);
             mainPanel.SetActive(false);
-            ShowOfflineLobbyUI();
         }
     }
+
+    public Sprite GetAvatarForUser(string userId)
+    {
+        if (availableAvatars == null || availableAvatars.Length == 0)
+            return null;
+
+        // Nếu là local player, lấy avatar đã chọn
+        string localPlayerId = PlayerPrefs.GetString("PlayerId", "");
+        if (userId == localPlayerId)
+        {
+            int avatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0);
+            if (avatarIndex >= 0 && avatarIndex < availableAvatars.Length)
+            {
+                return availableAvatars[avatarIndex];
+            }
+        }
+
+        // Với remote player, tạo avatar index dựa trên userId
+        int index = Mathf.Abs(userId.GetHashCode()) % availableAvatars.Length;
+        return availableAvatars[index];
+    }
+
 
     private IEnumerator CheckServerAvailabilityCoroutine(System.Action<bool> callback)
     {
@@ -485,10 +688,19 @@ public class ConnectionCanvas : BaseCanvas
             }
         }
 
-        string playerId = System.Guid.NewGuid().ToString();
-        PlayerPrefs.SetString("PlayerId", playerId);
+        string playerId = PlayerPrefs.GetString("PlayerId", "");
+        if (string.IsNullOrEmpty(playerId))
+        {
+            playerId = System.Guid.NewGuid().ToString();
+            PlayerPrefs.SetString("PlayerId", playerId);
+        }
 
-        var user = new UserInfo { userId = playerId, userName = playerName };
+        var user = new UserInfo
+        {
+            userId = playerId,
+            userName = playerName,
+            avatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0)
+        };
         string json = JsonUtility.ToJson(user);
 
         using (var www = new UnityWebRequest($"{SERVER_URL}/{lobbyId}/join", "POST"))
@@ -573,7 +785,8 @@ public class ConnectionCanvas : BaseCanvas
     {
         if (networkManager.IsHost)
         {
-            StartCoroutine(PollLobbyInfo());
+            if (pollLobbyRoutine != null) StopCoroutine(pollLobbyRoutine);
+            pollLobbyRoutine = StartCoroutine(PollLobbyInfo());
         }
     }
 
@@ -611,6 +824,7 @@ public class ConnectionCanvas : BaseCanvas
 
     private void HandleClientDisconnect()
     {
+        HandleExitLogic();
         if (!string.IsNullOrEmpty(currentLobbyId) && !string.IsNullOrEmpty(localUserName))
         {
             string playerId = PlayerPrefs.GetString("PlayerId", "");
@@ -627,9 +841,8 @@ public class ConnectionCanvas : BaseCanvas
 
     private void OnBackToMenu()
     {
-        HandleExitLogic();
         lobbyPanel.SetActive(false);
-        enterNamePopup.SetActive(false);
+        if (joinByIdPanel != null) joinByIdPanel.SetActive(false);
         GameManager.Instance.ShowPlayerPreview();
         UIManager.Instance?.CloseNetwork();
         UIManager.Instance?.OpenMainMenu();
@@ -696,38 +909,6 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-    public void KickPlayer(string userId, ulong clientId)
-    {
-        if (string.IsNullOrEmpty(currentLobbyId)) return;
-        StartCoroutine(KickAndNotifyRoutine(currentLobbyId, userId, clientId));
-    }
-
-    private IEnumerator KickAndNotifyRoutine(string lobbyId, string userId, ulong clientId)
-    {
-        if (NetworkManager.Singleton != null && clientId == NetworkManager.Singleton.LocalClientId)
-        {
-            yield break;
-        }
-        string url = $"{SERVER_URL}/{lobbyId}/kick/{userId}";
-        using (var www = new UnityWebRequest(url, "POST"))
-        {
-            www.uploadHandler = new UploadHandlerRaw(new byte[0]);
-            www.downloadHandler = new DownloadHandlerBuffer();
-            www.SetRequestHeader("Content-Type", "application/json");
-
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                if (NetworkManager.Singleton.IsHost)
-                {
-                    RequestKickServerRpc(clientId);
-                }
-                StartCoroutine(PollLobbyInfo());
-            }
-        }
-    }
-
     private IEnumerator StartGameOnServerRoutine()
     {
         if (string.IsNullOrEmpty(currentLobbyId)) yield break;
@@ -754,73 +935,98 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestKickServerRpc(ulong clientId)
+    private void OnApplicationQuit()
     {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
+        Debug.Log("Application quitting - cleaning up network...");
+
+        try
         {
-            if (clientId == NetworkManager.Singleton.LocalClientId)
+            if (heartbeatRoutine != null)
             {
-                return;
+                StopCoroutine(heartbeatRoutine);
+                heartbeatRoutine = null;
+            }
+            if (pollLobbyRoutine != null)
+            {
+                StopCoroutine(pollLobbyRoutine);
+                pollLobbyRoutine = null;
             }
 
-            if (!NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId))
+            // Shutdown network trước
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
             {
-                return;
-            }
-
-            try
-            {
-                var targetClient = new ClientRpcParams
+                if (NetworkManager.Singleton.IsHost)
                 {
-                    Send = new ClientRpcSendParams
+                    if (!string.IsNullOrEmpty(currentLobbyId))
                     {
-                        TargetClientIds = new[] { clientId }
+                        SendDeleteLobbySync(currentLobbyId);
                     }
-                };
+                }
+                else if (NetworkManager.Singleton.IsClient)
+                {
+                    if (!string.IsNullOrEmpty(currentLobbyId) && !string.IsNullOrEmpty(localUserName))
+                    {
+                        string playerId = PlayerPrefs.GetString("PlayerId", "");
+                        if (!string.IsNullOrEmpty(playerId))
+                        {
+                            var user = new UserInfo { userId = playerId, userName = localUserName };
+                            SendLeaveLobbySync(currentLobbyId, user);
+                        }
+                    }
+                }
 
-                KickClientClientRpc(targetClient);
-                NetworkManager.Singleton.DisconnectClient(clientId);
-                CleanupPlayerObjects(clientId);
+                // Shutdown network cuối cùng
+                NetworkManager.Singleton.Shutdown();
             }
-            catch (Exception e)
+
+            // Sau khi shutdown network, dọn dẹp game
+            if (GameManager.Instance != null)
             {
-                Debug.LogError($"Error kicking client {clientId}: {e.Message}");
+                GameManager.Instance.StopPowerupSpawning();
             }
+#if UNITY_ANDROID || UNITY_IOS
+            Application.Quit();
+#endif
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Error during OnApplicationQuit cleanup: {e.Message}");
         }
     }
 
-    [ClientRpc]
-    private void KickClientClientRpc(ClientRpcParams rpcParams = default)
+    private void SendDeleteLobbySync(string lobbyId)
     {
-        if (NetworkManager.Singleton != null &&
-            NetworkManager.Singleton.IsClient &&
-            !NetworkManager.Singleton.IsHost)
+        try
         {
-            HandleKickedClient();
+            var req = UnityWebRequest.Delete($"{SERVER_URL}/unregister/{lobbyId}");
+            req.timeout = 2;
+            var op = req.SendWebRequest();
+            while (!op.isDone) { } // Blocking wait (chỉ dùng khi quit app)
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Delete lobby failed: {e.Message}");
         }
     }
 
-    private void HandleKickedClient()
+    private void SendLeaveLobbySync(string lobbyId, UserInfo user)
     {
-        string lobbyId = currentLobbyId;
-        string playerId = PlayerPrefs.GetString("PlayerId", "");
-        string userName = localUserName;
-
-        if (networkManager != null && networkManager.IsListening)
+        try
         {
-            networkManager.Shutdown();
-        }
+            string json = JsonUtility.ToJson(user);
+            var req = new UnityWebRequest($"{SERVER_URL}/{lobbyId}/leave", "POST");
+            req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+            req.timeout = 2;
 
-        if (!string.IsNullOrEmpty(lobbyId) && !string.IsNullOrEmpty(playerId))
+            var op = req.SendWebRequest();
+            while (!op.isDone) { }
+        }
+        catch (Exception e)
         {
-            var user = new UserInfo { userId = playerId, userName = userName };
-            StartCoroutine(LeaveLobbyRoutine(lobbyId, user));
+            Debug.LogWarning($"Leave lobby failed: {e.Message}");
         }
-
-        ResetState();
-        ResetUIState();
-        RefreshLobbyList();
     }
 }
 
@@ -844,6 +1050,7 @@ public class UserInfo
 {
     public string userId;
     public string userName;
+    public int avatarIndex;
     public ulong clientId;
 }
 
@@ -855,6 +1062,7 @@ public class LobbyRegistrationRequest
     public int hostPort;
     public int maxPlayers;
     public string hostName;
+    public int AvatarIndex;
 }
 
 public static class JsonHelper

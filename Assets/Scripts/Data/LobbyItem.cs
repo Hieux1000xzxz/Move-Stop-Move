@@ -14,18 +14,19 @@ public class LobbyItem : MonoBehaviour
     {
         lobbyInfo = info;
         connectionCanvas = canvas;
-
         lobbyNameText.text = $"{info.lobbyName} ({info.currentPlayers}/{info.maxPlayers})";
 
         joinButton.onClick.RemoveAllListeners();
         joinButton.onClick.AddListener(OnJoinClicked);
+
+        joinButton.interactable = info.currentPlayers < info.maxPlayers && !info.isGameStarted;
     }
 
     private void OnJoinClicked()
     {
         if (connectionCanvas != null && lobbyInfo != null)
         {
-            connectionCanvas.ShowJoinNamePopup(lobbyInfo);
+            connectionCanvas.JoinLobbyDirect(lobbyInfo);
         }
     }
 

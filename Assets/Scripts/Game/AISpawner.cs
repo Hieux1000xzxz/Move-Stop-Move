@@ -4,35 +4,41 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 
+[System.Serializable]
+public class SpawnPointData
+{
+    public Transform point;
+    public float spawnRadius = 10f; 
+}
+
 public class AISpawner : NetworkBehaviour
 {
     [Header("Spawn Settings")]
-    [SerializeField] private Transform[] spawnPoints;
+    [SerializeField] private SpawnPointData[] spawnPoints;
     [SerializeField] private float baseSpawnDelay = 1f;
     [SerializeField] private float delayIncrement = 0.5f;
     [SerializeField] private float maxSpawnDelay = 8f;
-
+    [SerializeField] private int spawnPerWave = 2;
     private Dictionary<Transform, GameObject> spawnPointAIs = new Dictionary<Transform, GameObject>();
-    private bool isFirstWave = true;
     private Coroutine spawnCoroutine;
     private int waveCount = 0;
 
     private void Start()
     {
         if (!IsServer) return;
-        foreach (Transform point in spawnPoints)
-            spawnPointAIs[point] = null;
 
+        foreach (var sp in spawnPoints)
+            spawnPointAIs[sp.point] = null;
     }
 
     private void Update()
     {
         if (!IsServer) return;
+
         CleanupDeadAIs();
-        if (!gameObject.activeInHierarchy)
-        {
-            return;
-        }
+
+        if (!gameObject.activeInHierarchy) return;
+
         if (HasEmptyPoints() && GameManager.Instance.CanSpawnAI() && spawnCoroutine == null)
         {
             SpawnWave();
@@ -46,10 +52,7 @@ public class AISpawner : NetworkBehaviour
         foreach (var kvp in spawnPointAIs)
         {
             if (kvp.Value != null && !kvp.Value.activeInHierarchy)
-            {
-                //GameManager.Instance.UnregisterAI(kvp.Value);
                 toRemove.Add(kvp.Key);
-            }
         }
 
         foreach (Transform point in toRemove)
@@ -67,7 +70,6 @@ public class AISpawner : NetworkBehaviour
     {
         waveCount++;
         spawnCoroutine = StartCoroutine(DelayedSpawn());
-
     }
 
     private IEnumerator DelayedSpawn()
@@ -80,29 +82,44 @@ public class AISpawner : NetworkBehaviour
 
         float delay = Mathf.Min(baseSpawnDelay + (waveCount - 1) * delayIncrement, maxSpawnDelay);
 
-        foreach (Transform point in spawnPoints)
+        List<SpawnPointData> availablePoints = new List<SpawnPointData>();
+        foreach (var sp in spawnPoints)
         {
-            if (!GameManager.Instance.CanSpawnAI())
+            if (spawnPointAIs[sp.point] == null && !IsPlayerInRange(sp))
             {
-                spawnCoroutine = null;
-                yield break;
-            }
-
-            if (spawnPointAIs[point] == null)
-            {
-                SpawnAtPoint(point);
-
-                if (!GameManager.Instance.CanSpawnAI())
-                {
-                    spawnCoroutine = null;
-                    yield break;
-                }
-
-                yield return new WaitForSeconds(delay);
+                availablePoints.Add(sp);
             }
         }
 
+        if (availablePoints.Count < spawnPerWave)
+        {
+            spawnCoroutine = null;
+            yield break;
+        }
+
+        for (int i = 0; i < spawnPerWave; i++)
+        {
+            if (!GameManager.Instance.CanSpawnAI()) break;
+
+            int index = Random.Range(0, availablePoints.Count);
+            SpawnAtPoint(availablePoints[index].point);
+
+            availablePoints.RemoveAt(index); 
+            yield return new WaitForSeconds(delay);
+        }
+
         spawnCoroutine = null;
+    }
+
+    private bool IsPlayerInRange(SpawnPointData sp)
+    {
+        Collider[] colliders = Physics.OverlapSphere(sp.point.position, sp.spawnRadius);
+        foreach (var col in colliders)
+        {
+            if (col.CompareTag("Player"))
+                return true;
+        }
+        return false;
     }
 
     private void SpawnAtPoint(Transform spawnPoint)

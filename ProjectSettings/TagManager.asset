@@ -10,6 +10,8 @@ TagManager:
   - Knife
   - Dead
   - Arrow1
+  - Spawner
+  - Grass
   layers:
   - Default
   - TransparentFX
@@ -22,7 +24,7 @@ TagManager:
   - Ground
   - Dead
   - Weapon
-  - 
+  - Grass
   - 
   - 
   - 
