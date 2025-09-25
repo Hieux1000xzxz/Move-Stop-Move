@@ -400,7 +400,6 @@ public class ConnectionCanvas : BaseCanvas
         PlayerPrefs.Save();
     }
 
-    // Sửa lại StartHostRoutine
     private IEnumerator StartHostRoutine(string hostName, string lobbyName)
     {
         ushort port = 7777;
@@ -427,7 +426,6 @@ public class ConnectionCanvas : BaseCanvas
             hostName = hostName
         };
 
-        // ✨ Kiểm tra server trước
         bool serverAvailable = false;
         yield return StartCoroutine(CheckServerAvailabilityCoroutine((result) => serverAvailable = result));
 
@@ -439,7 +437,6 @@ public class ConnectionCanvas : BaseCanvas
         {
             Debug.LogWarning("⚠️ Server not available, starting offline mode...");
 
-            // Chạy offline mode ngay lập tức
             currentLobbyId = "LOCAL";
             localUserName = hostName;
             isCreatingLobby = false;
@@ -582,6 +579,8 @@ public class ConnectionCanvas : BaseCanvas
 
     private void OnClientDisconnected(ulong clientId)
     {
+        Debug.LogWarning($"Client {clientId} disconnected. IsServer={NetworkManager.Singleton.IsServer}");
+
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
             CleanupPlayerObjects(clientId);

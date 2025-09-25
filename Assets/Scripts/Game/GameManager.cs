@@ -32,8 +32,9 @@ public class GameManager : NetworkBehaviour
 
     private Coroutine powerupRoutine;
     public FloatingJoystick mainJoystick;
-    private List<GameObject> activeAIs = new List<GameObject>();
-    private List<Player> activePlayers = new List<Player>();
+
+    private List<NetworkObject> activeAINetworkObjects = new List<NetworkObject>();
+    private List<NetworkObject> activePlayerNetworkObjects = new List<NetworkObject>();
     private List<NetworkObject> activeEntities = new List<NetworkObject>();
     private int spectatorIndex = 0;
 
@@ -99,73 +100,70 @@ public class GameManager : NetworkBehaviour
     {
         UIManager.Instance?.SendQuotaUpdate(current);
     }
+
     public bool CanSpawnAI()
     {
-        return currentAIQuota - activeAIs.Count > 0;
+        return currentAIQuota - activeAINetworkObjects.Count > 0;
     }
 
-    public bool TryRegisterAI(GameObject ai)
+    public bool TryRegisterAI(NetworkObject aiNetworkObject)
     {
-        if (!IsServer) return false;
+        if (!IsServer || aiNetworkObject == null) return false;
 
-        if (activeAIs.Contains(ai))
+        if (activeAINetworkObjects.Contains(aiNetworkObject))
             return false;
 
-        activeAIs.Add(ai);
-        ActiveAICount.Value = activeAIs.Count;
+        activeAINetworkObjects.Add(aiNetworkObject);
+        ActiveAICount.Value = activeAINetworkObjects.Count;
 
-        var netObj = ai.GetComponent<NetworkObject>();
-        if (netObj != null && !activeEntities.Contains(netObj))
+        if (!activeEntities.Contains(aiNetworkObject))
         {
-            activeEntities.Add(netObj);
+            activeEntities.Add(aiNetworkObject);
         }
 
         return true;
     }
 
-    public void UnregisterAI(GameObject ai)
+    public void UnregisterAI(NetworkObject aiNetworkObject)
     {
-        if (!IsServer || ai == null) return;
+        if (!IsServer || aiNetworkObject == null) return;
 
-        if (activeAIs.Remove(ai))
+        if (activeAINetworkObjects.Remove(aiNetworkObject))
         {
-            currentAIQuota--; 
-            ActiveAICount.Value = activeAIs.Count;
+            currentAIQuota--;
+            ActiveAICount.Value = activeAINetworkObjects.Count;
             RemainingAIQuota.Value = currentAIQuota;
+            activeEntities.Remove(aiNetworkObject);
         }
 
-        var netObj = ai.GetComponent<NetworkObject>();
-        if (netObj != null)
-        {
-            activeEntities.Remove(netObj);
-        }
         CheckLastSurvivor();
     }
 
-    public void RegisterPlayerInGame(Player player)
+    public void RegisterPlayerInGame(NetworkObject playerNetworkObject)
     {
-        activePlayers.Add(player);
-        ActivePlayerCount.Value = activePlayers.Count;
-        var netObj = player.GetComponent<NetworkObject>();
-        if (netObj != null && !activeEntities.Contains(netObj))
+        if (playerNetworkObject == null) return;
+
+        activePlayerNetworkObjects.Add(playerNetworkObject);
+        ActivePlayerCount.Value = activePlayerNetworkObjects.Count;
+
+        if (!activeEntities.Contains(playerNetworkObject))
         {
-            activeEntities.Add(netObj);
+            activeEntities.Add(playerNetworkObject);
         }
     }
 
-    public void UnregisterPlayerInGame(Player player)
+    public void UnregisterPlayerInGame(NetworkObject playerNetworkObject)
     {
-        if (activePlayers.Remove(player))
+        if (playerNetworkObject == null) return;
+
+        if (activePlayerNetworkObjects.Remove(playerNetworkObject))
         {
-            ActivePlayerCount.Value = activePlayers.Count;
-            var netObj = player.GetComponent<NetworkObject>();
-            if (netObj != null)
-            {
-                activeEntities.Remove(netObj);
-            }
+            ActivePlayerCount.Value = activePlayerNetworkObjects.Count;
+            activeEntities.Remove(playerNetworkObject);
             CheckLastSurvivor();
         }
     }
+
     private void CheckLastSurvivor()
     {
         if (!IsServer) return;
@@ -180,6 +178,7 @@ public class GameManager : NetworkBehaviour
             }
         }
     }
+
     [ClientRpc]
     private void GameWinClientRpc(ClientRpcParams clientRpcParams = default)
     {
@@ -192,6 +191,7 @@ public class GameManager : NetworkBehaviour
             //DisableGamePlaySystem();
         }
     }
+
     [ClientRpc]
     private void FocusCameraOnTargetClientRpc(NetworkObjectReference targetRef)
     {
@@ -210,13 +210,16 @@ public class GameManager : NetworkBehaviour
         currentAIQuota = totalAIQuota;
         totalSpawned = 0;
         totalKilled = 0;
-        foreach (var ai in activeAIs)
+
+        foreach (var aiNetObj in activeAINetworkObjects)
         {
-            if (ai != null) ai.SetActive(false);
+            if (aiNetObj != null && aiNetObj.gameObject != null)
+                aiNetObj.gameObject.SetActive(false);
         }
-        activeAIs.Clear();
+        activeAINetworkObjects.Clear();
+
         ActiveAICount.Value = 0;
-        ActivePlayerCount.Value = activePlayers.Count;
+        ActivePlayerCount.Value = activePlayerNetworkObjects.Count;
         RemainingAIQuota.Value = currentAIQuota;
     }
 
@@ -267,7 +270,7 @@ public class GameManager : NetworkBehaviour
     {
         zoomController.SetUp(killScore);
     }
-   
+
     public void ShowMainMenu()
     {
         if (mainMenuCanvas != null)
@@ -341,25 +344,25 @@ public class GameManager : NetworkBehaviour
     {
         List<Transform> targets = new List<Transform>();
 
-        foreach (var p in activePlayers)
+        foreach (var playerNetObj in activePlayerNetworkObjects)
         {
-            if (p != null)
+            if (playerNetObj != null)
             {
-                var health = p.GetComponent<Health>();
+                var health = playerNetObj.GetComponent<Health>();
                 if (health != null && !health.IsDead)
-                    targets.Add(p.transform);
+                    targets.Add(playerNetObj.transform);
             }
         }
 
         if (targets.Count == 0)
         {
-            foreach (var ai in activeAIs)
+            foreach (var aiNetObj in activeAINetworkObjects)
             {
-                if (ai != null)
+                if (aiNetObj != null)
                 {
-                    var health = ai.GetComponent<Health>();
+                    var health = aiNetObj.GetComponent<Health>();
                     if (health != null && !health.IsDead)
-                        targets.Add(ai.transform);
+                        targets.Add(aiNetObj.transform);
                 }
             }
         }
@@ -378,6 +381,7 @@ public class GameManager : NetworkBehaviour
         spectatorIndex = 0;
         FocusCameraOnTarget(alive[spectatorIndex]);
     }
+
     public void NextSpectatorTarget()
     {
         var alive = GetAliveSpectatorTargets();
@@ -402,6 +406,7 @@ public class GameManager : NetworkBehaviour
         if (spectatorIndex < 0) spectatorIndex = alive.Count - 1;
         FocusCameraOnTarget(alive[spectatorIndex]);
     }
+
     public void SwitchSpectatorTarget()
     {
         var alive = GetAliveSpectatorTargets();
@@ -507,7 +512,4 @@ public class GameManager : NetworkBehaviour
             }
         }
     }
-
-
-
 }

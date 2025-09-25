@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections;
+using System.Globalization;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
@@ -111,10 +112,15 @@ public class Player : CharacterBase
 
         if (IsServer)
         {
-            GameManager.Instance.RegisterPlayerInGame(this);
+            StartCoroutine(DeferredRegister());
         }
     }
 
+    private IEnumerator DeferredRegister()
+    {
+        yield return null; 
+        GameManager.Instance.RegisterPlayerInGame(this.networkObject);
+    }
     protected override void Move(Vector3 direction)
     {
         if (isDead) return;
@@ -137,14 +143,14 @@ public class Player : CharacterBase
     {
         if (IsServer)
         {
-            GameManager.Instance.UnregisterPlayerInGame(this);
+            GameManager.Instance.UnregisterPlayerInGame(this.networkObject);
         }
     }
     private void OnDisable()
     {
         if (IsServer)
         {
-            GameManager.Instance.UnregisterPlayerInGame(this);
+            GameManager.Instance.UnregisterPlayerInGame(this.networkObject);
         }
     }
 }

@@ -47,7 +47,7 @@ public class AISpawner : NetworkBehaviour
         {
             if (kvp.Value != null && !kvp.Value.activeInHierarchy)
             {
-                GameManager.Instance.UnregisterAI(kvp.Value);
+                //GameManager.Instance.UnregisterAI(kvp.Value);
                 toRemove.Add(kvp.Key);
             }
         }
@@ -140,7 +140,7 @@ public class AISpawner : NetworkBehaviour
             if (netObj != null && !netObj.IsSpawned)
                 netObj.Spawn(true);
 
-            bool registered = GameManager.Instance.TryRegisterAI(enemy);
+            bool registered = GameManager.Instance.TryRegisterAI(netObj);
             if (registered)
             {
                 spawnPointAIs[spawnPoint] = enemy;

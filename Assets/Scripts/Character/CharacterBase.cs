@@ -22,6 +22,7 @@ public abstract class CharacterBase : NetworkBehaviour
     [SerializeField] protected float attackDuration = 0.5f;
     [SerializeField] protected LayerMask targetLayer;
     [SerializeField] public Collider characterCollider;
+    [SerializeField] protected NetworkObject networkObject;
 
     [Header("Weapon Settings")]
     [SerializeField] public Transform weaponSpawnPoint;
@@ -390,7 +391,6 @@ public abstract class CharacterBase : NetworkBehaviour
             {
                 currentWeapon.Launch(-dir, this.gameObject);
 
-                //Send event launch to all the different clients
                 LaunchWeaponClientRPC(dir);
             }
         }
@@ -488,14 +488,13 @@ public abstract class CharacterBase : NetworkBehaviour
 
         if (IsServer && health != null)
         {
-            health.CurrentHealth.Value = health.maxHealth; // reset máu
+            health.CurrentHealth.Value = health.maxHealth;
         }
 
         scoreDisplay.gameObject.SetActive(true);
         this.gameObject.layer = LayerMask.NameToLayer("Player");
         characterCollider.enabled = true;
 
-        //Weapon bug; 
         if (IsServer && hasSpawnedBefore)
         {
             ChangeWeapon(weaponType);
@@ -595,7 +594,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
             if (IsServer)
             {
-                GameManager.Instance.UnregisterAI(this.gameObject);
+                GameManager.Instance.UnregisterAI(this.networkObject);
             }
 
             StopAllCoroutines();
@@ -612,7 +611,6 @@ public abstract class CharacterBase : NetworkBehaviour
             {
                 animator.SetBool("IsMoving", false);
                 animator.SetBool("IsAttacking", false);
-                animator.SetTrigger("Death");
             }
 
             if (IsServer)
@@ -862,6 +860,7 @@ private void SetWeaponClientRpc(NetworkObjectReference weaponRef, NetworkObjectR
     [ClientRpc]
     private void LaunchWeaponClientRpc(Vector3 dir, Quaternion rot, ClientRpcParams rpcParams = default)
     {
+        if (!isActiveAndEnabled) return;
         StartCoroutine(WaitUntilWeaponReady(dir, rot));
     }
     private IEnumerator WaitUntilWeaponReady(Vector3 dir, Quaternion rot)
@@ -883,7 +882,6 @@ private void SetWeaponClientRpc(NetworkObjectReference weaponRef, NetworkObjectR
         {
             animator.SetBool("IsMoving", false);
             animator.SetBool("IsAttacking", false);
-            animator.SetTrigger("Death");
         }
     }
 

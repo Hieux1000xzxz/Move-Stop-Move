@@ -554,6 +554,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 72
   characterCollider: {fileID: 7915159274365355493}
+  networkObject: {fileID: 5574279119974141978}
   weaponSpawnPoint: {fileID: 5560079348092688031}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.3
@@ -569,13 +570,48 @@ MonoBehaviour:
     m_InternalValue: 0
   NetIsMoving:
     m_InternalValue: 0
+  PlayerName:
+    m_InternalValue:
+      utf8LengthInBytes: 6
+      bytes:
+        offset0000:
+          byte0000: 80
+          byte0001: 108
+          byte0002: 97
+          byte0003: 121
+          byte0004: 101
+          byte0005: 114
+          byte0006: 0
+          byte0007: 0
+          byte0008: 0
+          byte0009: 0
+          byte0010: 0
+          byte0011: 0
+          byte0012: 0
+          byte0013: 0
+          byte0014: 0
+          byte0015: 0
+        byte0016: 0
+        byte0017: 0
+        byte0018: 0
+        byte0019: 0
+        byte0020: 0
+        byte0021: 0
+        byte0022: 0
+        byte0023: 0
+        byte0024: 0
+        byte0025: 0
+        byte0026: 0
+        byte0027: 0
+        byte0028: 0
+        byte0029: 0
   patrolRadius: 10
   observeMinTime: 1
   observeMaxTime: 3
-  aggressionLevel: 0
-  curiosityLevel: 0
-  fearLevel: 0
-  attentionSpan: 10
+  aggressionLevel: 0.8
+  curiosityLevel: 0.4
+  fearLevel: 0.2
+  attentionSpan: 5
   rayOrigin: {fileID: 0}
   rayDistance: 2
   obstacleLayer:

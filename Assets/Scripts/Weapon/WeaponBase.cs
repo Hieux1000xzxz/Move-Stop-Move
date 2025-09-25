@@ -90,11 +90,6 @@ public class WeaponBase : NetworkBehaviour
         StopRotation();
         isFlying = false;
         isFollowing = true;
-
-        if (spawnPoint == null)
-            return;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;
 
         transform.position = spawnPoint.position;
@@ -144,6 +139,7 @@ public class WeaponBase : NetworkBehaviour
     protected void StartRotation()
     {
         StopRotation();
+        if (this == null || transform == null) return;
         rotateTween = transform.DOLocalRotate(rotateAxis * rotateSpeed, 1f, rotateMode)
             .SetEase(Ease.Linear)
             .SetLoops(-1, LoopType.Incremental);
@@ -206,7 +202,6 @@ public class WeaponBase : NetworkBehaviour
         }
     }
 
-    // WeaponBase.cs
 
     public void SetOwner(CharacterBase newOwner)
     {
@@ -223,4 +218,8 @@ public class WeaponBase : NetworkBehaviour
         spawnPoint = null;
     }
 
+    private void OnDestroy()
+    {
+        StopRotation();
+    }
 }
