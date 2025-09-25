@@ -325,8 +325,6 @@ public class ObjectPool : Singleton<ObjectPool>
 
     public void ReleaseWeapon(GameObject obj)
     {
-        if (obj == null) return;
-
         var netObj = obj.GetComponent<NetworkObject>();
         if (netObj != null && netObj.IsSpawned && NetworkManager.Singleton.IsServer)
         {

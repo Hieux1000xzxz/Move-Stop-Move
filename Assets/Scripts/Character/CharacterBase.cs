@@ -72,6 +72,11 @@ public abstract class CharacterBase : NetworkBehaviour
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server);
 
+    public NetworkVariable<NetworkObjectReference> NetCurrentWeapon =
+    new NetworkVariable<NetworkObjectReference>(default,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
     protected virtual void Start()
     {
         if (agent != null)
@@ -326,7 +331,11 @@ public abstract class CharacterBase : NetworkBehaviour
             return;
         }
         if (currentWeapon == null)
-            return;
+        {
+            StartCoroutine(WaitWeaponAndAttack());
+            Debug.Log("Current weapon is null, equipping default weapon.");
+                return;
+        }
         if (!hasWeapon)
         {
             return;
@@ -355,7 +364,25 @@ public abstract class CharacterBase : NetworkBehaviour
         }
         attackRoutine = StartCoroutine(AttackRoutine()); 
     }
+    private IEnumerator WaitWeaponAndAttack()
+    {
+        yield return new WaitUntil(() => currentWeapon != null);
+        DoAttack();
+    }
+private void DoAttack()
+{
+    isAttacking = true;
+    hasWeapon = false;
+    nextAttackTime = Time.time + attackDelay;
 
+    if (animator != null)
+        animator.SetBool("IsAttacking", true);
+
+    if (attackRoutine != null)
+        StopCoroutine(attackRoutine);
+
+    attackRoutine = StartCoroutine(AttackRoutine());
+}
     private IEnumerator AttackRoutine()
     {
         yield return new WaitForSeconds(attackDelay);
@@ -370,9 +397,6 @@ public abstract class CharacterBase : NetworkBehaviour
             animator.SetBool("IsAttacking", false);
         }
     }
-
-
-
     public virtual void OnWeaponReturned()
     {
         isAttacking = false;
@@ -536,11 +560,11 @@ public abstract class CharacterBase : NetworkBehaviour
 
         if (ownerType == OwnerType.Player)
         {
-            go = ObjectPool.Instance.SpawnPlayerWeaponByType(newWeaponType, weaponSpawnPoint);
+            go = ObjectPool.Instance.SpawnPlayerWeaponByType(newWeaponType, weaponSpawnPoint, true);
         }
         else if (ownerType == OwnerType.AI)
         {
-            go = ObjectPool.Instance.SpawnAIWeaponByType(newWeaponType, weaponSpawnPoint);
+            go = ObjectPool.Instance.SpawnAIWeaponByType(newWeaponType, weaponSpawnPoint, true);
         }
 
         if (go == null) return;
@@ -555,8 +579,9 @@ public abstract class CharacterBase : NetworkBehaviour
             netObj.Spawn(true);
         }
 
+        NetCurrentWeapon.Value = netObj;
         AssignWeapon(currentWeapon);
-        SetWeaponClientRpc(netObj, this.NetworkObject);
+        SetWeaponClientRpc(netObj, this.networkObject);
 
     }
 
@@ -676,6 +701,30 @@ public abstract class CharacterBase : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+
+        NetCurrentWeapon.OnValueChanged += (oldVal, newVal) =>
+        {
+            if (newVal.TryGet(out NetworkObject obj))
+            {
+                Debug.Log("NetCurrentWeapon changed, assigning weapon.");
+                currentWeapon = obj.GetComponent<WeaponBase>();
+                currentWeapon.SetOwner(this);
+            }
+            else
+            {
+                Debug.Log("NetCurrentWeapon is now null.");
+                currentWeapon = null;
+            }
+        };
+
+        StartCoroutine(ResolveCurrentWeaponInitial());
+
+        if (NetCurrentWeapon.Value.TryGet(out NetworkObject objNow))
+        {
+            currentWeapon = objNow.GetComponent<WeaponBase>();
+            currentWeapon.SetOwner(this);
+        }
+
         if (IsOwner)
         {
             string savedWeapon = PlayerPrefs.GetString("SelectedWeapon", WeaponType.Knife1.ToString());
@@ -711,7 +760,31 @@ public abstract class CharacterBase : NetworkBehaviour
         };
 
     }
+    private IEnumerator ResolveCurrentWeaponInitial()
+    {
+        yield return null;
 
+        float timeout = 2f; 
+        float t = 0f;
+
+        while (t < timeout && currentWeapon == null)
+        {
+            if (NetCurrentWeapon.Value.TryGet(out NetworkObject obj) && obj != null)
+            {
+                var weap = obj.GetComponent<WeaponBase>();
+                if (weap != null)
+                {
+                    currentWeapon = weap;
+                    currentWeapon.SetOwner(this);
+                    AssignWeapon(currentWeapon);
+                    yield break;
+                }
+            }
+
+            t += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
@@ -761,22 +834,22 @@ public abstract class CharacterBase : NetworkBehaviour
         ChangeWeapon(selectedWeapon);
     }
 
-   [ClientRpc]
-private void SetWeaponClientRpc(NetworkObjectReference weaponRef, NetworkObjectReference ownerRef)
-{
-    if (weaponRef.TryGet(out NetworkObject weaponObj) && 
-        ownerRef.TryGet(out NetworkObject ownerObj))
+    [ClientRpc]
+    private void SetWeaponClientRpc(NetworkObjectReference weaponRef, NetworkObjectReference ownerRef)
     {
-        var weapon = weaponObj.GetComponent<WeaponBase>();
-        var ownerChar = ownerObj.GetComponent<CharacterBase>();
-
-        if (weapon != null && ownerChar != null)
+        if (weaponRef.TryGet(out NetworkObject weaponObj) && 
+            ownerRef.TryGet(out NetworkObject ownerObj))
         {
-            ownerChar.AssignWeapon(weapon);
-            weapon.SetOwner(ownerChar);
+            var weapon = weaponObj.GetComponent<WeaponBase>();
+            var ownerChar = ownerObj.GetComponent<CharacterBase>();
+
+            if (weapon != null && ownerChar != null)
+            {
+                ownerChar.AssignWeapon(weapon);
+                weapon.SetOwner(ownerChar);
+            }
         }
     }
-}
 
 
     [ClientRpc]
