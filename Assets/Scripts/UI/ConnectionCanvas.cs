@@ -37,6 +37,7 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private TextMeshProUGUI lobbyId;
     [SerializeField] private GameObject playerItemPrefab;
     [SerializeField] private Button startGameButton;
+    [SerializeField] private Button settingButton;
     [SerializeField] private Button exitButton;
 
     [Header("Join by ID Panel")]
@@ -52,6 +53,12 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private Button confirmPlayerInfoButton;
     [SerializeField] private Button cancelPlayerInfoButton;
 
+    [Header("Setting Panel")]
+    [SerializeField] private GameObject settingPanel;
+    [SerializeField] private TMP_InputField roomNameInputField;
+    [SerializeField] private Button confirmRoomNameButton;
+    [SerializeField] private Button closeSettingButton;
+
     [Header("Network")]
     [SerializeField] private NetworkManager networkManager;
     [SerializeField] private UnityTransport transport;
@@ -60,7 +67,7 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private CinemachineCamera mainCamera;
     [SerializeField] private Sprite[] availableAvatars;
 
-    private const string SERVER_URL = "http://192.168.0.103:5000/api/lobby";
+    private const string SERVER_URL = "http://192.168.1.32:5000/api/lobby";
     private const string DEFAULT_LOBBY_NAME = "Lobby";
     private const string DEFAULT_PLAYER_NAME = "You";
     private int selectedAvatarIndex = 0;
@@ -71,6 +78,8 @@ public class ConnectionCanvas : BaseCanvas
     private Coroutine autoRefreshLobbyRoutine;
     private LobbyInfo pendingLobbyJoin;
     private bool isSinglePlayerMode = false;
+    private LobbyInfo currentLobbyInfo;
+
 
     private void Start()
     {
@@ -103,10 +112,14 @@ public class ConnectionCanvas : BaseCanvas
         joinByIdButton.onClick.AddListener(ShowJoinByIdPanel);
 
         startGameButton.onClick.AddListener(OnStartGameClicked);
+        settingButton.onClick.AddListener(ShowSettingPanel);
         exitButton.onClick.AddListener(OnExitClicked);
 
         confirmJoinButton.onClick.AddListener(OnConfirmJoinById);
         cancelJoinButton.onClick.AddListener(CloseJoinByIdPanel);
+
+        confirmRoomNameButton.onClick.AddListener(OnConfirmRoomNameChange);
+        closeSettingButton.onClick.AddListener(HideSettingPanel);
 
         confirmPlayerInfoButton.onClick.AddListener(OnConfirmPlayerInfo);
         cancelPlayerInfoButton.onClick.AddListener(OnCancelPlayerInfo);
@@ -154,6 +167,24 @@ public class ConnectionCanvas : BaseCanvas
         }
 
         SelectAvatar(Mathf.Clamp(selectedAvatarIndex, 0, availableAvatars.Length - 1));
+    }
+
+    public void ShowSettingPanel()
+    {
+        if (settingPanel != null)
+        {
+            settingPanel.SetActive(true);
+
+            // Gợi ý: hiện room name hiện tại
+            if (roomNameInputField != null && currentLobbyInfo != null)
+                roomNameInputField.text = currentLobbyInfo.lobbyName;
+        }
+    }
+
+    public void HideSettingPanel()
+    {
+        if (settingPanel != null)
+            settingPanel.SetActive(false);
     }
 
     private void CreateDefaultAvatarSelection()
@@ -234,6 +265,12 @@ public class ConnectionCanvas : BaseCanvas
     private void OnConfirmPlayerInfo()
     {
         string newName = playerNameInputField != null ? playerNameInputField.text.Trim() : "";
+        if (!Regex.IsMatch(newName, @"^[a-zA-Z0-9 ]+$"))
+        {
+            UIManager.Instance?.SendNotification("Special characters are not allowed!");
+            UIManager.Instance?.OpenNotification();
+            return;
+        }
         if (string.IsNullOrEmpty(newName))
         {
             UIManager.Instance?.SendNotification("Please enter your name");
@@ -389,6 +426,12 @@ public class ConnectionCanvas : BaseCanvas
     private void OnConfirmJoinById()
     {
         string lobbyId = lobbyIdInputField.text.Trim();
+        if (!Regex.IsMatch(lobbyId, @"^[a-zA-Z0-9 ]+$"))
+        {
+            UIManager.Instance?.SendNotification("Special characters are not allowed!");
+            UIManager.Instance?.OpenNotification();
+            return;
+        }
         if (string.IsNullOrEmpty(lobbyId))
         {
             UIManager.Instance?.SendNotification("Please enter a lobby ID");
@@ -415,6 +458,13 @@ public class ConnectionCanvas : BaseCanvas
     {
         if (networkManager.IsHost)
         {
+            if (currentLobbyInfo == null || currentLobbyInfo.users == null || currentLobbyInfo.users.Count < 2)
+            {
+                UIManager.Instance?.SendNotification("At least 2 players are required to start the game!");
+                UIManager.Instance?.OpenNotification();
+                return;
+            }
+
             StartCoroutine(StartGameOnServerRoutine());
 
             GameManager.Instance.StartGame();
@@ -537,9 +587,10 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-  
+
     private void ShowLobbyUI(LobbyInfo lobby)
     {
+        currentLobbyInfo = lobby;
         lobbyPanel.SetActive(true);
         lobbyId.text = $"Lobby ID: {lobby.lobbyId}";
         UpdatePlayerList(lobby);
@@ -1028,6 +1079,92 @@ public class ConnectionCanvas : BaseCanvas
             Debug.LogWarning($"Leave lobby failed: {e.Message}");
         }
     }
+
+    private void OnConfirmRoomNameChange()
+    {
+        if (roomNameInputField == null) return;
+
+        string newName = roomNameInputField.text.Trim();
+
+        if (!Regex.IsMatch(newName, @"^[a-zA-Z0-9 ]+$"))
+        {
+            UIManager.Instance?.SendNotification("Special characters are not allowed!");
+            UIManager.Instance?.OpenNotification();
+            return;
+        }
+        if (string.IsNullOrEmpty(newName))
+        {
+            UIManager.Instance?.SendNotification("Room name cannot be empty");
+            UIManager.Instance?.OpenNotification();
+            return;
+        }
+
+        // Cập nhật local ngay lập tức (có thể hiện lên UI)
+        if (currentLobbyInfo == null) currentLobbyInfo = new LobbyInfo { lobbyId = currentLobbyId };
+        currentLobbyInfo.lobbyName = newName;
+        //if (lobbyNameText != null) lobbyNameText.text = newName;
+
+        // Gọi server update (endpoint ví dụ: {SERVER_URL}/{lobbyId}/rename)
+        StartCoroutine(UpdateRoomNameRoutine(currentLobbyInfo.lobbyId, newName));
+
+        HideSettingPanel();
+    }
+
+    private IEnumerator UpdateRoomNameRoutine(string lobbyId, string newName)
+    {
+        var reqObj = new UpdateLobbyNameRequest
+        {
+            lobbyId = lobbyId,
+            lobbyName = newName,
+            requestingUserId = PlayerPrefs.GetString("PlayerId", "")
+        };
+
+        string json = JsonUtility.ToJson(reqObj);
+        string url = $"{SERVER_URL}/{lobbyId}/rename";
+
+        using (var www = new UnityWebRequest(url, "POST"))
+        {
+            byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+            www.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            www.downloadHandler = new DownloadHandlerBuffer();
+            www.SetRequestHeader("Content-Type", "application/json");
+
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                UIManager.Instance?.SendNotification("Room name updated");
+                UIManager.Instance?.OpenNotification();
+                StartCoroutine(RefreshCurrentLobbyInfo());
+            }
+            else
+            {
+                UIManager.Instance?.SendNotification("Failed to update room name");
+                UIManager.Instance?.OpenNotification();
+            }
+        }
+    }
+
+    private IEnumerator RefreshCurrentLobbyInfo()
+    {
+        if (string.IsNullOrEmpty(currentLobbyId)) yield break;
+
+        using (var www = UnityWebRequest.Get($"{SERVER_URL}/find/{currentLobbyId}"))
+        {
+            yield return www.SendWebRequest();
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                LobbyInfo lobby = JsonUtility.FromJson<LobbyInfo>(www.downloadHandler.text);
+                if (lobby != null)
+                {
+                    currentLobbyInfo = lobby;
+                    //if (lobbyNameText != null) lobbyNameText.text = string.IsNullOrEmpty(lobby.lobbyName) ? DEFAULT_LOBBY_NAME : lobby.lobbyName;
+                    UpdatePlayerList(lobby);
+                }
+            }
+        }
+    }
+
 }
 
 [Serializable]
@@ -1079,4 +1216,12 @@ public static class JsonHelper
     {
         public T[] array;
     }
+}
+
+[Serializable]
+public class UpdateLobbyNameRequest
+{
+    public string lobbyId;
+    public string lobbyName;
+    public string requestingUserId;
 }

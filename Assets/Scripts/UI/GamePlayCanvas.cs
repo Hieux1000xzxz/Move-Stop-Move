@@ -129,6 +129,7 @@ public class GamePlayCanvas : BaseCanvas
     public void OnGameOver()
     {
         menuButton.gameObject.SetActive(false);
+        UIManager.Instance.HideCountText();
         gameOverUI.SetActive(true);
     }
 
