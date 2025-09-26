@@ -92,6 +92,17 @@ public class WeaponBase : NetworkBehaviour
         isFollowing = true;
         rb.isKinematic = true;
 
+        if (spawnPoint == null && owner != null)
+        {
+            spawnPoint = owner.weaponSpawnPoint;
+        }
+
+        if (owner == null)   // ❌ fix crash
+        {
+            Debug.LogWarning($"[WeaponBase] ReturnToHand called but spawnPoint is null for {gameObject.name}");
+            return;
+        }
+
         transform.position = spawnPoint.position;
         transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
 
@@ -102,7 +113,7 @@ public class WeaponBase : NetworkBehaviour
 
     protected virtual void Update()
     {
-        if (!NetworkManager.Singleton.IsServer) return; 
+        //if (!NetworkManager.Singleton.IsServer) return; 
         if (isFlying && owner != null)
         {
             float dist = Vector3.Distance(launchPos, transform.position);
