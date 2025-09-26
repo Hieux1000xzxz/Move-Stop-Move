@@ -402,7 +402,7 @@ public class ConnectionCanvas : BaseCanvas
 
     private void StartHost()
     {
-        StartCoroutine(StartHostRoutine(localUserName, DEFAULT_LOBBY_NAME));
+        StartCoroutine(StartHostRoutine(localUserName, localUserName +"'s "+ DEFAULT_LOBBY_NAME));
         mainPanel.SetActive(false);
     }
 
