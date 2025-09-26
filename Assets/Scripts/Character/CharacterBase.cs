@@ -392,10 +392,10 @@ private void DoAttack()
         }
         yield return new WaitForSeconds(0.1f);
 
-        if (animator != null)
-        {
-            animator.SetBool("IsAttacking", false);
-        }
+        //if (animator != null)
+        //{
+        //    animator.SetBool("IsAttacking", false);
+        //}
     }
     public virtual void OnWeaponReturned()
     {
@@ -698,6 +698,16 @@ private void DoAttack()
     }
 
     #region Network Methods
+
+    [ClientRpc]
+    private void StopAttackAnimationClientRpc()
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsAttacking", false);
+        }
+    }
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -809,14 +819,22 @@ private void DoAttack()
     [ServerRpc]
     public void RequestAttackServerRpc()
     {
-        
         if (isDead || currentState != CharacterState.Idle) return;
 
         if (!isAttacking && hasWeapon)
         {
             PerformAttack();
             PlayAttackAnimationClientRpc();
+
+            // Sau attackDuration thì server yêu cầu client tắt animation
+            StartCoroutine(StopAttackAnimDelayed(attackDuration));
         }
+    }
+
+    private IEnumerator StopAttackAnimDelayed(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        StopAttackAnimationClientRpc();
     }
 
     [ClientRpc]
