@@ -27,7 +27,7 @@ public abstract class CharacterBase : NetworkBehaviour
     [Header("Weapon Settings")]
     [SerializeField] public Transform weaponSpawnPoint;
     [SerializeField] protected Vector3 weaponRotationOffset = Vector3.zero;
-    [SerializeField] protected float attackDelay = 0.3f;
+    [SerializeField] protected float attackDelay = 0.5f;
     [SerializeField] public WeaponType weaponType;
     protected WeaponBase currentWeapon;
 
@@ -93,7 +93,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (!GameManager.Instance || !GameManager.Instance.IsGameStarted)
             return;
-        
+
         CheckForDead();
 
         if (isDead || health.IsDead)
@@ -213,10 +213,6 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected void ChangeState(CharacterState newState)
     {
-        if (newState == CharacterState.Attack && currentState == CharacterState.Move)
-        {
-            return;
-        }
         if (currentState == newState) return;
 
         if (currentState == CharacterState.Attack)
@@ -237,7 +233,8 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             ChangeState(CharacterState.Move);
         }
-        CheckForAttack();
+        else
+            CheckForAttack();
     }
 
     protected virtual void HandleMove()
@@ -251,7 +248,7 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             ChangeState(CharacterState.Idle);
         }
-        CheckForAttack();
+        //CheckForAttack();
     }
 
     protected virtual void HandleAttack()
@@ -263,6 +260,7 @@ public abstract class CharacterBase : NetworkBehaviour
         }
 
         FaceTarget(attackTarget.position);
+
         if (!isAttacking)
         {
             PerformAttack();
@@ -274,22 +272,16 @@ public abstract class CharacterBase : NetworkBehaviour
             agent.ResetPath();
             agent.velocity = Vector3.zero;
         }
-
-        FaceTarget(attackTarget.position);
-
-        if (!isAttacking)
-        {
-            PerformAttack();
-        }
     }
 
     protected virtual void CheckForAttack()
     {
-        if (currentState == CharacterState.Move) return; 
+        if (currentState == CharacterState.Move) return;
 
         if (this is Player player && player.isMovingInput)
         {
-            return;
+            if (player.NetIsMoving.Value)
+                return;
         }
 
         if (attackTarget != null && attackTarget != detectedTarget)
@@ -334,7 +326,7 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             StartCoroutine(WaitWeaponAndAttack());
             Debug.Log("Current weapon is null, equipping default weapon.");
-                return;
+            return;
         }
         if (!hasWeapon)
         {
@@ -362,41 +354,45 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             StopCoroutine(attackRoutine);
         }
-        attackRoutine = StartCoroutine(AttackRoutine()); 
+        attackRoutine = StartCoroutine(AttackRoutine());
     }
     private IEnumerator WaitWeaponAndAttack()
     {
         yield return new WaitUntil(() => currentWeapon != null);
         DoAttack();
     }
-private void DoAttack()
-{
-    isAttacking = true;
-    hasWeapon = false;
-    nextAttackTime = Time.time + attackDelay;
+    private void DoAttack()
+    {
+        isAttacking = true;
+        hasWeapon = false;
+        nextAttackTime = Time.time + attackDelay;
 
-    if (animator != null)
-        animator.SetBool("IsAttacking", true);
+        if (animator != null)
+            animator.SetBool("IsAttacking", true);
 
-    if (attackRoutine != null)
-        StopCoroutine(attackRoutine);
+        if (attackRoutine != null)
+            StopCoroutine(attackRoutine);
 
-    attackRoutine = StartCoroutine(AttackRoutine());
-}
+        attackRoutine = StartCoroutine(AttackRoutine());
+    }
     private IEnumerator AttackRoutine()
     {
+        // Delay ra đòn
         yield return new WaitForSeconds(attackDelay);
-        if (IsOwner) 
+
+        if (IsOwner)
         {
             RequestLaunchServerRpc();
         }
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(attackDuration);
 
-        //if (animator != null)
-        //{
-        //    animator.SetBool("IsAttacking", false);
-        //}
+        isAttacking = false;
+        if (animator != null)
+            animator.SetBool("IsAttacking", false);
+
+        hasWeapon = true;
     }
+
     public virtual void OnWeaponReturned()
     {
         isAttacking = false;
@@ -435,7 +431,7 @@ private void DoAttack()
         {
             currentWeapon.ResetWeapon();
         }
-        
+
         if (agent != null && agent.isActiveAndEnabled && !isDead)
         {
             agent.isStopped = false;
@@ -464,11 +460,28 @@ private void DoAttack()
 
     protected virtual void UpdateAnimator()
     {
-        if (animator == null || agent == null || !agent.isActiveAndEnabled) return;
+        if (animator == null) return;
 
-        bool isMovingNow = agent.velocity.sqrMagnitude > 0.01f && !isAttacking;
+        float speed = 0f;
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            speed = agent.velocity.magnitude;
+        }
+        else
+        {
+            Vector3 delta = (transform.position - lastPosition);
+            delta.y = 0f;
+            speed = (Time.deltaTime > 0f) ? (delta.magnitude / Time.deltaTime) : 0f;
+        }
+
+        bool isMovingNow = speed > 0.01f && !isAttacking;
         animator.SetBool("IsMoving", isMovingNow);
+
+        animator.SetBool("IsAttacking", isAttacking);
+
+        lastPosition = transform.position;
     }
+
 
 
     public abstract Vector3 GetMovementInput();
@@ -670,7 +683,7 @@ private void DoAttack()
         {
             currentWeapon.gameObject.SetActive(false);
         }
-        else 
+        else
         {
             if (IsServer)
                 ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
@@ -774,7 +787,7 @@ private void DoAttack()
     {
         yield return null;
 
-        float timeout = 2f; 
+        float timeout = 2f;
         float t = 0f;
 
         while (t < timeout && currentWeapon == null)
@@ -855,7 +868,7 @@ private void DoAttack()
     [ClientRpc]
     private void SetWeaponClientRpc(NetworkObjectReference weaponRef, NetworkObjectReference ownerRef)
     {
-        if (weaponRef.TryGet(out NetworkObject weaponObj) && 
+        if (weaponRef.TryGet(out NetworkObject weaponObj) &&
             ownerRef.TryGet(out NetworkObject ownerObj))
         {
             var weapon = weaponObj.GetComponent<WeaponBase>();
@@ -936,7 +949,7 @@ private void DoAttack()
     private void RequestLaunchServerRpc(ServerRpcParams rpcParams = default)
     {
         if (isDead || currentWeapon == null || attackTarget == null)
-        {         
+        {
             return;
         }
         Vector3 dir = (attackTarget.position - weaponSpawnPoint.position).normalized;
