@@ -458,12 +458,12 @@ public class ConnectionCanvas : BaseCanvas
     {
         if (networkManager.IsHost)
         {
-            if (currentLobbyInfo == null || currentLobbyInfo.users == null || currentLobbyInfo.users.Count < 2)
-            {
-                UIManager.Instance?.SendNotification("At least 2 players are required to start the game!");
-                UIManager.Instance?.OpenNotification();
-                return;
-            }
+            //if (currentLobbyInfo == null || currentLobbyInfo.users == null || currentLobbyInfo.users.Count < 2)
+            //{
+            //    UIManager.Instance?.SendNotification("At least 2 players are required to start the game!");
+            //    UIManager.Instance?.OpenNotification();
+            //    return;
+            //}
 
             StartCoroutine(StartGameOnServerRoutine());
 
