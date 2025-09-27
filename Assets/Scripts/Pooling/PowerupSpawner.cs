@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
+using System.Collections;
 
 public class PowerupSpawner : NetworkBehaviour
 {
@@ -17,7 +18,6 @@ public class PowerupSpawner : NetworkBehaviour
         }
     }
 
-
     private void SpawnAllOnce()
     {
         foreach (var point in spawnPoints)
@@ -31,13 +31,11 @@ public class PowerupSpawner : NetworkBehaviour
 
     private void SpawnAtPoint(Transform point)
     {
-        if (!IsServer || !NetworkManager.Singleton.IsListening)
-            return;
+        if (!IsServer) return;
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening) return;
 
         if (activePowerups.ContainsKey(point) && activePowerups[point] != null)
-        {
             return;
-        }
 
         PowerupType type = (Random.value > 0.5f) ? PowerupType.SpeedBoost : PowerupType.WeaponGrow;
         GameObject obj = ObjectPool.Instance.SpawnPowerup(type, point.position, point.rotation);
@@ -47,7 +45,16 @@ public class PowerupSpawner : NetworkBehaviour
             var netObj = obj.GetComponent<NetworkObject>();
             if (netObj != null && !netObj.IsSpawned)
             {
-                netObj.Spawn(true);
+                // ✅ Chỉ spawn khi NetworkManager đang lắng nghe
+                if (NetworkManager.Singleton.IsListening)
+                {
+                    netObj.Spawn(true);
+                }
+                else
+                {
+                    Debug.LogWarning("Tried to spawn while NetworkManager is not listening.");
+                    return;
+                }
             }
 
             Powerup pu = obj.GetComponent<Powerup>();
@@ -55,23 +62,24 @@ public class PowerupSpawner : NetworkBehaviour
 
             pu.OnReleased = () =>
             {
-                if (IsServer && NetworkManager.Singleton.IsListening && netObj != null && netObj.IsSpawned)
+                if (IsServer && netObj != null && netObj.IsSpawned && NetworkManager.Singleton.IsListening)
                 {
                     netObj.Despawn();
                 }
 
                 activePowerups[point] = null;
-                StartCoroutine(RespawnAfterDelay(point, 5.0f));
+
+                if (IsServer)
+                {
+                    StartCoroutine(RespawnAfterDelay(point, 5.0f));
+                }
             };
 
             activePowerups[point] = obj;
         }
     }
 
-
-
-
-    private System.Collections.IEnumerator RespawnAfterDelay(Transform point, float delayTime)
+    private IEnumerator RespawnAfterDelay(Transform point, float delayTime)
     {
         yield return new WaitForSeconds(delayTime);
 
@@ -80,5 +88,4 @@ public class PowerupSpawner : NetworkBehaviour
             SpawnAtPoint(point);
         }
     }
-
 }

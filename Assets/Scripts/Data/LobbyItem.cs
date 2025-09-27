@@ -7,10 +7,10 @@ public class LobbyItem : MonoBehaviour
     [SerializeField] private TextMeshProUGUI lobbyNameText;
     [SerializeField] private Button joinButton;
 
-    private LobbyInfo lobbyInfo;
+    private RelayLobbyInfo lobbyInfo;
     private ConnectionCanvas connectionCanvas;
 
-    public void Setup(LobbyInfo info, ConnectionCanvas canvas)
+    public void Setup(RelayLobbyInfo info, ConnectionCanvas canvas)
     {
         lobbyInfo = info;
         connectionCanvas = canvas;

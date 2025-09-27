@@ -62,7 +62,7 @@ public class GamePlayCanvas : BaseCanvas
         nextButton.onClick.AddListener(() => GameManager.Instance.RequestNextSpectatorTargetServerRpc());
     }
 
-    public void UpdateExitButtonState(LobbyInfo lobby)
+    public void UpdateExitButtonState(RelayLobbyInfo lobby)
     {
         if (lobby == null) return;
 
