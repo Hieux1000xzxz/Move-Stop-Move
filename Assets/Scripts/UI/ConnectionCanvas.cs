@@ -67,7 +67,8 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private CinemachineCamera mainCamera;
     [SerializeField] private Sprite[] availableAvatars;
 
-    private const string SERVER_URL = "http://192.168.1.32:5000/api/lobby";
+    // UPDATED: Changed to new server URL
+    private const string SERVER_URL = "https://mini-server-8.onrender.com/api/lobby";
     private const string DEFAULT_LOBBY_NAME = "Lobby";
     private const string DEFAULT_PLAYER_NAME = "You";
     private int selectedAvatarIndex = 0;
@@ -82,13 +83,14 @@ public class ConnectionCanvas : BaseCanvas
 
 
     private void Start()
-    {
+    {   
         InitializeButtons();
         InitializeNetworkCallbacks();
         SetInitialUIState();
         LoadPlayerPrefs();
         RefreshLobbyList();
         InitializeAvatarSelection();
+        InitializeInputValidation();
         autoRefreshLobbyRoutine = StartCoroutine(AutoRefreshLobbyList());
     }
 
@@ -154,7 +156,6 @@ public class ConnectionCanvas : BaseCanvas
 
             if (avatarItemObj == null) continue;
 
-            // Get AvatarItem component
             var avatarItem = avatarItemObj.GetComponent<AvatarItem>();
             if (avatarItem == null)
             {
@@ -162,11 +163,39 @@ public class ConnectionCanvas : BaseCanvas
                 continue;
             }
 
-            // Initialize với avatarItem component
             avatarItem.Initialize(i, availableAvatars[i], SelectAvatar);
         }
 
         SelectAvatar(Mathf.Clamp(selectedAvatarIndex, 0, availableAvatars.Length - 1));
+    }
+    private void InitializeInputValidation()
+    {
+        if (playerNameInputField != null && confirmPlayerInfoButton != null)
+        {
+            confirmPlayerInfoButton.interactable = false;
+            playerNameInputField.onValueChanged.AddListener(value =>
+            {
+                confirmPlayerInfoButton.interactable = !string.IsNullOrWhiteSpace(value);
+            });
+        }
+
+        if (lobbyIdInputField != null && confirmJoinButton != null)
+        {
+            confirmJoinButton.interactable = false;
+            lobbyIdInputField.onValueChanged.AddListener(value =>
+            {
+                confirmJoinButton.interactable = !string.IsNullOrWhiteSpace(value);
+            });
+        }
+
+        if (roomNameInputField != null && confirmRoomNameButton != null)
+        {
+            confirmRoomNameButton.interactable = false;
+            roomNameInputField.onValueChanged.AddListener(value =>
+            {
+                confirmRoomNameButton.interactable = !string.IsNullOrWhiteSpace(value);
+            });
+        }
     }
 
     public void ShowSettingPanel()
@@ -175,7 +204,6 @@ public class ConnectionCanvas : BaseCanvas
         {
             settingPanel.SetActive(true);
 
-            // Gợi ý: hiện room name hiện tại
             if (roomNameInputField != null && currentLobbyInfo != null)
                 roomNameInputField.text = currentLobbyInfo.lobbyName;
         }
@@ -219,23 +247,12 @@ public class ConnectionCanvas : BaseCanvas
 
     private void LoadPlayerPrefs()
     {
-        // Load player name từ PlayerPrefs
         localUserName = PlayerPrefs.GetString("PlayerName", DEFAULT_PLAYER_NAME);
         selectedAvatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0);
-
-        if (playerNameInputField != null)
-        {
-            playerNameInputField.text = localUserName;
-        }
         SelectAvatar(selectedAvatarIndex);
     }
 
-    private void SavePlayerPrefs()
-    {
-        PlayerPrefs.SetString("PlayerName", localUserName);
-        PlayerPrefs.SetInt("PlayerAvatar", selectedAvatarIndex);
-        PlayerPrefs.Save();
-    }
+
     private void InitializeNetworkCallbacks()
     {
         if (networkManager != null)
@@ -257,6 +274,7 @@ public class ConnectionCanvas : BaseCanvas
     {
         if (playerInfoPanel != null)
         {
+            playerNameInputField.text = string.Empty;
             playerInfoPanel.SetActive(false);
         }
 
@@ -280,7 +298,6 @@ public class ConnectionCanvas : BaseCanvas
 
         localUserName = newName;
 
-        // Save PlayerId, name và avatar
         SavePlayerPrefs(localUserName);
 
         HidePlayerInfoPanel();
@@ -402,7 +419,7 @@ public class ConnectionCanvas : BaseCanvas
 
     private void StartHost()
     {
-        StartCoroutine(StartHostRoutine(localUserName, DEFAULT_LOBBY_NAME));
+        StartCoroutine(StartHostRoutine(localUserName, localUserName + "'s " + DEFAULT_LOBBY_NAME));
         mainPanel.SetActive(false);
     }
 
@@ -565,6 +582,9 @@ public class ConnectionCanvas : BaseCanvas
             www.downloadHandler = new DownloadHandlerBuffer();
             www.SetRequestHeader("Content-Type", "application/json");
 
+            // UPDATED: Increased timeout for cloud server
+            www.timeout = 10;
+
             yield return www.SendWebRequest();
 
             if (www.result == UnityWebRequest.Result.Success)
@@ -578,7 +598,7 @@ public class ConnectionCanvas : BaseCanvas
             }
             else
             {
-                Debug.LogWarning("⚠️ Could not reach lobby server, starting local offline host...");
+                Debug.LogWarning("⚠ Could not reach lobby server, starting local offline host...");
 
                 currentLobbyId = "LOCAL";
                 localUserName = DEFAULT_PLAYER_NAME;
@@ -616,6 +636,10 @@ public class ConnectionCanvas : BaseCanvas
 
                 comp.Setup(user.userName, user.userId, user.clientId, this, canKick, avatar);
             }
+        }
+        if (gameplayCanvas != null)
+        {
+            gameplayCanvas.UpdateExitButtonState(lobby);
         }
     }
 
@@ -670,7 +694,7 @@ public class ConnectionCanvas : BaseCanvas
         }
         else
         {
-            Debug.LogWarning("⚠️ Server not available, starting offline mode...");
+            Debug.LogWarning("⚠ Server not available, starting offline mode...");
 
             currentLobbyId = "LOCAL";
             localUserName = hostName;
@@ -704,7 +728,8 @@ public class ConnectionCanvas : BaseCanvas
     {
         using (var www = UnityWebRequest.Get($"{SERVER_URL}/ping"))
         {
-            www.timeout = 3;
+            // UPDATED: Increased timeout for cloud server
+            www.timeout = 10;
             yield return www.SendWebRequest();
             callback(www.result == UnityWebRequest.Result.Success);
         }
@@ -714,6 +739,8 @@ public class ConnectionCanvas : BaseCanvas
     {
         using (var checkWww = UnityWebRequest.Get($"{SERVER_URL}/find/{lobbyId}"))
         {
+            // UPDATED: Increased timeout for cloud server
+            checkWww.timeout = 10;
             yield return checkWww.SendWebRequest();
 
             if (checkWww.result != UnityWebRequest.Result.Success)
@@ -759,6 +786,8 @@ public class ConnectionCanvas : BaseCanvas
             www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
             www.downloadHandler = new DownloadHandlerBuffer();
             www.SetRequestHeader("Content-Type", "application/json");
+            // UPDATED: Increased timeout for cloud server
+            www.timeout = 10;
 
             yield return www.SendWebRequest();
 
@@ -789,6 +818,8 @@ public class ConnectionCanvas : BaseCanvas
             www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
             www.downloadHandler = new DownloadHandlerBuffer();
             www.SetRequestHeader("Content-Type", "application/json");
+            // UPDATED: Increased timeout for cloud server
+            www.timeout = 10;
 
             yield return www.SendWebRequest();
         }
@@ -809,6 +840,8 @@ public class ConnectionCanvas : BaseCanvas
     {
         using (var www = UnityWebRequest.Get($"{SERVER_URL}/list"))
         {
+            // UPDATED: Increased timeout for cloud server
+            www.timeout = 10;
             yield return www.SendWebRequest();
 
             if (www.result == UnityWebRequest.Result.Success)
@@ -940,6 +973,8 @@ public class ConnectionCanvas : BaseCanvas
             {
                 using (var www = UnityWebRequest.Get($"{SERVER_URL}/find/{currentLobbyId}"))
                 {
+                    // UPDATED: Increased timeout for cloud server
+                    www.timeout = 10;
                     yield return www.SendWebRequest();
                     if (www.result == UnityWebRequest.Result.Success && this != null && lobbyPanel != null)
                     {
@@ -956,6 +991,8 @@ public class ConnectionCanvas : BaseCanvas
     {
         using (var www = UnityWebRequest.Delete($"{SERVER_URL}/unregister/{lobbyId}"))
         {
+            // UPDATED: Increased timeout for cloud server
+            www.timeout = 10;
             yield return www.SendWebRequest();
         }
     }
@@ -969,6 +1006,8 @@ public class ConnectionCanvas : BaseCanvas
             www.uploadHandler = new UploadHandlerRaw(new byte[0]);
             www.downloadHandler = new DownloadHandlerBuffer();
             www.SetRequestHeader("Content-Type", "application/json");
+            // UPDATED: Increased timeout for cloud server
+            www.timeout = 10;
 
             yield return www.SendWebRequest();
         }
@@ -980,6 +1019,8 @@ public class ConnectionCanvas : BaseCanvas
         {
             using (var www = UnityWebRequest.PostWwwForm($"{SERVER_URL}/{currentLobbyId}/heartbeat", ""))
             {
+                // UPDATED: Increased timeout for cloud server
+                www.timeout = 10;
                 yield return www.SendWebRequest();
             }
             yield return new WaitForSeconds(5f);
@@ -1050,7 +1091,8 @@ public class ConnectionCanvas : BaseCanvas
         try
         {
             var req = UnityWebRequest.Delete($"{SERVER_URL}/unregister/{lobbyId}");
-            req.timeout = 2;
+            // UPDATED: Increased timeout for cloud server
+            req.timeout = 5;
             var op = req.SendWebRequest();
             while (!op.isDone) { } // Blocking wait (chỉ dùng khi quit app)
         }
@@ -1069,7 +1111,8 @@ public class ConnectionCanvas : BaseCanvas
             req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
             req.downloadHandler = new DownloadHandlerBuffer();
             req.SetRequestHeader("Content-Type", "application/json");
-            req.timeout = 2;
+            // UPDATED: Increased timeout for cloud server
+            req.timeout = 5;
 
             var op = req.SendWebRequest();
             while (!op.isDone) { }
@@ -1128,6 +1171,8 @@ public class ConnectionCanvas : BaseCanvas
             www.uploadHandler = new UploadHandlerRaw(bodyRaw);
             www.downloadHandler = new DownloadHandlerBuffer();
             www.SetRequestHeader("Content-Type", "application/json");
+            // UPDATED: Increased timeout for cloud server
+            www.timeout = 10;
 
             yield return www.SendWebRequest();
 
@@ -1151,6 +1196,8 @@ public class ConnectionCanvas : BaseCanvas
 
         using (var www = UnityWebRequest.Get($"{SERVER_URL}/find/{currentLobbyId}"))
         {
+            // UPDATED: Increased timeout for cloud server
+            www.timeout = 10;
             yield return www.SendWebRequest();
             if (www.result == UnityWebRequest.Result.Success)
             {

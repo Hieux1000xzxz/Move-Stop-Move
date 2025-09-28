@@ -340,10 +340,8 @@ public class ObjectPool : Singleton<ObjectPool>
     #region HELPERS
     private GameObject CreateGobject(GameObject item)
     {
-        // ❌ Không parent trực tiếp vào ObjectPool để tránh lỗi Netcode
         GameObject gobject = Instantiate(item);
 
-        // Đưa ra xa khỏi scene để "ẩn"
         gobject.transform.position = new Vector3(9999, 9999, 9999);
         gobject.SetActive(false);
 

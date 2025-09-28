@@ -231,6 +231,7 @@ public class GameManager : NetworkBehaviour
         {
             ResetGame();
         }
+        HidePlayerPreview();
         UIManager.Instance.CloseAllUI();
     }
 

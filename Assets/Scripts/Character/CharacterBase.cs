@@ -855,7 +855,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (animator != null)
         {
-            animator.SetBool("IsAttacking", true);
+            animator.SetBool("IsAttacking", false);
         }
     }
 
