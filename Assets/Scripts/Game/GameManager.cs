@@ -426,8 +426,15 @@ public class GameManager : NetworkBehaviour
         {
             mainCamera.Follow = target;
             mainCamera.LookAt = target;
+
+            var killScore = target.GetComponent<KillScoreDisplay>();
+            if (killScore != null)
+            {
+                zoomController.SetUp(killScore);
+            }
         }
     }
+
 
     private void SpawnPowerup()
     {
@@ -510,7 +517,14 @@ public class GameManager : NetworkBehaviour
             {
                 mainCamera.Follow = t;
                 mainCamera.LookAt = t;
+
+                var killScore = t.GetComponent<KillScoreDisplay>();
+                if (killScore != null)
+                {
+                    zoomController.SetUp(killScore);
+                }
             }
         }
     }
+
 }
