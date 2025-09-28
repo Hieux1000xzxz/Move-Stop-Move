@@ -39,7 +39,6 @@ public class Player : CharacterBase
 
         if (currentState == CharacterState.Attack && !isAttacking) 
         {
-            Debug.Log("Player Attack requested");
             RequestAttackServerRpc();
         }
     }
@@ -62,6 +61,9 @@ public class Player : CharacterBase
     protected override void OnNewTargetFound(Transform newTarget)
     {
         base.OnNewTargetFound(newTarget);
+
+        if (!IsServer) return;
+
         if (!isMovingInput)
         {
             float distance = Vector3.Distance(transform.position, newTarget.position);

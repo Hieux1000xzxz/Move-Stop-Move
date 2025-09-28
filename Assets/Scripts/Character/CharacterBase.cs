@@ -105,7 +105,14 @@ public abstract class CharacterBase : NetworkBehaviour
             return;
         }
 
-        UpdateRadar();
+        if (!IsMovingNow())   // chỉ quét radar khi đứng yên
+        {
+            UpdateRadar();
+        }
+        else
+        {
+            detectedTarget = null;  // reset để chắc chắn không giữ target cũ
+        }
 
         switch (currentState)
         {
@@ -133,7 +140,20 @@ public abstract class CharacterBase : NetworkBehaviour
             OnTargetChanged(previousTarget, detectedTarget);
         }
     }
+    protected bool IsMovingNow()
+    {
+        if (this is Player player)
+        {
+            return player.isMovingInput || player.NetIsMoving.Value;
+        }
 
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            return agent.velocity.magnitude > 0.05f;
+        }
+
+        return false;
+    }
     protected virtual void OnTargetChanged(Transform oldTarget, Transform newTarget)
     {
         if (oldTarget != null && newTarget == null)
@@ -224,6 +244,17 @@ public abstract class CharacterBase : NetworkBehaviour
             EndAttack();
         }
         currentState = newState;
+
+        if (currentState == CharacterState.Attack)
+        {
+            // ⛔ stop ngay lập tức khi vào trạng thái Attack
+            if (agent != null && agent.isActiveAndEnabled)
+            {
+                agent.isStopped = true;
+                agent.ResetPath();
+                agent.velocity = Vector3.zero;
+            }
+        }
     }
 
     protected virtual void HandleIdle()
@@ -276,6 +307,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected virtual void CheckForAttack()
     {
+        if (IsMovingNow()) return;
         if (currentState == CharacterState.Move) return;
 
         if (this is Player player && player.isMovingInput)
@@ -322,6 +354,13 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             return;
         }
+
+        if (agent != null && agent.isActiveAndEnabled && agent.velocity.magnitude > 0.01f)
+        {
+            // 🚫 chưa dừng hẳn → không cho attack
+            return;
+        }
+
         if (currentWeapon == null)
         {
             StartCoroutine(WaitWeaponAndAttack());
