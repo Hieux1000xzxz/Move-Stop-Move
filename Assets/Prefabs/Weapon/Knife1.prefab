@@ -263,7 +263,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   speed: 14
   damage: 10
-  handRotationOffset: {x: 0, y: 0, z: 190}
+  handRotationOffset: {x: 360, y: 300, z: 200}
   rotateAxis: {x: -1, y: 0, z: 0}
   rotateSpeed: 1080
   rotateMode: 3

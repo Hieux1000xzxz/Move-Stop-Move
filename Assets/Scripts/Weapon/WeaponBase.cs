@@ -128,6 +128,23 @@ public class WeaponBase : NetworkBehaviour
     {
         if (!isFlying || other.gameObject == owner.gameObject) return;
 
+        if(other.CompareTag("Wall"))
+        {
+            if(NetworkManager.Singleton.IsServer)
+            {
+                ReturnToHandServerRpc();
+            }
+
+            NetworkObject wallNetObj = other.GetComponent<NetworkObject>();
+            if (wallNetObj != null && wallNetObj.IsSpawned)
+            {
+                wallNetObj.Despawn(true); 
+            }
+            else
+            {
+                Destroy(other.gameObject); 
+            }
+        }
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
         {

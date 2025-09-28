@@ -12,6 +12,7 @@ TagManager:
   - Arrow1
   - Spawner
   - Grass
+  - Wall
   layers:
   - Default
   - TransparentFX
