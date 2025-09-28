@@ -1,0 +1,1970 @@
+fileFormatVersion: 2
+guid: 9b1dbe8e97e309b4b8ed044192721133
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Point-60FPS_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 756
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 56fac242a57cff34e87c3cbbf48ca359
+      internalID: -2045236174
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_1
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 756
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a44716bbcb16f574daa26c604b938327
+      internalID: 424884091
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_2
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 756
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ab6da743a1fe5c444b7bccec8dd3dd3b
+      internalID: 589202964
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_3
+      rect:
+        serializedVersion: 2
+        x: 286
+        y: 756
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: af9be2d94896b8641bbbd22b22f698ec
+      internalID: -1735304863
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_4
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 756
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 169f6b197ca6daa40bc5d0471e9f615a
+      internalID: -1917335029
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_5
+      rect:
+        serializedVersion: 2
+        x: 476
+        y: 756
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 27dac9b618ea3fb48b25763a8b19249d
+      internalID: -1668269645
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_6
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 756
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 96e18d37597c2214b9866a0f4491838a
+      internalID: -1355943717
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_7
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 756
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8cb8bac0d2a8e0943b7e3e7a5a275346
+      internalID: -1812935825
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_8
+      rect:
+        serializedVersion: 2
+        x: 761
+        y: 756
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: feb006fe633c8bf48ad76ea8ca44da94
+      internalID: -2016645559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_9
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 756
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cc1fe0ed3c7b5a946a4819a7825448af
+      internalID: 84991769
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_10
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 648
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0cba8c77cfe437a429c19a7a3cc53dfb
+      internalID: 1677585605
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_11
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 648
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fafae08a23a517c4aad5f278f0495070
+      internalID: 238606660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_12
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 648
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 76cf076e19a38c2429428237c72ee783
+      internalID: -519954292
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_13
+      rect:
+        serializedVersion: 2
+        x: 286
+        y: 648
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 83d93cd454ead2141bd995fa8578bfba
+      internalID: 917702768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_14
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 648
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 17525d78732822b4b946f23feec2e33b
+      internalID: 1092301611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_15
+      rect:
+        serializedVersion: 2
+        x: 476
+        y: 648
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b67758579c9ccbf488865e1b7483ba46
+      internalID: -1142042263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_16
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 648
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 79036f6947a72cb42abc7c99d4546d87
+      internalID: 1367754992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_17
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 648
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 801dfa3aa1bae104b9c2cd8d7115a0ce
+      internalID: -251659638
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_18
+      rect:
+        serializedVersion: 2
+        x: 761
+        y: 648
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8d7d69f5d7181d24daee62026bb719b6
+      internalID: -1948357046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_19
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 648
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c6cd82a9508f94f42a776e31f1f96473
+      internalID: 1084005572
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_20
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 540
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bae768061d2064740a0ab63849076f41
+      internalID: 1744340506
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_21
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 540
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b622be9d7d77ce2479390e0e5dd4c7fa
+      internalID: 401616470
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_22
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 540
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: edfd6f965c5f91e4cb956f11c40883d0
+      internalID: -1456793581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_23
+      rect:
+        serializedVersion: 2
+        x: 286
+        y: 540
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: da716b9d4638ebd4f8835a7c81e23cbb
+      internalID: -1844795498
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_24
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 540
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a46c0c9365b50b940a05cb4eb5adff2b
+      internalID: 2069635471
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_25
+      rect:
+        serializedVersion: 2
+        x: 476
+        y: 540
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 10bbf702085bf3c4299bcf7cf919006f
+      internalID: 214957152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_26
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 540
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bdef2c17c5a6a6b48a9b8746dc0826ac
+      internalID: -1854313010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_27
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 540
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 41ac613e78ebc5048ae81f4ae3b5fcd8
+      internalID: -165742851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_28
+      rect:
+        serializedVersion: 2
+        x: 761
+        y: 540
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4b7fcde6e59634c43a20bfa816d7b4ab
+      internalID: -1621693508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_29
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 540
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fd6f097bc63196642b0ef3d6f10842f1
+      internalID: 1641681938
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_30
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 432
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7f71ccd4ead1a9043b40ebc28a9a9610
+      internalID: -1839080318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_31
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 432
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e5139c5ae8631784f99df5e05875261a
+      internalID: 1123716302
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_32
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 432
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e9b7fa8ca152b644eb513a026df317bd
+      internalID: -978452100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_33
+      rect:
+        serializedVersion: 2
+        x: 286
+        y: 432
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f99462262cdcefe47b8fc6c8bdc0b34c
+      internalID: -1256622855
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_34
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 432
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bcbe24b7c0692a843999e1ad929f9692
+      internalID: -1411552435
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_35
+      rect:
+        serializedVersion: 2
+        x: 476
+        y: 432
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bee93652c0106f54fa19776230b799a0
+      internalID: -959590389
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_36
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 432
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ba5fec1390b060d4db627bdf4e9fc2da
+      internalID: 620127315
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_37
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 432
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2d3490623d8d86e4abf31e952cd6a8a4
+      internalID: -677134895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_38
+      rect:
+        serializedVersion: 2
+        x: 761
+        y: 432
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3e582c29af8cb104880745439d353cb7
+      internalID: -1455792444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_39
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 432
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 37c863a333afbea47b7999b77a2059af
+      internalID: 2024572512
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_40
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 324
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 420b0a9e2f04ec24c85508a5d088fc06
+      internalID: -844283913
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_41
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 324
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 467391528407dc54cb8c71175dcdbd8a
+      internalID: 1603497989
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_42
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 324
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 564b1472802f65a468557f929e223686
+      internalID: -873052642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_43
+      rect:
+        serializedVersion: 2
+        x: 286
+        y: 324
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6c997c9adde7ad14fbab32273e6aaf0d
+      internalID: 1731793675
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_44
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 324
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 474ad27efa465aa478307090d506a294
+      internalID: 2001251957
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_45
+      rect:
+        serializedVersion: 2
+        x: 476
+        y: 324
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: adc8c74339592f94b85c51c390d56941
+      internalID: 303494343
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_46
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 324
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 08e83f8b96d585f4aabb80d7494ef95f
+      internalID: -1164431129
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_47
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 324
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 36b0d2b66824b53418428357793fbe12
+      internalID: -1990435317
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_48
+      rect:
+        serializedVersion: 2
+        x: 761
+        y: 324
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b2ba72fe539be604492893ad00ac3a19
+      internalID: 19282574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_49
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 324
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b818bba678c6c246ab79bbf469afa0f
+      internalID: 631964806
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_50
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 216
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: be38e300fc675b74b8f06e50e517a017
+      internalID: -513649039
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_51
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 216
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0efb03bcaa1d3b241bd6c0127be245b5
+      internalID: -2105259168
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_52
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 216
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4f56ed31b70986943894c55a0d815b1a
+      internalID: -1957411456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_53
+      rect:
+        serializedVersion: 2
+        x: 286
+        y: 216
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c69312f1fb7e2f045ad3cbe1fea5cd61
+      internalID: 2136872501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_54
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 216
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b68b93eb386a0274ab7fb213eae4fa76
+      internalID: 266763936
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_55
+      rect:
+        serializedVersion: 2
+        x: 476
+        y: 216
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eb7497fd97a16b2408f9ba587169f16c
+      internalID: -1041093216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_56
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 216
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a5bc34a28a8701948bec02f431ffbc5d
+      internalID: -366881583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_57
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 216
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f17bc8f76273bb94580acfc2d160c3f9
+      internalID: -1487484103
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_58
+      rect:
+        serializedVersion: 2
+        x: 761
+        y: 216
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 60bbdaf90c733694899149fa8b8f2481
+      internalID: 283988846
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_59
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 216
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 37ff29f64f52aa347838628adf4500c5
+      internalID: 231146173
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_60
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 108
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0755298551b26ef40b5fa0038aae0353
+      internalID: -1730726859
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_61
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 108
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 98a394dabb5524146a1d51b6e83b058d
+      internalID: -1420374498
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_62
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 108
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e288718198033ce44b96b7c7900ae28f
+      internalID: 1529594034
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_63
+      rect:
+        serializedVersion: 2
+        x: 286
+        y: 108
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4b711f3f497217f46abbe082ff3bcd21
+      internalID: -1768672095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_64
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 108
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 98cdb0035c6dfcc44b246429e3c202e5
+      internalID: 1605568842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_65
+      rect:
+        serializedVersion: 2
+        x: 476
+        y: 108
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: da8befc80bd584a43b0f9d4b89e3192f
+      internalID: 1337044230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_66
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 108
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b590aaabcbdcbec4792a9a03bbf61c44
+      internalID: -1028695381
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_67
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 108
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: afde81d87924a924fb2a054b6cca9667
+      internalID: 1895148928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_68
+      rect:
+        serializedVersion: 2
+        x: 761
+        y: 108
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a95ff56de7994f44d8ffa4d4fa7c7107
+      internalID: 907657554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_69
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 108
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ce2a6a7976dc681408b90b8edabd4aee
+      internalID: -617425538
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_70
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 0
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e4da1c77eb98d2e4dbe8e9e1975da75f
+      internalID: 542486760
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_71
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0744333b6d764b34f9e16bc222fcf83e
+      internalID: -1294380193
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_72
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 0
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 216fe06efbdb83d478e3f503e701bb1c
+      internalID: 459295264
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_73
+      rect:
+        serializedVersion: 2
+        x: 286
+        y: 0
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b5553bdd380e94f4d806df52b57a839c
+      internalID: -1543305674
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_74
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 0
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 15befb1e5c9942c43a1f7cbe77f75cff
+      internalID: -90061592
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_75
+      rect:
+        serializedVersion: 2
+        x: 476
+        y: 0
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 09c36d03f05d1964592d2b712ac29489
+      internalID: -1025634644
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_76
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 0
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9f16fe3958c07b24c8edc25a7722b911
+      internalID: 386799051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_77
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 0
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3a54eecc32c3f534ea076685741cc086
+      internalID: -481272139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_78
+      rect:
+        serializedVersion: 2
+        x: 761
+        y: 0
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 53a9f33a23b4e6e49ae5e294e210bfcc
+      internalID: 1951579032
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Point-60FPS_79
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 0
+        width: 95
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 57050ebc707b4064f80d00c4f23b1909
+      internalID: -251655150
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 1b5a618c3ee083f48864e0ff5200cf3b
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Point-60FPS_0: -2045236174
+      Point-60FPS_1: 424884091
+      Point-60FPS_10: 1677585605
+      Point-60FPS_11: 238606660
+      Point-60FPS_12: -519954292
+      Point-60FPS_13: 917702768
+      Point-60FPS_14: 1092301611
+      Point-60FPS_15: -1142042263
+      Point-60FPS_16: 1367754992
+      Point-60FPS_17: -251659638
+      Point-60FPS_18: -1948357046
+      Point-60FPS_19: 1084005572
+      Point-60FPS_2: 589202964
+      Point-60FPS_20: 1744340506
+      Point-60FPS_21: 401616470
+      Point-60FPS_22: -1456793581
+      Point-60FPS_23: -1844795498
+      Point-60FPS_24: 2069635471
+      Point-60FPS_25: 214957152
+      Point-60FPS_26: -1854313010
+      Point-60FPS_27: -165742851
+      Point-60FPS_28: -1621693508
+      Point-60FPS_29: 1641681938
+      Point-60FPS_3: -1735304863
+      Point-60FPS_30: -1839080318
+      Point-60FPS_31: 1123716302
+      Point-60FPS_32: -978452100
+      Point-60FPS_33: -1256622855
+      Point-60FPS_34: -1411552435
+      Point-60FPS_35: -959590389
+      Point-60FPS_36: 620127315
+      Point-60FPS_37: -677134895
+      Point-60FPS_38: -1455792444
+      Point-60FPS_39: 2024572512
+      Point-60FPS_4: -1917335029
+      Point-60FPS_40: -844283913
+      Point-60FPS_41: 1603497989
+      Point-60FPS_42: -873052642
+      Point-60FPS_43: 1731793675
+      Point-60FPS_44: 2001251957
+      Point-60FPS_45: 303494343
+      Point-60FPS_46: -1164431129
+      Point-60FPS_47: -1990435317
+      Point-60FPS_48: 19282574
+      Point-60FPS_49: 631964806
+      Point-60FPS_5: -1668269645
+      Point-60FPS_50: -513649039
+      Point-60FPS_51: -2105259168
+      Point-60FPS_52: -1957411456
+      Point-60FPS_53: 2136872501
+      Point-60FPS_54: 266763936
+      Point-60FPS_55: -1041093216
+      Point-60FPS_56: -366881583
+      Point-60FPS_57: -1487484103
+      Point-60FPS_58: 283988846
+      Point-60FPS_59: 231146173
+      Point-60FPS_6: -1355943717
+      Point-60FPS_60: -1730726859
+      Point-60FPS_61: -1420374498
+      Point-60FPS_62: 1529594034
+      Point-60FPS_63: -1768672095
+      Point-60FPS_64: 1605568842
+      Point-60FPS_65: 1337044230
+      Point-60FPS_66: -1028695381
+      Point-60FPS_67: 1895148928
+      Point-60FPS_68: 907657554
+      Point-60FPS_69: -617425538
+      Point-60FPS_7: -1812935825
+      Point-60FPS_70: 542486760
+      Point-60FPS_71: -1294380193
+      Point-60FPS_72: 459295264
+      Point-60FPS_73: -1543305674
+      Point-60FPS_74: -90061592
+      Point-60FPS_75: -1025634644
+      Point-60FPS_76: 386799051
+      Point-60FPS_77: -481272139
+      Point-60FPS_78: 1951579032
+      Point-60FPS_79: -251655150
+      Point-60FPS_8: -2016645559
+      Point-60FPS_9: 84991769
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

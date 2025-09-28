@@ -35,6 +35,7 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private Button startHostButton;
     [SerializeField] private Button backButton;
     [SerializeField] private Button joinByIdButton;
+    [SerializeField] private Button editProfileButton;
     [SerializeField] private Transform lobbyListContainer;
     [SerializeField] private GameObject lobbyItemPrefab;
 
@@ -45,6 +46,7 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private Button startGameButton;
     [SerializeField] private Button settingButton;
     [SerializeField] private Button exitButton;
+    [SerializeField] private Button editProfileInLobbyButton;
 
     [Header("Join by ID Panel")]
     [SerializeField] private GameObject joinByIdPanel;
@@ -58,6 +60,7 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private GameObject avatarItemPrefab;
     [SerializeField] private Button confirmPlayerInfoButton;
     [SerializeField] private Button cancelPlayerInfoButton;
+    [SerializeField] private TextMeshProUGUI playerInfoTitle;
 
     [Header("Setting Panel")]
     [SerializeField] private GameObject settingPanel;
@@ -76,7 +79,7 @@ public class ConnectionCanvas : BaseCanvas
     // Server URL updated for relay support
     private const string SERVER_URL = "https://mini-server-8.onrender.com/api/lobby";
     private const string DEFAULT_LOBBY_NAME = "Lobby";
-    private const string DEFAULT_PLAYER_NAME = "You";
+    private const string DEFAULT_PLAYER_NAME = "Player";
 
     private int selectedAvatarIndex = 0;
     private string currentLobbyId = string.Empty;
@@ -146,7 +149,7 @@ public class ConnectionCanvas : BaseCanvas
 
             RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
             transport.SetRelayServerData(relayServerData);
-
+            UIManager.Instance?.CloseNotification();
             currentRelayJoinCode = joinCode;
             Debug.Log($"Relay allocation created. Join Code: {joinCode}");
 
@@ -205,10 +208,12 @@ public class ConnectionCanvas : BaseCanvas
         backButton.onClick.AddListener(OnBackToModePanel);
         startHostButton.onClick.AddListener(OnStartHostClicked);
         joinByIdButton.onClick.AddListener(ShowJoinByIdPanel);
+        editProfileButton.onClick.AddListener(ShowEditProfilePanel);
 
         startGameButton.onClick.AddListener(OnStartGameClicked);
         settingButton.onClick.AddListener(ShowSettingPanel);
         exitButton.onClick.AddListener(OnExitClicked);
+        editProfileInLobbyButton.onClick.AddListener(ShowEditProfilePanel);
 
         confirmJoinButton.onClick.AddListener(OnConfirmJoinById);
         cancelJoinButton.onClick.AddListener(CloseJoinByIdPanel);
@@ -323,7 +328,7 @@ public class ConnectionCanvas : BaseCanvas
     private void OnSinglePlayerClicked()
     {
         isSinglePlayerMode = true;
-        localUserName = DEFAULT_PLAYER_NAME;
+        localUserName = PlayerPrefs.GetString("PlayerName", DEFAULT_PLAYER_NAME);
         currentLobbyId = "SINGLE";
 
         if (networkManager != null)
@@ -377,8 +382,8 @@ public class ConnectionCanvas : BaseCanvas
         else
         {
             string message = !isUnityServicesInitialized ?
-                "Failed to initialize online services. Please check your connection." :
-                "Failed to connect. Please check your internet connection.";
+                "Unable to connect to online services. Please check your internet connection and try again." :
+                "Connection failed. Please check your internet connection.";
 
             UIManager.Instance?.SendNotification(message);
             UIManager.Instance?.OpenNotification();
@@ -393,25 +398,26 @@ public class ConnectionCanvas : BaseCanvas
 
     private void OnStartHostClicked()
     {
-        ShowPlayerInfoPanel("host");
+        // Tạo phòng ngay lập tức với thông tin đã lưu
+        StartHost();
     }
 
     private async void StartHost()
     {
         if (!isUnityServicesInitialized)
         {
-            UIManager.Instance?.SendNotification("Unity services not ready");
+            UIManager.Instance?.SendNotification("Online services are not ready. Please try again.");
             UIManager.Instance?.OpenNotification();
             return;
         }
 
-        UIManager.Instance?.SendNotification("Creating relay allocation...");
+        UIManager.Instance?.SendNotification("Creating lobby...");
         UIManager.Instance?.OpenNotification();
 
         string joinCode = await CreateRelayAllocation(6);
         if (string.IsNullOrEmpty(joinCode))
         {
-            UIManager.Instance?.SendNotification("Failed to create relay allocation");
+            UIManager.Instance?.SendNotification("Failed to create game session. Please try again.");
             UIManager.Instance?.OpenNotification();
             ResetUIState();
             return;
@@ -419,7 +425,7 @@ public class ConnectionCanvas : BaseCanvas
 
         if (!networkManager.StartHost())
         {
-            UIManager.Instance?.SendNotification("Failed to start hosting");
+            UIManager.Instance?.SendNotification("Failed to start hosting. Please try again.");
             UIManager.Instance?.OpenNotification();
             ResetUIState();
             return;
@@ -521,7 +527,7 @@ public class ConnectionCanvas : BaseCanvas
         string lobbyId = lobbyIdInputField.text.Trim();
         if (!Regex.IsMatch(lobbyId, @"^[a-zA-Z0-9 ]+$"))
         {
-            UIManager.Instance?.SendNotification("Special characters are not allowed!");
+            UIManager.Instance?.SendNotification("Please use only letters and numbers. Special characters are not allowed.");
             UIManager.Instance?.OpenNotification();
             return;
         }
@@ -534,19 +540,20 @@ public class ConnectionCanvas : BaseCanvas
 
         CloseJoinByIdPanel();
 
+        // Join trực tiếp với thông tin đã lưu
         var tmp = new RelayLobbyInfo { lobbyId = lobbyId };
-        JoinLobbyDirect(tmp);
+        StartCoroutine(JoinLobbyRoutine(tmp.lobbyId, localUserName));
     }
 
     public void JoinLobbyDirect(RelayLobbyInfo lobby)
     {
         if (lobby == null) return;
 
-        pendingLobbyJoin = lobby;
-        ShowPlayerInfoPanel("join");
+        // Join trực tiếp với thông tin đã lưu
+        StartCoroutine(JoinLobbyRoutine(lobby.lobbyId, localUserName));
     }
 
-    private void ShowPlayerInfoPanel(string purpose = "host")
+    private void ShowEditProfilePanel()
     {
         if (playerInfoPanel != null)
         {
@@ -555,6 +562,10 @@ public class ConnectionCanvas : BaseCanvas
             {
                 playerNameInputField.text = localUserName;
             }
+            if (playerInfoTitle != null)
+            {
+                playerInfoTitle.text = "Edit Profile";
+            }
         }
     }
 
@@ -562,8 +573,6 @@ public class ConnectionCanvas : BaseCanvas
     {
         if (playerInfoPanel != null)
         {
-            if (playerNameInputField != null)
-                playerNameInputField.text = string.Empty;
             playerInfoPanel.SetActive(false);
         }
     }
@@ -573,7 +582,7 @@ public class ConnectionCanvas : BaseCanvas
         string newName = playerNameInputField != null ? playerNameInputField.text.Trim() : "";
         if (!Regex.IsMatch(newName, @"^[a-zA-Z0-9 ]+$"))
         {
-            UIManager.Instance?.SendNotification("Special characters are not allowed!");
+            UIManager.Instance?.SendNotification("Please use only letters and numbers. Special characters are not allowed.");
             UIManager.Instance?.OpenNotification();
             return;
         }
@@ -588,22 +597,44 @@ public class ConnectionCanvas : BaseCanvas
         SavePlayerPrefs(localUserName);
         HidePlayerInfoPanel();
 
-        if (pendingLobbyJoin != null)
+        // Cập nhật thông tin người chơi trong lobby nếu đang trong lobby
+        if (!string.IsNullOrEmpty(currentLobbyId) && networkManager.IsClient)
         {
-            StartCoroutine(JoinLobbyRoutine(pendingLobbyJoin.lobbyId, localUserName));
-            pendingLobbyJoin = null;
+            StartCoroutine(UpdatePlayerInfoInLobby());
         }
-        else
+
+        UIManager.Instance?.SendNotification("Profile updated successfully");
+        UIManager.Instance?.OpenNotification();
+    }
+
+    private IEnumerator UpdatePlayerInfoInLobby()
+    {
+        string playerId = PlayerPrefs.GetString("PlayerId", "");
+        if (string.IsNullOrEmpty(playerId)) yield break;
+
+        var user = new UserInfo
         {
-            StartHost();
+            userId = playerId,
+            userName = localUserName,
+            avatarIndex = selectedAvatarIndex
+        };
+
+        string json = JsonUtility.ToJson(user);
+
+        using (var www = new UnityWebRequest($"{SERVER_URL}/{currentLobbyId}/updateplayer", "POST"))
+        {
+            www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+            www.downloadHandler = new DownloadHandlerBuffer();
+            www.SetRequestHeader("Content-Type", "application/json");
+            www.timeout = 10;
+
+            yield return www.SendWebRequest();
         }
     }
 
     private void OnCancelPlayerInfo()
     {
         HidePlayerInfoPanel();
-        pendingLobbyJoin = null;
-        mainPanel.SetActive(true);
     }
 
     public void ShowSettingPanel()
@@ -701,7 +732,6 @@ public class ConnectionCanvas : BaseCanvas
     {
         currentLobbyId = string.Empty;
         currentRelayJoinCode = string.Empty;
-        localUserName = DEFAULT_PLAYER_NAME;
         isSinglePlayerMode = false;
         currentLobbyInfo = null;
     }
@@ -775,7 +805,7 @@ public class ConnectionCanvas : BaseCanvas
 
             if (checkWww.result != UnityWebRequest.Result.Success)
             {
-                UIManager.Instance?.SendNotification("Lobby not found. Please check the ID.");
+                UIManager.Instance?.SendNotification("Lobby not found. Please check the ID and try again.");
                 UIManager.Instance?.OpenNotification();
                 yield break;
             }
@@ -783,14 +813,14 @@ public class ConnectionCanvas : BaseCanvas
             RelayLobbyInfo lobbyCheck = JsonUtility.FromJson<RelayLobbyInfo>(checkWww.downloadHandler.text);
             if (lobbyCheck == null)
             {
-                UIManager.Instance?.SendNotification("Lobby not found. Please check the ID.");
+                UIManager.Instance?.SendNotification("Lobby not found. Please check the ID and try again.");
                 UIManager.Instance?.OpenNotification();
                 yield break;
             }
 
             if (lobbyCheck.isGameStarted)
             {
-                UIManager.Instance?.SendNotification("This game has already started. You cannot join.");
+                UIManager.Instance?.SendNotification("This game has already started. You cannot join a game in progress.");
                 UIManager.Instance?.OpenNotification();
                 yield break;
             }
@@ -807,7 +837,7 @@ public class ConnectionCanvas : BaseCanvas
         {
             userId = playerId,
             userName = playerName,
-            avatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0)
+            avatarIndex = selectedAvatarIndex
         };
         string json = JsonUtility.ToJson(user);
 
@@ -835,7 +865,7 @@ public class ConnectionCanvas : BaseCanvas
             }
             else
             {
-                UIManager.Instance?.SendNotification("Failed to join lobby. Please try again.");
+                UIManager.Instance?.SendNotification("Failed to join lobby. The lobby may be full or no longer available.");
                 UIManager.Instance?.OpenNotification();
             }
         }
@@ -843,7 +873,7 @@ public class ConnectionCanvas : BaseCanvas
 
     private IEnumerator JoinRelayLobbyCoroutine(string joinCode)
     {
-        UIManager.Instance?.SendNotification("Connecting to relay...");
+        UIManager.Instance?.SendNotification("Connecting to game...");
         UIManager.Instance?.OpenNotification();
 
         bool joinSuccess = false;
@@ -854,22 +884,20 @@ public class ConnectionCanvas : BaseCanvas
             bool clientStarted = networkManager.StartClient();
             if (clientStarted)
             {
-                // Thành công → tắt notification
                 UIManager.Instance?.CloseNotification();
             }
             else
             {
-                UIManager.Instance?.SendNotification("Failed to connect to game");
+                UIManager.Instance?.SendNotification("Failed to connect to the game. Please try again.");
                 UIManager.Instance?.OpenNotification();
             }
         }
         else
         {
-            UIManager.Instance?.SendNotification("Failed to connect to relay");
+            UIManager.Instance?.SendNotification("Connection failed. Please check your internet connection.");
             UIManager.Instance?.OpenNotification();
         }
     }
-
 
     private IEnumerator JoinRelayCoroutineWrapper(string joinCode, System.Action<bool> callback)
     {
@@ -1111,7 +1139,7 @@ public class ConnectionCanvas : BaseCanvas
 
         if (!Regex.IsMatch(newName, @"^[a-zA-Z0-9 ]+$"))
         {
-            UIManager.Instance?.SendNotification("Special characters are not allowed!");
+            UIManager.Instance?.SendNotification("Please use only letters and numbers. Special characters are not allowed.");
             UIManager.Instance?.OpenNotification();
             return;
         }
@@ -1153,13 +1181,13 @@ public class ConnectionCanvas : BaseCanvas
 
             if (www.result == UnityWebRequest.Result.Success)
             {
-                UIManager.Instance?.SendNotification("Room name updated");
+                UIManager.Instance?.SendNotification("Room name updated successfully");
                 UIManager.Instance?.OpenNotification();
                 StartCoroutine(RefreshCurrentLobbyInfo());
             }
             else
             {
-                UIManager.Instance?.SendNotification("Failed to update room name");
+                UIManager.Instance?.SendNotification("Failed to update room name. Please try again.");
                 UIManager.Instance?.OpenNotification();
             }
         }
