@@ -44,6 +44,9 @@ public abstract class CharacterBase : NetworkBehaviour
     [Header("Character Owner")]
     [SerializeField] public OwnerType ownerType = OwnerType.Player;
 
+    [Header("Attack Settings")] [SerializeField]
+    private float detectAttackDelay = 0.5f;
+        
     protected CharacterState currentState = CharacterState.Idle;
     protected Transform attackTarget;
     protected Transform detectedTarget;
@@ -54,6 +57,7 @@ public abstract class CharacterBase : NetworkBehaviour
     private Vector3 lastPosition;
     private Coroutine attackRoutine;
     private bool hasSpawnedBefore = false;
+    private bool queuedMove = false;
 
     public float currentAttackRange => attackRange;
     public WeaponBase currentWeaponPublic => currentWeapon;
@@ -108,6 +112,15 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             return;
         }
+        
+        Vector3 input = GetMovementInput();
+
+        // Nếu đang Attack và có input di chuyển -> queue
+        if (currentState == CharacterState.Attack && isAttacking && input.magnitude > 0.01f)
+        {
+            queuedMove = true;
+        }
+        
         if (agent == null || !agent.isActiveAndEnabled)
         {
             return;
@@ -255,8 +268,27 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-    protected virtual void OnNewTargetFound(Transform newTarget) { }
+    protected virtual void OnNewTargetFound(Transform newTarget)
+    {
+        if (newTarget == null) return;
+        if (isDead) return;
+        
+        StartCoroutine(DelayedAttackCheck(newTarget, detectAttackDelay));
+    }
+    private IEnumerator DelayedAttackCheck(Transform target, float delay)
+    {
+        yield return new WaitForSeconds(delay);
 
+        if (target != null && !isDead && currentState != CharacterState.Attack)
+        {
+            float distance = Vector3.Distance(transform.position, target.position);
+            if (distance <= attackRange && detectedTarget == target)
+            {
+                attackTarget = target;
+                ChangeState(CharacterState.Attack);
+            }
+        }
+    }
     protected virtual void OnTargetSwitched(Transform oldTarget, Transform newTarget)
     {
         if (attackTarget == oldTarget)
@@ -361,10 +393,14 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (attackTarget == null || Vector3.Distance(transform.position, attackTarget.position) > attackRange)
         {
-            EndAttack();
-            ChangeState(CharacterState.Move);
+            if (!isAttacking)
+            {
+                EndAttack();
+                ChangeState(CharacterState.Idle);
+            }
             return;
         }
+
 
         FaceTarget(attackTarget.position);
 
@@ -564,7 +600,12 @@ public abstract class CharacterBase : NetworkBehaviour
         }
 
         nextAttackTime = Time.time;
-
+        
+        if (queuedMove)
+        {
+            queuedMove = false;
+            ChangeState(CharacterState.Move);
+        }
     }
     #endregion
 
@@ -826,13 +867,11 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             if (newVal.TryGet(out NetworkObject obj))
             {
-                Debug.Log("NetCurrentWeapon changed, assigning weapon.");
                 currentWeapon = obj.GetComponent<WeaponBase>();
                 currentWeapon.SetOwner(this);
             }
             else
             {
-                Debug.Log("NetCurrentWeapon is now null.");
                 currentWeapon = null;
             }
         };

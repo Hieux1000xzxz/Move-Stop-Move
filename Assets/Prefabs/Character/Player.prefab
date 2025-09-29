@@ -567,7 +567,7 @@ MonoBehaviour:
   networkObject: {fileID: 4822096757030938270}
   weaponSpawnPoint: {fileID: 7101475273743860029}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
-  attackDelay: 0.1
+  attackDelay: 0.3
   weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
   sizePerScore: 0.05
@@ -576,6 +576,7 @@ MonoBehaviour:
   maxScale: 2.5
   defaultWeapon: 5
   ownerType: 0
+  detectAttackDelay: 0
   Score:
     m_InternalValue: 0
   NetIsMoving:
@@ -615,6 +616,8 @@ MonoBehaviour:
         byte0027: 0
         byte0028: 0
         byte0029: 0
+  NetState:
+    m_InternalValue: 0
   joystick: {fileID: 6433299856123335784, guid: 0bd3649e64dbcd840962fac485ab370f, type: 3}
   isMovingInput: 0
 --- !u!114 &1186641312026304189
