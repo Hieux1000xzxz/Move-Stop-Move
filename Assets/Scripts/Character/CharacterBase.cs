@@ -122,7 +122,7 @@ public abstract class CharacterBase : NetworkBehaviour
         
         if (currentState == CharacterState.Attack && isAttacking && input.magnitude > 0.01f)
         {
-            EndAttack();
+            EndAttack(true);
         }
         
         if (agent == null || !agent.isActiveAndEnabled)
@@ -279,7 +279,7 @@ public abstract class CharacterBase : NetworkBehaviour
             if (currentState == CharacterState.Attack)
             {
                 StopAttackAnimationClientRpc();
-                EndAttack();
+                EndAttack(true);
                 ChangeState(CharacterState.Idle);
             }
         }
@@ -452,7 +452,7 @@ public abstract class CharacterBase : NetworkBehaviour
             if (distanceToAttackTarget > attackRange || !attackTarget.gameObject.activeInHierarchy)
             {
                 attackTarget = null;
-                EndAttack();
+                EndAttack(true);
                 ChangeState(CharacterState.Idle);
             }
         }
@@ -552,14 +552,14 @@ public abstract class CharacterBase : NetworkBehaviour
         // Nếu trong lúc chờ mà nhân vật đã move thì hủy attack
         if (currentState != CharacterState.Attack || isDead || IsMovingNow())
         {
-            EndAttack(); // hủy và về Idle/Move
+            EndAttack(true); // hủy và về Idle/Move
             yield break;
         }
 
         // Đảm bảo weapon có
         if (currentWeapon == null || currentWeapon.IsFlying)
         {
-            EndAttack();
+            EndAttack(true);
             yield break;
         }
 
@@ -598,7 +598,7 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-    protected virtual void EndAttack()
+    protected virtual void EndAttack(bool cancelByMove = false)
     {
         if (attackRoutine != null)
         {
@@ -613,11 +613,11 @@ public abstract class CharacterBase : NetworkBehaviour
         if (animator != null)
         {
             animator.SetBool("IsAttacking", false);
-
-          //  if (IsMovingNow())
-            //    animator.CrossFade("Run", 0.05f);
-            //else
-              //  animator.CrossFade("Idle", 0.05f); 
+            
+            if (cancelByMove)
+                animator.CrossFade("Run", 0.1f); 
+            else
+                animator.CrossFade("Idle", 0.1f);
         }
 
         if (currentWeapon != null && !currentWeapon.IsFlying)

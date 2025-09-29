@@ -267,9 +267,9 @@ public class AIController : CharacterBase
         return false;
     }
 
-    protected override void EndAttack()
+    protected override void EndAttack(bool cancelByMove = false)
     {
-        base.EndAttack();
+        base.EndAttack(cancelByMove);
         lastInterestPoint = transform.position;
         if (Random.value < 0.4f) detectedTarget = null;
         agent.isStopped = false;

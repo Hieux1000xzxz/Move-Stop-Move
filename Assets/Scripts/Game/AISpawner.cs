@@ -177,11 +177,21 @@ public class AISpawner : NetworkBehaviour
         if (agent != null)
         {
             agent.enabled = false;
-            agent.Warp(position);
+            bool warped = agent.Warp(position); // Trả về true nếu thành công
             agent.enabled = true;
-            agent.isStopped = false;
+
+            if (warped && agent.isOnNavMesh)
+            {
+                agent.isStopped = false;
+            }
+            else
+            {
+                Debug.LogWarning($"[AISpawner] Failed to warp {enemy.name} onto NavMesh at {position}");
+                enemy.SetActive(false);
+            }
         }
     }
+
 
     private void SyncNetworkObject(GameObject enemy, Transform spawnPoint)
     {
