@@ -28,7 +28,7 @@ public class Player : CharacterBase
 
         Vector3 input = GetMovementInput();
         isMovingInput = input.magnitude > 0.01f;
-
+        
         NetIsMoving.Value = isMovingInput;
 
         if (isMovingInput && currentState == CharacterState.Attack)
@@ -37,6 +37,7 @@ public class Player : CharacterBase
             ChangeState(CharacterState.Move);
         }
     }
+
 
     protected override void UpdateAnimator()
     {

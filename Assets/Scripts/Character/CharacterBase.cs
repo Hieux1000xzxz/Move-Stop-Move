@@ -86,6 +86,11 @@ public abstract class CharacterBase : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
+    public NetworkVariable<bool> NetIsAttacking = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
 
     #region Unity Lifecycle
 
@@ -114,11 +119,10 @@ public abstract class CharacterBase : NetworkBehaviour
         }
         
         Vector3 input = GetMovementInput();
-
-        // Nếu đang Attack và có input di chuyển -> queue
+        
         if (currentState == CharacterState.Attack && isAttacking && input.magnitude > 0.01f)
         {
-            queuedMove = true;
+            EndAttack();
         }
         
         if (agent == null || !agent.isActiveAndEnabled)
@@ -215,9 +219,22 @@ public abstract class CharacterBase : NetworkBehaviour
             speed = (Time.deltaTime > 0f) ? (delta.magnitude / Time.deltaTime) : 0f;
         }
 
-        bool isMovingNow = speed > 0.01f;
+        bool isMovingNow;
+
+        if (IsOwner) 
+        {
+            // Local player
+            isMovingNow = this is Player player ? player.isMovingInput : speed > 0.01f;
+        }
+        else
+        {
+            // Remote/AI → sync server
+            isMovingNow = NetIsMoving.Value;
+        }
+
         animator.SetBool("IsMoving", isMovingNow);
 
+        bool attackingNow = IsOwner ? isAttacking : NetIsAttacking.Value;
         animator.SetBool("IsAttacking", isAttacking);
 
         lastPosition = transform.position;
@@ -347,7 +364,6 @@ public abstract class CharacterBase : NetworkBehaviour
             {
                 animator.SetBool("IsAttacking", false);
             }
-            EndAttack();
         }
         currentState = newState;
         
@@ -494,6 +510,7 @@ public abstract class CharacterBase : NetworkBehaviour
         }
 
         isAttacking = true;
+        if (IsServer) NetIsAttacking.Value = true;
         hasWeapon = false;
         nextAttackTime = Time.time + attackDelay;
 
@@ -516,6 +533,7 @@ public abstract class CharacterBase : NetworkBehaviour
     private void DoAttack()
     {
         isAttacking = true;
+        if (IsServer) NetIsAttacking.Value = true;
         hasWeapon = false;
         nextAttackTime = Time.time + attackDelay;
 
@@ -530,24 +548,32 @@ public abstract class CharacterBase : NetworkBehaviour
     private IEnumerator AttackRoutine()
     {
         yield return new WaitForSeconds(attackDelay);
-        
+
+        // Nếu trong lúc chờ mà nhân vật đã move thì hủy attack
         if (currentState != CharacterState.Attack || isDead || IsMovingNow())
         {
+            EndAttack(); // hủy và về Idle/Move
             yield break;
         }
-        
+
+        // Đảm bảo weapon có
+        if (currentWeapon == null || currentWeapon.IsFlying)
+        {
+            EndAttack();
+            yield break;
+        }
+
+        // Nếu vẫn còn đứng yên thì mới bắn
         if (IsOwner)
         {
             RequestLaunchServerRpc();
         }
+
         yield return new WaitForSeconds(attackDuration);
 
-        isAttacking = false;
-        if (animator != null)
-            animator.SetBool("IsAttacking", false);
-
-        hasWeapon = true;
+        EndAttack();
     }
+
 
     public virtual void OnWeaponReturned()
     {
@@ -582,13 +608,18 @@ public abstract class CharacterBase : NetworkBehaviour
 
         isAttacking = false;
         hasWeapon = true;
+        if (IsServer) NetIsAttacking.Value = false;
 
         if (animator != null)
         {
             animator.SetBool("IsAttacking", false);
-            animator.CrossFade("Idle", 0.05f); 
+
+            if (IsMovingNow())
+                animator.CrossFade("Run", 0.05f);
+            else
+                animator.CrossFade("Idle", 0.05f); 
         }
-        
+
         if (currentWeapon != null && !currentWeapon.IsFlying)
         {
             currentWeapon.ResetWeapon();
@@ -601,12 +632,12 @@ public abstract class CharacterBase : NetworkBehaviour
 
         nextAttackTime = Time.time;
         
-        if (queuedMove)
-        {
-            queuedMove = false;
+        if (IsMovingNow()) 
             ChangeState(CharacterState.Move);
-        }
+        else
+            ChangeState(CharacterState.Idle);
     }
+
     #endregion
 
     #region  Score & Stats
@@ -825,9 +856,7 @@ public abstract class CharacterBase : NetworkBehaviour
             StartCoroutine(DelayedDisable(1.5f));
         }
     }
-
-   
-
+    
     private IEnumerator DelayedDisable(float delay)
     {
         yield return new WaitForSeconds(delay);
@@ -843,7 +872,11 @@ public abstract class CharacterBase : NetworkBehaviour
         if (animator != null)
         {
             animator.SetBool("IsAttacking", false);
+            animator.CrossFade("Idle", 0.05f);
         }
+        
+        isAttacking = false;
+        hasWeapon = true;
     }
 
     public override void OnNetworkSpawn()
@@ -984,18 +1017,6 @@ public abstract class CharacterBase : NetworkBehaviour
         PlayerName.Value = new FixedString32Bytes(newName);
     }
     //Anim Attack
-    [ServerRpc]
-    public void RequestAttackServerRpc()
-    {
-        if (isDead || currentState != CharacterState.Idle) return;
-
-        if (!isAttacking && hasWeapon)
-        {
-            PerformAttack();
-            PlayAttackAnimationClientRpc();
-            StartCoroutine(StopAttackAnimDelayed(attackDuration));
-        }
-    }
 
     private IEnumerator StopAttackAnimDelayed(float delay)
     {
@@ -1035,7 +1056,11 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-
+    [ServerRpc]
+    private void RequestStopAttackAnimationServerRpc()
+    {
+        StopAttackAnimationClientRpc();
+    }
     [ClientRpc]
     private void LaunchWeaponClientRPC(Vector3 dir)
     {
