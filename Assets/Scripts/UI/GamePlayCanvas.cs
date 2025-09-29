@@ -2,13 +2,15 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 public class GamePlayCanvas : BaseCanvas
 {
-    [SerializeField] GameObject gameOverUI;
-    [SerializeField] GameObject gameWinUI;
-    [SerializeField] GameObject menuUI;
-    [SerializeField] GameObject viewUI;
+    [SerializeField] private GameObject gameOverUI;
+    [SerializeField] private GameObject gameWinUI;
+    [SerializeField] private GameObject menuUI;
+    [SerializeField] private GameObject viewUI;
+    [SerializeField] private GameObject winnerUI;
     [SerializeField] private Button menuButton;
     [SerializeField] private Button backToMenuButton;
     [SerializeField] private Button backToMenuWinButton;
@@ -17,6 +19,8 @@ public class GamePlayCanvas : BaseCanvas
     [SerializeField] private Button continueViewGameButton;
     [SerializeField] private Button previousButton;
     [SerializeField] private Button nextButton;
+    [SerializeField] private VideoPlayer videoPlayer;
+    [SerializeField] private RawImage rawImage;
     private ConnectionCanvas connectionCanvas;
     private string lobbyId;
     private string playerName;
@@ -84,8 +88,8 @@ public class GamePlayCanvas : BaseCanvas
     {
         Debug.Log("Exit Match");
 
-        if (NetworkManager.Singleton == null) 
-            
+        if (NetworkManager.Singleton == null)
+
             return;
 
         if (NetworkManager.Singleton.IsHost)
@@ -139,5 +143,25 @@ public class GamePlayCanvas : BaseCanvas
         gameOverUI.SetActive(false);
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
+    }
+
+    public void OnWinner()
+    {
+        winnerUI.SetActive(true);
+        gameWinUI.SetActive(false);
+        gameOverUI.SetActive(false);
+        menuButton.gameObject.SetActive(false);
+        winExitTimer = winExitDelay;
+        PlayWinVideo();
+    }
+
+    private void PlayWinVideo()
+    {
+        videoPlayer.Prepare();
+        videoPlayer.prepareCompleted += (vp) =>
+        {
+            rawImage.texture = vp.texture;
+            vp.Play();
+        };
     }
 }

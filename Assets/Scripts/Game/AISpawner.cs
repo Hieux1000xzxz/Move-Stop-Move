@@ -133,11 +133,11 @@ public class AISpawner : NetworkBehaviour
         GameObject enemy = ObjectPool.Instance.SpawnRandomEnemy();
         if (enemy == null) return;
 
-        CharacterBase character = enemy.GetComponent<CharacterBase>();
+        var character = enemy.GetComponent<CharacterBase>();
         if (character != null)
             character.ResetState();
 
-        NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
+        var agent = enemy.GetComponent<NavMeshAgent>();
 
         if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
         {
@@ -147,29 +147,25 @@ public class AISpawner : NetworkBehaviour
             if (agent != null)
             {
                 agent.enabled = false;
-                agent.enabled = true;
-
                 agent.Warp(hit.position);
+                agent.enabled = true;
                 agent.isStopped = false;
             }
 
-            NetworkObject netObj = enemy.GetComponent<NetworkObject>();
-            if (netObj != null && !netObj.IsSpawned)
-                netObj.Spawn(true);
+            var netObj = enemy.GetComponent<NetworkObject>();
+            if (netObj != null)
+            {
+                if (!netObj.IsSpawned)
+                    netObj.Spawn(true);
 
-            bool registered = GameManager.Instance.TryRegisterAI(netObj);
-            if (registered)
-            {
-                spawnPointAIs[spawnPoint] = enemy;
-            }
-            else
-            {
-                if (netObj != null && netObj.IsSpawned)
+                if (GameManager.Instance.TryRegisterAI(netObj))
+                {
+                    spawnPointAIs[spawnPoint] = enemy;
+                }
+                else
+                {
                     netObj.Despawn();
-                enemy.SetActive(false);
-
-                if (spawnPointAIs.ContainsKey(spawnPoint) && spawnPointAIs[spawnPoint] == enemy)
-                    spawnPointAIs.Remove(spawnPoint);
+                }
             }
         }
         else
@@ -177,6 +173,7 @@ public class AISpawner : NetworkBehaviour
             enemy.SetActive(false);
         }
     }
+
 
     public int GetActiveAICount()
     {

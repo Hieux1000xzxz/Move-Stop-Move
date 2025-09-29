@@ -398,7 +398,7 @@ public class ConnectionCanvas : BaseCanvas
 
     private void OnStartHostClicked()
     {
-        // Tạo phòng ngay lập tức với thông tin đã lưu
+        ResetNetworkManager(); 
         StartHost();
     }
 
@@ -540,7 +540,6 @@ public class ConnectionCanvas : BaseCanvas
 
         CloseJoinByIdPanel();
 
-        // Join trực tiếp với thông tin đã lưu
         var tmp = new RelayLobbyInfo { lobbyId = lobbyId };
         StartCoroutine(JoinLobbyRoutine(tmp.lobbyId, localUserName));
     }
@@ -548,8 +547,7 @@ public class ConnectionCanvas : BaseCanvas
     public void JoinLobbyDirect(RelayLobbyInfo lobby)
     {
         if (lobby == null) return;
-
-        // Join trực tiếp với thông tin đã lưu
+        ResetNetworkManager();
         StartCoroutine(JoinLobbyRoutine(lobby.lobbyId, localUserName));
     }
 
@@ -683,6 +681,7 @@ public class ConnectionCanvas : BaseCanvas
             }
             GameManager.Instance.StopPowerupSpawning();
             ResetState();
+            ResetNetworkManager();
             modePanel.SetActive(true);
             return;
         }
@@ -698,7 +697,7 @@ public class ConnectionCanvas : BaseCanvas
         {
             networkManager.Shutdown();
         }
-
+        ResetNetworkManager();
         if (wasHost)
         {
             if (heartbeatRoutine != null) StopCoroutine(heartbeatRoutine);
@@ -1311,6 +1310,37 @@ public class ConnectionCanvas : BaseCanvas
         {
             Debug.LogWarning($"Leave lobby failed: {e.Message}");
         }
+    }
+
+    private void ResetNetworkManager()
+    {
+        if (networkManager == null) return;
+
+        if (networkManager.IsListening)
+        {
+            networkManager.Shutdown();
+        }
+
+        if (transport != null)
+        {
+            transport.SetConnectionData("127.0.0.1", 7777);
+        }
+
+        StartCoroutine(ResetNetworkManagerCoroutine());
+    }
+
+    private IEnumerator ResetNetworkManagerCoroutine()
+    {
+        yield return null;
+
+        if (networkManager != null)
+        {
+            networkManager.gameObject.SetActive(false);
+            yield return null;
+            networkManager.gameObject.SetActive(true);
+        }
+
+        Debug.Log("NetworkManager reset completed");
     }
 }
 

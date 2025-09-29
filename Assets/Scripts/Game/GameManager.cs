@@ -123,6 +123,10 @@ public class GameManager : NetworkBehaviour
 
         return true;
     }
+    public void CaculateTotalQuota()
+    {
+        totalAIQuota = totalAIQuota - ActivePlayerCount.Value + 1;
+    }
 
     public void UnregisterAI(NetworkObject aiNetworkObject)
     {
@@ -174,10 +178,22 @@ public class GameManager : NetworkBehaviour
             if (lastNetObj != null)
             {
                 FocusCameraOnTargetClientRpc(lastNetObj);
+
                 GameWinClientRpc();
+
+                if (lastNetObj.TryGetComponent(out NetworkObject netObj))
+                {
+                    var winnerId = netObj.OwnerClientId;
+                    var clientRpcParams = new ClientRpcParams
+                    {
+                        Send = new ClientRpcSendParams { TargetClientIds = new[] { winnerId } }
+                    };
+                    WinnerClientRpc(clientRpcParams);
+                }
             }
         }
     }
+
 
     [ClientRpc]
     private void GameWinClientRpc(ClientRpcParams clientRpcParams = default)
@@ -188,9 +204,9 @@ public class GameManager : NetworkBehaviour
             UIManager.Instance.HideCountText();
             zoomController.baseFOV = 35f;
             zoomController.baseFollowY = 5f;
-            //DisableGamePlaySystem();
         }
     }
+
 
     [ClientRpc]
     private void FocusCameraOnTargetClientRpc(NetworkObjectReference targetRef)
@@ -207,6 +223,7 @@ public class GameManager : NetworkBehaviour
 
     public void ResetGame()
     {
+        CaculateTotalQuota();
         currentAIQuota = totalAIQuota;
         totalSpawned = 0;
         totalKilled = 0;
@@ -524,6 +541,18 @@ public class GameManager : NetworkBehaviour
                     zoomController.SetUp(killScore);
                 }
             }
+        }
+    }
+
+    [ClientRpc]
+    private void WinnerClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        if (gamePlayCanvas != null)
+        {
+            gamePlayCanvas.OnWinner();
+            UIManager.Instance.HideCountText();
+            zoomController.baseFOV = 35f;
+            zoomController.baseFollowY = 5f;
         }
     }
 
