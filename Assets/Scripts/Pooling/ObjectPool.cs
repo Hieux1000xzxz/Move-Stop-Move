@@ -71,12 +71,11 @@ public class ObjectPool : Singleton<ObjectPool>
     public GameObject SpawnRandomEnemy(Vector3 pos = default, Quaternion rot = default)
     {
         GameObject enemy = null;
-
-        // Lấy enemy chưa active
+        
         List<GameObject> availableEnemies = new List<GameObject>();
         foreach (var obj in pooledGobjects)
         {
-            if (obj == null) continue; // tránh lỗi MissingReference
+            if (obj == null) continue; 
 
             if (!obj.activeSelf)
             {
@@ -98,7 +97,6 @@ public class ObjectPool : Singleton<ObjectPool>
         }
         else
         {
-            // Nếu không còn thì expand
             foreach (var pre in preAllocations)
             {
                 if (pre.type == ObjectType.Enemy && pre.expandable)
@@ -118,7 +116,7 @@ public class ObjectPool : Singleton<ObjectPool>
         // setup transform
         enemy.transform.position = pos;
         enemy.transform.rotation = rot;
-        enemy.SetActive(true);
+        //enemy.SetActive(true);
 
         return enemy;
     }

@@ -92,6 +92,11 @@ public class WeaponBase : NetworkBehaviour
         isFollowing = true;
         rb.isKinematic = true;
 
+        if (rb != null && rb.gameObject.TryGetComponent(out Collider col))
+        {
+            col.enabled = true; 
+        }
+        
         if (spawnPoint == null && owner != null)
         {
             spawnPoint = owner.weaponSpawnPoint;
@@ -127,10 +132,16 @@ public class WeaponBase : NetworkBehaviour
     protected virtual void OnTriggerEnter(Collider other)
     {
         if (!isFlying || other.gameObject == owner.gameObject) return;
-
-        if(other.CompareTag("Wall"))
+        
+        if (rb != null && rb.gameObject.TryGetComponent(out Collider col))
         {
-            if(NetworkManager.Singleton.IsServer)
+            col.enabled = false;
+            DisableColliderClientRpc();
+        }
+
+        if (other.CompareTag("Wall"))
+        {
+            if (NetworkManager.Singleton.IsServer)
             {
                 ReturnToHandServerRpc();
             }
@@ -138,13 +149,14 @@ public class WeaponBase : NetworkBehaviour
             NetworkObject wallNetObj = other.GetComponent<NetworkObject>();
             if (wallNetObj != null && wallNetObj.IsSpawned)
             {
-                wallNetObj.Despawn(true); 
+                wallNetObj.Despawn(true);
             }
             else
             {
-                Destroy(other.gameObject); 
+                Destroy(other.gameObject);
             }
         }
+
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
         {
@@ -155,10 +167,8 @@ public class WeaponBase : NetworkBehaviour
                 ReturnToHandServerRpc();
             }
         }
-        
     }
-
-
+    
     public virtual void ResetWeapon()
     {
         ReturnToHand();
@@ -197,6 +207,11 @@ public class WeaponBase : NetworkBehaviour
         CharacterBase victim = victimObj.GetComponent<CharacterBase>();
         if (victim == null || victim == owner) return;
 
+        if (victim.characterCollider != null)
+        {
+            victim.characterCollider.enabled = false;
+        }
+        
         Health h = victim.GetComponent<Health>();
         if (h != null)
         {
@@ -210,10 +225,7 @@ public class WeaponBase : NetworkBehaviour
             victim.characterCollider.enabled = false;
         }
     }
-    public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn();
-    }
+    
     [ServerRpc(RequireOwnership = false)]
     private void ReturnToHandServerRpc()
     {
@@ -227,6 +239,15 @@ public class WeaponBase : NetworkBehaviour
         if (!NetworkManager.Singleton.IsServer)
         {
             ReturnToHand();
+        }
+    }
+    
+    [ClientRpc]
+    private void DisableColliderClientRpc()
+    {
+        if (rb != null && rb.gameObject.TryGetComponent(out Collider col))
+        {
+            col.enabled = false;
         }
     }
 

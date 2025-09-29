@@ -124,49 +124,18 @@ public class AISpawner : NetworkBehaviour
 
     private void SpawnAtPoint(Transform spawnPoint)
     {
-        if (!GameManager.Instance.CanSpawnAI())
-            return;
-
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
-            return;
+        if (!GameManager.Instance.CanSpawnAI()) return;
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening) return;
 
         GameObject enemy = ObjectPool.Instance.SpawnRandomEnemy();
         if (enemy == null) return;
 
-        var character = enemy.GetComponent<CharacterBase>();
-        if (character != null)
-            character.ResetState();
+        PrepareEnemy(enemy);
 
-        var agent = enemy.GetComponent<NavMeshAgent>();
-
-        if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+        if (TryPlaceOnNavMesh(enemy, spawnPoint, out Vector3 position, out Quaternion rotation))
         {
-            enemy.transform.position = hit.position;
-            enemy.transform.rotation = spawnPoint.rotation;
-
-            if (agent != null)
-            {
-                agent.enabled = false;
-                agent.Warp(hit.position);
-                agent.enabled = true;
-                agent.isStopped = false;
-            }
-
-            var netObj = enemy.GetComponent<NetworkObject>();
-            if (netObj != null)
-            {
-                if (!netObj.IsSpawned)
-                    netObj.Spawn(true);
-
-                if (GameManager.Instance.TryRegisterAI(netObj))
-                {
-                    spawnPointAIs[spawnPoint] = enemy;
-                }
-                else
-                {
-                    netObj.Despawn();
-                }
-            }
+            PositionEnemy(enemy, position, rotation);
+            SyncNetworkObject(enemy, spawnPoint);
         }
         else
         {
@@ -174,7 +143,81 @@ public class AISpawner : NetworkBehaviour
         }
     }
 
+    private void PrepareEnemy(GameObject enemy)
+    {
+        var character = enemy.GetComponent<CharacterBase>();
+        if (character != null)
+        {
+            character.ResetState();
+            character.ChangeWeapon(character.weaponType);
+        }
+    }
 
+    private bool TryPlaceOnNavMesh(GameObject enemy, Transform spawnPoint, out Vector3 position, out Quaternion rotation)
+    {
+        position = spawnPoint.position;
+        rotation = spawnPoint.rotation;
+
+        if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+        {
+            position = hit.position;
+            rotation = spawnPoint.rotation;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void PositionEnemy(GameObject enemy, Vector3 position, Quaternion rotation)
+    {
+        enemy.transform.position = position;
+        enemy.transform.rotation = rotation;
+
+        var agent = enemy.GetComponent<NavMeshAgent>();
+        if (agent != null)
+        {
+            agent.enabled = false;
+            bool warped = agent.Warp(position); // Trả về true nếu thành công
+            agent.enabled = true;
+
+            if (warped && agent.isOnNavMesh)
+            {
+                agent.isStopped = false;
+            }
+            else
+            {
+                Debug.LogWarning($"[AISpawner] Failed to warp {enemy.name} onto NavMesh at {position}");
+                enemy.SetActive(false);
+            }
+        }
+    }
+
+
+    private void SyncNetworkObject(GameObject enemy, Transform spawnPoint)
+    {
+        var netObj = enemy.GetComponent<NetworkObject>();
+        if (netObj == null) return;
+
+        if (netObj.IsSpawned)
+        {
+            netObj.Despawn(false);
+        }
+
+        enemy.SetActive(true);
+        
+        netObj.Spawn(true);
+
+        if (GameManager.Instance.TryRegisterAI(netObj))
+        {
+            spawnPointAIs[spawnPoint] = enemy;
+        }
+        else
+        {
+            netObj.Despawn(false);
+            enemy.SetActive(false);
+        }
+    }
+    
     public int GetActiveAICount()
     {
         int count = 0;
