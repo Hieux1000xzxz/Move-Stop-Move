@@ -614,10 +614,10 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             animator.SetBool("IsAttacking", false);
 
-            if (IsMovingNow())
-                animator.CrossFade("Run", 0.05f);
-            else
-                animator.CrossFade("Idle", 0.05f); 
+          //  if (IsMovingNow())
+            //    animator.CrossFade("Run", 0.05f);
+            //else
+              //  animator.CrossFade("Idle", 0.05f); 
         }
 
         if (currentWeapon != null && !currentWeapon.IsFlying)
