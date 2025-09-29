@@ -688,7 +688,7 @@ public abstract class CharacterBase : NetworkBehaviour
         this.gameObject.layer = LayerMask.NameToLayer("Player");
         characterCollider.enabled = true;
 
-        if (IsServer && hasSpawnedBefore)
+        if (IsServer)
         {
             ChangeWeapon(weaponType);
         }
@@ -968,7 +968,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         yield return null;
 
-        float timeout = 2f;
+        float timeout = 5f;
         float t = 0f;
 
         while (t < timeout && currentWeapon == null)
@@ -987,6 +987,11 @@ public abstract class CharacterBase : NetworkBehaviour
 
             t += Time.unscaledDeltaTime;
             yield return null;
+        }
+        
+        if (IsServer && currentWeapon == null)
+        {
+            ChangeWeapon(weaponType);
         }
     }
     public override void OnNetworkDespawn()
