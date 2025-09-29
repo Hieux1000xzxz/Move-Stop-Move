@@ -641,11 +641,22 @@ public abstract class CharacterBase : NetworkBehaviour
     #endregion
 
     #region  Score & Stats
+    private void OnScoreChanged(int oldValue, int newValue)
+    {
+        Debug.Log($"[CLIENT] {gameObject.name} Score synced {oldValue} -> {newValue}");
+        if (scoreDisplay != null)
+        {
+            scoreDisplay.SetScore(newValue);
+            UpdateCharacterStats();
+        }
+    }
 
     public void AddScore(int value)
     {
         if (!IsServer) return;
         Score.Value += value;
+        
+        Debug.Log($"[SERVER] {gameObject.name} Score = {Score.Value}");
     }
 
     private void UpdateCharacterStats()
@@ -887,6 +898,7 @@ public abstract class CharacterBase : NetworkBehaviour
         SetupInitialWeapon();
         SetupPlayerInfo();
         SetupScoreDisplay();
+        
         SetupScoreSync();
         
         NetState.OnValueChanged += (oldVal, newVal) =>
@@ -957,11 +969,13 @@ public abstract class CharacterBase : NetworkBehaviour
 
     private void SetupScoreSync()
     {
-        Score.OnValueChanged += (oldValue, newValue) =>
+        Score.OnValueChanged += OnScoreChanged;
+        
+        if (scoreDisplay != null)
         {
-            scoreDisplay.SetScore(newValue);
+            scoreDisplay.SetScore(Score.Value);
             UpdateCharacterStats();
-        };
+        }
     }
 
     private IEnumerator ResolveCurrentWeaponInitial()
@@ -997,7 +1011,7 @@ public abstract class CharacterBase : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
-    
+        Score.OnValueChanged -= OnScoreChanged;
         if (IsServer && currentWeapon != null)
         {
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
@@ -1012,6 +1026,7 @@ public abstract class CharacterBase : NetworkBehaviour
         }
         Score.OnValueChanged -= (oldValue, newValue) =>
         {
+            Debug.Log($"[CLIENT] {gameObject.name} Score synced {oldValue} -> {newValue}");
             scoreDisplay.SetScore(newValue);
             UpdateCharacterStats();
         };
