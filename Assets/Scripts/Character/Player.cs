@@ -36,11 +36,6 @@ public class Player : CharacterBase
             EndAttack();
             ChangeState(CharacterState.Move);
         }
-
-        if (currentState == CharacterState.Attack && !isAttacking) 
-        {
-            RequestAttackServerRpc();
-        }
     }
 
     protected override void UpdateAnimator()

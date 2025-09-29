@@ -44,6 +44,9 @@ public abstract class CharacterBase : NetworkBehaviour
     [Header("Character Owner")]
     [SerializeField] public OwnerType ownerType = OwnerType.Player;
 
+    [Header("Attack Settings")] [SerializeField]
+    private float detectAttackDelay = 0.5f;
+        
     protected CharacterState currentState = CharacterState.Idle;
     protected Transform attackTarget;
     protected Transform detectedTarget;
@@ -54,6 +57,7 @@ public abstract class CharacterBase : NetworkBehaviour
     private Vector3 lastPosition;
     private Coroutine attackRoutine;
     private bool hasSpawnedBefore = false;
+    private bool queuedMove = false;
 
     public float currentAttackRange => attackRange;
     public WeaponBase currentWeaponPublic => currentWeapon;
@@ -76,6 +80,14 @@ public abstract class CharacterBase : NetworkBehaviour
     new NetworkVariable<NetworkObjectReference>(default,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
+    
+    public NetworkVariable<CharacterState> NetState = new NetworkVariable<CharacterState>(
+        CharacterState.Idle,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
+
+    #region Unity Lifecycle
 
     protected virtual void Start()
     {
@@ -100,18 +112,27 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             return;
         }
+        
+        Vector3 input = GetMovementInput();
+
+        // Nếu đang Attack và có input di chuyển -> queue
+        if (currentState == CharacterState.Attack && isAttacking && input.magnitude > 0.01f)
+        {
+            queuedMove = true;
+        }
+        
         if (agent == null || !agent.isActiveAndEnabled)
         {
             return;
         }
 
-        if (!IsMovingNow())   // chỉ quét radar khi đứng yên
+        if (!IsMovingNow()) 
         {
             UpdateRadar();
         }
         else
         {
-            detectedTarget = null;  // reset để chắc chắn không giữ target cũ
+            detectedTarget = null;  
         }
 
         switch (currentState)
@@ -130,16 +151,24 @@ public abstract class CharacterBase : NetworkBehaviour
         UpdateAnimator();
     }
 
-    protected virtual void UpdateRadar()
+    protected virtual void OnDisable()
     {
-        Transform previousTarget = detectedTarget;
-        detectedTarget = FindNearestTarget();
-
-        if (detectedTarget != previousTarget)
+        if (currentWeapon != null)
         {
-            OnTargetChanged(previousTarget, detectedTarget);
+            //currentWeapon.gameObject.SetActive(false);
         }
+        attackTarget = null;
+        detectedTarget = null;
     }
+    protected virtual void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
+    }
+    
+    #endregion
+
+    #region Movement
     protected bool IsMovingNow()
     {
         if (this is Player player)
@@ -154,6 +183,61 @@ public abstract class CharacterBase : NetworkBehaviour
 
         return false;
     }
+    protected virtual void Move(Vector3 direction)
+    {
+        if (agent == null || !agent.isActiveAndEnabled) return;
+        if (isDead) return;
+
+        if (direction.magnitude > 0.01f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+            agent.Move(direction.normalized * moveSpeed * Time.deltaTime);
+        }
+        else
+        {
+            agent.ResetPath();
+        }
+    }
+    protected virtual void UpdateAnimator()
+    {
+        if (animator == null) return;
+
+        float speed = 0f;
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            speed = agent.velocity.magnitude;
+        }
+        else
+        {
+            Vector3 delta = (transform.position - lastPosition);
+            delta.y = 0f;
+            speed = (Time.deltaTime > 0f) ? (delta.magnitude / Time.deltaTime) : 0f;
+        }
+
+        bool isMovingNow = speed > 0.01f;
+        animator.SetBool("IsMoving", isMovingNow);
+
+        animator.SetBool("IsAttacking", isAttacking);
+
+        lastPosition = transform.position;
+    }
+    
+    public abstract Vector3 GetMovementInput();
+    #endregion
+
+    #region Radar & Tartget
+    protected virtual void UpdateRadar()
+    {
+        Transform previousTarget = detectedTarget;
+        detectedTarget = FindNearestTarget();
+
+        if (detectedTarget != previousTarget)
+        {
+            OnTargetChanged(previousTarget, detectedTarget);
+        }
+    }
+   
     protected virtual void OnTargetChanged(Transform oldTarget, Transform newTarget)
     {
         if (oldTarget != null && newTarget == null)
@@ -177,14 +261,34 @@ public abstract class CharacterBase : NetworkBehaviour
             attackTarget = null;
             if (currentState == CharacterState.Attack)
             {
+                StopAttackAnimationClientRpc();
                 EndAttack();
                 ChangeState(CharacterState.Idle);
             }
         }
     }
 
-    protected virtual void OnNewTargetFound(Transform newTarget) { }
+    protected virtual void OnNewTargetFound(Transform newTarget)
+    {
+        if (newTarget == null) return;
+        if (isDead) return;
+        
+        StartCoroutine(DelayedAttackCheck(newTarget, detectAttackDelay));
+    }
+    private IEnumerator DelayedAttackCheck(Transform target, float delay)
+    {
+        yield return new WaitForSeconds(delay);
 
+        if (target != null && !isDead && currentState != CharacterState.Attack)
+        {
+            float distance = Vector3.Distance(transform.position, target.position);
+            if (distance <= attackRange && detectedTarget == target)
+            {
+                attackTarget = target;
+                ChangeState(CharacterState.Attack);
+            }
+        }
+    }
     protected virtual void OnTargetSwitched(Transform oldTarget, Transform newTarget)
     {
         if (attackTarget == oldTarget)
@@ -230,7 +334,9 @@ public abstract class CharacterBase : NetworkBehaviour
 
         return nearest;
     }
-
+    #endregion
+    
+    #region State Handling
     protected void ChangeState(CharacterState newState)
     {
         if (currentState == newState) return;
@@ -244,10 +350,12 @@ public abstract class CharacterBase : NetworkBehaviour
             EndAttack();
         }
         currentState = newState;
-
+        
+        if (IsServer) 
+            NetState.Value = newState;
+        
         if (currentState == CharacterState.Attack)
         {
-            // ⛔ stop ngay lập tức khi vào trạng thái Attack
             if (agent != null && agent.isActiveAndEnabled)
             {
                 agent.isStopped = true;
@@ -279,16 +387,20 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             ChangeState(CharacterState.Idle);
         }
-        //CheckForAttack();
     }
 
     protected virtual void HandleAttack()
     {
         if (attackTarget == null || Vector3.Distance(transform.position, attackTarget.position) > attackRange)
         {
-            EndAttack();
+            if (!isAttacking)
+            {
+                EndAttack();
+                ChangeState(CharacterState.Idle);
+            }
             return;
         }
+
 
         FaceTarget(attackTarget.position);
 
@@ -304,7 +416,9 @@ public abstract class CharacterBase : NetworkBehaviour
             agent.velocity = Vector3.zero;
         }
     }
-
+    #endregion
+    
+    #region Attack
     protected virtual void CheckForAttack()
     {
         if (IsMovingNow()) return;
@@ -357,7 +471,6 @@ public abstract class CharacterBase : NetworkBehaviour
 
         if (agent != null && agent.isActiveAndEnabled && agent.velocity.magnitude > 0.01f)
         {
-            // 🚫 chưa dừng hẳn → không cho attack
             return;
         }
 
@@ -416,9 +529,13 @@ public abstract class CharacterBase : NetworkBehaviour
     }
     private IEnumerator AttackRoutine()
     {
-        // Delay ra đòn
         yield return new WaitForSeconds(attackDelay);
-
+        
+        if (currentState != CharacterState.Attack || isDead || IsMovingNow())
+        {
+            yield break;
+        }
+        
         if (IsOwner)
         {
             RequestLaunchServerRpc();
@@ -466,6 +583,12 @@ public abstract class CharacterBase : NetworkBehaviour
         isAttacking = false;
         hasWeapon = true;
 
+        if (animator != null)
+        {
+            animator.SetBool("IsAttacking", false);
+            animator.CrossFade("Idle", 0.05f); 
+        }
+        
         if (currentWeapon != null && !currentWeapon.IsFlying)
         {
             currentWeapon.ResetWeapon();
@@ -477,53 +600,16 @@ public abstract class CharacterBase : NetworkBehaviour
         }
 
         nextAttackTime = Time.time;
-
-    }
-
-    protected virtual void Move(Vector3 direction)
-    {
-        if (agent == null || !agent.isActiveAndEnabled) return;
-        if (isDead) return;
-
-        if (direction.magnitude > 0.01f)
+        
+        if (queuedMove)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
-            agent.Move(direction.normalized * moveSpeed * Time.deltaTime);
-        }
-        else
-        {
-            agent.ResetPath();
+            queuedMove = false;
+            ChangeState(CharacterState.Move);
         }
     }
+    #endregion
 
-    protected virtual void UpdateAnimator()
-    {
-        if (animator == null) return;
-
-        float speed = 0f;
-        if (agent != null && agent.isActiveAndEnabled)
-        {
-            speed = agent.velocity.magnitude;
-        }
-        else
-        {
-            Vector3 delta = (transform.position - lastPosition);
-            delta.y = 0f;
-            speed = (Time.deltaTime > 0f) ? (delta.magnitude / Time.deltaTime) : 0f;
-        }
-
-        bool isMovingNow = speed > 0.01f && !isAttacking;
-        animator.SetBool("IsMoving", isMovingNow);
-
-        animator.SetBool("IsAttacking", isAttacking);
-
-        lastPosition = transform.position;
-    }
-
-
-
-    public abstract Vector3 GetMovementInput();
+    #region  Score & Stats
 
     public void AddScore(int value)
     {
@@ -597,6 +683,9 @@ public abstract class CharacterBase : NetworkBehaviour
         hasSpawnedBefore = true;
     }
 
+    #endregion
+
+    #region Weapons Handling
     public void ChangeWeapon(WeaponType newWeaponType)
     {
         if (!IsServer) return;
@@ -636,17 +725,7 @@ public abstract class CharacterBase : NetworkBehaviour
         SetWeaponClientRpc(netObj, this.networkObject);
 
     }
-
-    protected virtual void OnDisable()
-    {
-        if (currentWeapon != null)
-        {
-            //currentWeapon.gameObject.SetActive(false);
-        }
-        attackTarget = null;
-        detectedTarget = null;
-    }
-
+    
     protected virtual void LoadWeapon()
     {
         string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
@@ -662,7 +741,34 @@ public abstract class CharacterBase : NetworkBehaviour
             }
         }
     }
+    
+    private void HideOrReleaseWeapon()
+    {
+        if (currentWeapon == null) return;
 
+        if (ownerType == OwnerType.Player)
+        {
+            currentWeapon.gameObject.SetActive(false);
+        }
+        else
+        {
+            if (IsServer)
+                ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
+            else
+                currentWeapon.gameObject.SetActive(false);
+        }
+
+        currentWeapon = null;
+    }
+    
+    public void AssignWeapon(WeaponBase weapon)
+    {
+        currentWeapon = weapon;
+        currentWeapon.Init(this, weaponSpawnPoint);
+    }
+    #endregion
+
+    #region Death
     protected virtual void CheckForDead()
     {
         if (health.IsDead == true)
@@ -676,7 +782,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
             StopAllCoroutines();
             scoreDisplay.gameObject.SetActive(false);
-            //characterCollider.enabled = false;
+            characterCollider.enabled = false;
             if (agent != null && agent.isActiveAndEnabled)
             {
                 agent.isStopped = true;
@@ -688,6 +794,12 @@ public abstract class CharacterBase : NetworkBehaviour
             {
                 animator.SetBool("IsMoving", false);
                 animator.SetBool("IsAttacking", false);
+            }
+
+            if (IsServer)
+            {
+                DisableColliderClientRpc();
+                PlayDeathAnimationClientRpc();
             }
 
             if (IsServer)
@@ -714,40 +826,14 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-    private void HideOrReleaseWeapon()
-    {
-        if (currentWeapon == null) return;
-
-        if (ownerType == OwnerType.Player)
-        {
-            currentWeapon.gameObject.SetActive(false);
-        }
-        else
-        {
-            if (IsServer)
-                ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
-            else
-                currentWeapon.gameObject.SetActive(false);
-        }
-
-        currentWeapon = null;
-    }
+   
 
     private IEnumerator DelayedDisable(float delay)
     {
         yield return new WaitForSeconds(delay);
         gameObject.SetActive(false);
     }
-    protected virtual void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
-    }
-    public void AssignWeapon(WeaponBase weapon)
-    {
-        currentWeapon = weapon;
-        currentWeapon.Init(this, weaponSpawnPoint);
-    }
+    #endregion
 
     #region Network Methods
 
@@ -764,23 +850,37 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+        SetupWeaponSync();
+        SetupInitialWeapon();
+        SetupPlayerInfo();
+        SetupScoreDisplay();
+        SetupScoreSync();
+        
+        NetState.OnValueChanged += (oldVal, newVal) =>
+        {
+            currentState = newVal; // sync local state with server
+        };
+    }
+    private void SetupWeaponSync()
+    {
         NetCurrentWeapon.OnValueChanged += (oldVal, newVal) =>
         {
             if (newVal.TryGet(out NetworkObject obj))
             {
-                Debug.Log("NetCurrentWeapon changed, assigning weapon.");
                 currentWeapon = obj.GetComponent<WeaponBase>();
                 currentWeapon.SetOwner(this);
             }
             else
             {
-                Debug.Log("NetCurrentWeapon is now null.");
                 currentWeapon = null;
             }
         };
 
         StartCoroutine(ResolveCurrentWeaponInitial());
+    }
 
+    private void SetupInitialWeapon()
+    {
         if (NetCurrentWeapon.Value.TryGet(out NetworkObject objNow))
         {
             currentWeapon = objNow.GetComponent<WeaponBase>();
@@ -796,13 +896,19 @@ public abstract class CharacterBase : NetworkBehaviour
 
             RequestSetWeaponServerRpc(weaponType);
         }
+    }
 
+    private void SetupPlayerInfo()
+    {
         if (IsOwner && ownerType == OwnerType.Player)
         {
             string localName = PlayerPrefs.GetString("PlayerName", "Player");
             SubmitPlayerNameServerRpc(localName);
         }
+    }
 
+    private void SetupScoreDisplay()
+    {
         if (scoreDisplay != null)
         {
             scoreDisplay.SetScore(Score.Value);
@@ -814,14 +920,17 @@ public abstract class CharacterBase : NetworkBehaviour
 
             scoreDisplay.SetPlayerName(PlayerName.Value.ToString());
         }
+    }
 
+    private void SetupScoreSync()
+    {
         Score.OnValueChanged += (oldValue, newValue) =>
         {
             scoreDisplay.SetScore(newValue);
             UpdateCharacterStats();
         };
-
     }
+
     private IEnumerator ResolveCurrentWeaponInitial()
     {
         yield return null;
@@ -850,7 +959,14 @@ public abstract class CharacterBase : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
-
+    
+        if (IsServer && currentWeapon != null)
+        {
+            ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
+            currentWeapon.ClearOwner();
+            currentWeapon = null;
+        }
+        
         if (IsOwner && ownerType == OwnerType.Player)
         {
             string localName = PlayerPrefs.GetString("PlayerName", "Player");
@@ -877,8 +993,6 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             PerformAttack();
             PlayAttackAnimationClientRpc();
-
-            // Sau attackDuration thì server yêu cầu client tắt animation
             StartCoroutine(StopAttackAnimDelayed(attackDuration));
         }
     }
@@ -894,7 +1008,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (animator != null)
         {
-            animator.SetBool("IsAttacking", false);
+            animator.SetBool("IsAttacking", true);
         }
     }
 
@@ -932,7 +1046,14 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-
+    [ClientRpc]
+    private void DisableColliderClientRpc()
+    {
+        if (characterCollider != null)
+        {
+            characterCollider.enabled = false;
+        }
+    }
     #endregion
 
     #region POWERUP
@@ -991,6 +1112,8 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             return;
         }
+        
+        if (currentState != CharacterState.Attack) return;
         Vector3 dir = (attackTarget.position - weaponSpawnPoint.position).normalized;
         Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(weaponRotationOffset);
 
