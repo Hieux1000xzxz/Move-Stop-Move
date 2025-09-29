@@ -18,6 +18,21 @@ public class NotificationCanvas : BaseCanvas
             messageText.text = message;
         }
     }
+    public void HideCloseButton()
+    {
+        if (closeButton != null)
+        {
+            closeButton.gameObject.SetActive(false);
+        }
+    }
+
+    public void ShowCloseButton()
+    {
+        if (closeButton != null) 
+        {
+            closeButton.gameObject.SetActive(true); 
+        }
+    }
 
     private void CloseNotificationCanvas()
     {

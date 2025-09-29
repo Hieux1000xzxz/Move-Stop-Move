@@ -69,11 +69,30 @@ public class UIManager : Singleton<UIManager>
 
     public void OpenNoti(BaseCanvas canvas) => canvas.Show();
 
-    public void SendNotification(string message)
+    public void SendNotification(string message, int type = 1)
     {
         if (notificationCanvas != null)
         {
             notificationCanvas.SetText(message);
+
+            if (type == 1)
+            {
+                notificationCanvas.ShowCloseButton();
+            }
+            else if (type == 2)
+            {
+                notificationCanvas.HideCloseButton();
+            }
+
+            notificationCanvas.Show();
+        }
+    }
+
+    public void HideCloseNotifiButton() 
+    {
+        if (notificationCanvas != null)
+        {
+            notificationCanvas.HideCloseButton();
         }
     }
 
