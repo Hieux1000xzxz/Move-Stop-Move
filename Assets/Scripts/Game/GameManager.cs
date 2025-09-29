@@ -44,6 +44,8 @@ public class GameManager : NetworkBehaviour
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     public NetworkVariable<int> RemainingAIQuota = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> EnemyCount = new NetworkVariable<int>(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private int totalSpawned = 0;
     private int totalKilled = 0;
@@ -67,12 +69,12 @@ public class GameManager : NetworkBehaviour
         base.OnNetworkSpawn();
         if (IsClient)
         {
-            ActiveAICount.OnValueChanged += OnAICountChanged;
-            ActivePlayerCount.OnValueChanged += OnPlayerCountChanged;
-            RemainingAIQuota.OnValueChanged += OnQuotaChanged;
-            //UIManager.Instance?.SendAICountUpdate(ActiveAICount.Value);
-            UIManager.Instance?.SendPlayerCountUpdate(ActivePlayerCount.Value);
-            UIManager.Instance?.SendQuotaUpdate(RemainingAIQuota.Value);
+            //ActiveAICount.OnValueChanged += OnAICountChanged;
+            //ActivePlayerCount.OnValueChanged += OnPlayerCountChanged;
+            //RemainingAIQuota.OnValueChanged += OnQuotaChanged;
+            EnemyCount.OnValueChanged += OnEnemyCountChanged;
+            UIManager.Instance?.UpdateEnemyCount(EnemyCount.Value);
+
         }
     }
 
@@ -80,30 +82,28 @@ public class GameManager : NetworkBehaviour
     {
         if (IsClient)
         {
-            ActiveAICount.OnValueChanged -= OnAICountChanged;
-            ActivePlayerCount.OnValueChanged -= OnPlayerCountChanged;
-            RemainingAIQuota.OnValueChanged -= OnQuotaChanged;
+            //ActiveAICount.OnValueChanged -= OnAICountChanged;
+            //ActivePlayerCount.OnValueChanged -= OnPlayerCountChanged;
+            //RemainingAIQuota.OnValueChanged -= OnQuotaChanged;
+            EnemyCount.OnValueChanged -= OnEnemyCountChanged;
+
         }
     }
-
-    private void OnAICountChanged(int prev, int current)
+    private void OnEnemyCountChanged(int previous, int current)
     {
-        UIManager.Instance?.SendAICountUpdate(current);
-    }
-
-    private void OnPlayerCountChanged(int prev, int current)
-    {
-        UIManager.Instance?.SendPlayerCountUpdate(current);
-    }
-
-    private void OnQuotaChanged(int prev, int current)
-    {
-        UIManager.Instance?.SendQuotaUpdate(current);
+        UIManager.Instance?.UpdateEnemyCount(current);
     }
 
     public bool CanSpawnAI()
     {
         return currentAIQuota - activeAINetworkObjects.Count > 0;
+    }
+    private void UpdateEnemyCount()
+    {
+        int enemyLeft = RemainingAIQuota.Value + ActivePlayerCount.Value - 1;
+        if (enemyLeft < 0) enemyLeft = 0;
+
+        EnemyCount.Value = enemyLeft;
     }
 
     public bool TryRegisterAI(NetworkObject aiNetworkObject)
@@ -138,6 +138,7 @@ public class GameManager : NetworkBehaviour
             ActiveAICount.Value = activeAINetworkObjects.Count;
             RemainingAIQuota.Value = currentAIQuota;
             activeEntities.Remove(aiNetworkObject);
+            UpdateEnemyCount();
         }
 
         CheckLastSurvivor();
@@ -154,6 +155,7 @@ public class GameManager : NetworkBehaviour
         {
             activeEntities.Add(playerNetworkObject);
         }
+        UpdateEnemyCount();
     }
 
     public void UnregisterPlayerInGame(NetworkObject playerNetworkObject)
@@ -164,6 +166,7 @@ public class GameManager : NetworkBehaviour
         {
             ActivePlayerCount.Value = activePlayerNetworkObjects.Count;
             activeEntities.Remove(playerNetworkObject);
+            UpdateEnemyCount();
             CheckLastSurvivor();
         }
     }
@@ -238,6 +241,7 @@ public class GameManager : NetworkBehaviour
         ActiveAICount.Value = 0;
         ActivePlayerCount.Value = activePlayerNetworkObjects.Count;
         RemainingAIQuota.Value = currentAIQuota;
+        UpdateEnemyCount();
     }
 
     public void StartGame()

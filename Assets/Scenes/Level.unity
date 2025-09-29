@@ -4764,7 +4764,7 @@ VideoPlayer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 399316011}
   m_Enabled: 1
-  m_VideoClip: {fileID: 32900000, guid: 428d375f9014efc43b97e0837f469fb7, type: 3}
+  m_VideoClip: {fileID: 32900000, guid: 95fe695747ac10049bda8cf7dd91d02f, type: 3}
   m_TargetCameraAlpha: 1
   m_TargetCamera3DLayout: 0
   m_TargetCamera: {fileID: 0}
@@ -7817,7 +7817,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58aab65c7f016de4d8032ec1981865f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  aiCounterText: {fileID: 755656860}
+  enemyCountText: {fileID: 755656860}
   displayFormat: 'Enemies Left: {0}'
   mainMenuCanvas: {fileID: 2076837707}
   shopCanvas: {fileID: 1890431161}
@@ -9145,6 +9145,8 @@ MonoBehaviour:
   ActivePlayerCount:
     m_InternalValue: 0
   RemainingAIQuota:
+    m_InternalValue: 0
+  EnemyCount:
     m_InternalValue: 0
 --- !u!114 &900380980
 MonoBehaviour:

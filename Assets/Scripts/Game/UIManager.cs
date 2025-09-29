@@ -5,7 +5,7 @@ using Unity.Netcode;
 public class UIManager : Singleton<UIManager>
 {
     [Header("AI Counter")]
-    [SerializeField] private TextMeshProUGUI aiCounterText;
+    [SerializeField] private TextMeshProUGUI enemyCountText;
     [SerializeField] private string displayFormat = "Enemies Left: {0}";
 
     [Header("Canvases")]
@@ -14,48 +14,23 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] private ConnectionCanvas connectionCanvas;
     [SerializeField] private LoadingCanvas loadingCanvas;
     [SerializeField] private NotificationCanvas notificationCanvas;
-    private int currentQuota = -1;
-    private int currentAlivePlayers = -1;
-    public void SendQuotaUpdate(int quota)
+    public void UpdateEnemyCount(int count)
     {
-        if (aiCounterText == null) return;
-        currentQuota = quota + currentAlivePlayers - 1;
-        if (currentQuota <= 0)
+        if (count <= 0)
         {
-            aiCounterText.text = "All Enemies Defeated!";
-            aiCounterText.color = Color.green;
+            enemyCountText.text = "All Enemies Defeated!";
+            enemyCountText.color = Color.green;
         }
         else
         {
-            aiCounterText.text = string.Format(displayFormat, currentQuota);
-            aiCounterText.color = currentQuota <= 10 ? Color.red : Color.white;
+            enemyCountText.text = string.Format(displayFormat, count);
+            enemyCountText.color = count <= 10 ? Color.red : Color.white;
         }
     }
 
-    public void SendAICountUpdate(int activeAI)
-    {
-        //if (aiCounterText == null) return;
-        //int remainingAI = GameManager.Instance.GetRemainingQuota();
-        //int totalRemaining = remainingAI + activeAI;
-
-        //if (totalRemaining <= 0)
-        //{
-        //    aiCounterText.text = "All Enemies Defeated!";
-        //    aiCounterText.color = Color.green;
-        //}
-        //else
-        //{
-        //    aiCounterText.text = string.Format(displayFormat, totalRemaining);
-        //    aiCounterText.color = totalRemaining <= 10 ? Color.red : Color.white;
-        //}
-    }
     public void HideCountText() 
     { 
-        aiCounterText.text = string.Empty;
-    }
-    public void SendPlayerCountUpdate(int current)
-    {
-        currentAlivePlayers = current;
+        enemyCountText.text = string.Empty;
     }
 
     public void OpenUI(BaseCanvas canvas)
