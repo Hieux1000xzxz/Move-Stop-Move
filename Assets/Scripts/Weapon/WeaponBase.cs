@@ -244,6 +244,9 @@ public class WeaponBase : NetworkBehaviour
     {
         owner = null;
         spawnPoint = null;
+        
+        StopRotation();
+        gameObject.SetActive(false);
     }
 
     private void OnDestroy()
