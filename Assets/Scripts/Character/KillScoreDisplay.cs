@@ -50,7 +50,7 @@ public class KillScoreDisplay : MonoBehaviour
             return;
 
         bool needsPositionUpdate = false;
-        bool needsRotationUpdate = false;
+        //bool needsRotationUpdate = false;
 
         if (transform.localScale != lastScale)
         {
@@ -58,16 +58,15 @@ public class KillScoreDisplay : MonoBehaviour
             lastScale = transform.localScale;
         }
 
-        if (faceCamera && cam != null && cam.transform.forward != lastCameraForward)
-        {
-            needsRotationUpdate = true;
-            lastCameraForward = cam.transform.forward;
-        }
+        //if (faceCamera && cam != null && cam.transform.forward != lastCameraForward)
+        //{
+        //    needsRotationUpdate = true;
+        //    lastCameraForward = cam.transform.forward;
+        //}
 
         if (needsPositionUpdate)
             UpdatePosition();
 
-        if (needsRotationUpdate)
             UpdateRotation();
     }
 
