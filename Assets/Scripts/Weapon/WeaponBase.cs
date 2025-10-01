@@ -17,6 +17,7 @@ public class WeaponBase : NetworkBehaviour
     [SerializeField] protected RotateMode rotateMode = RotateMode.FastBeyond360;
 
     [SerializeField] protected Rigidbody rb;
+    [SerializeField] protected Collider collider;
     protected CharacterBase owner;
     protected Transform spawnPoint;
     protected Vector3 launchPos;
@@ -25,7 +26,8 @@ public class WeaponBase : NetworkBehaviour
     public bool IsFlying => isFlying;
 
     private bool isFollowing = false;
-
+    
+    private bool hasHit = false;
     public virtual void Init(CharacterBase character, Transform hand)
     {
         owner = character;
@@ -87,14 +89,15 @@ public class WeaponBase : NetworkBehaviour
 
     protected virtual void ReturnToHand()
     {
+        hasHit  = false; 
         StopRotation();
         isFlying = false;
         isFollowing = true;
         rb.isKinematic = true;
-
-        if (rb != null && rb.gameObject.TryGetComponent(out Collider col))
+        
+        if (rb != null && collider != null)
         {
-            col.enabled = true; 
+            collider.enabled = true; 
         }
         
         if (spawnPoint == null && owner != null)
@@ -133,9 +136,9 @@ public class WeaponBase : NetworkBehaviour
     {
         if (!isFlying || other.gameObject == owner.gameObject) return;
         
-        if (rb != null && rb.gameObject.TryGetComponent(out Collider col))
+        if (collider != null)
         {
-            col.enabled = false;
+            collider.enabled = false;
             DisableColliderClientRpc();
         }
 
@@ -159,7 +162,8 @@ public class WeaponBase : NetworkBehaviour
 
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
-        {
+        { 
+            hasHit = true;
             NotifyHitServerRpc(victim.NetworkObject);
 
             if (NetworkManager.Singleton.IsServer)
@@ -167,8 +171,9 @@ public class WeaponBase : NetworkBehaviour
                 ReturnToHandServerRpc();
             }
         }
+
     }
-    
+
     public virtual void ResetWeapon()
     {
         ReturnToHand();
@@ -190,13 +195,6 @@ public class WeaponBase : NetworkBehaviour
             rotateTween.Kill();
             rotateTween = null;
         }
-    }
-
-    public virtual void ApplyData(WeaponData data)
-    {
-        if (data == null) return;
-        speed = data.speed;
-        damage = data.damage;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -245,9 +243,9 @@ public class WeaponBase : NetworkBehaviour
     [ClientRpc]
     private void DisableColliderClientRpc()
     {
-        if (rb != null && rb.gameObject.TryGetComponent(out Collider col))
+        if (collider != null)
         {
-            col.enabled = false;
+            collider.enabled = false;
         }
     }
 

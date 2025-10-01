@@ -548,22 +548,19 @@ public abstract class CharacterBase : NetworkBehaviour
     private IEnumerator AttackRoutine()
     {
         yield return new WaitForSeconds(attackDelay);
-
-        // Nếu trong lúc chờ mà nhân vật đã move thì hủy attack
+        
         if (currentState != CharacterState.Attack || isDead || IsMovingNow())
         {
-            EndAttack(true); // hủy và về Idle/Move
+            EndAttack(true);
             yield break;
         }
-
-        // Đảm bảo weapon có
+        
         if (currentWeapon == null || currentWeapon.IsFlying)
         {
             EndAttack(true);
             yield break;
         }
-
-        // Nếu vẫn còn đứng yên thì mới bắn
+        
         if (IsOwner)
         {
             RequestLaunchServerRpc();
@@ -1102,6 +1099,16 @@ public abstract class CharacterBase : NetworkBehaviour
     #endregion
 
     #region POWERUP
+
+    [ServerRpc]
+    public void RequestPickupPowerupServerRpc(NetworkObjectReference powerupRef, PowerupType type, float duration)
+    {
+        if (!powerupRef.TryGet(out NetworkObject powerupObj)) return;
+        
+        ApplyPowerupClientRpc(type, duration);
+        
+        powerupObj.Despawn();
+    }
 
     // Sync OnTriggerEnter:  server call to sync for the clients
     [ClientRpc]

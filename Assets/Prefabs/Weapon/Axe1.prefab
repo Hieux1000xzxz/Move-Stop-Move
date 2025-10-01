@@ -110,6 +110,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: -7734793605507807385}
   m_SourcePrefab: {fileID: 100100000, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
+--- !u!65 &2939150663891954781 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 4902244865759134372, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
+  m_PrefabInstance: {fileID: 7836738682889203449}
+  m_PrefabAsset: {fileID: 0}
 --- !u!54 &3562958303719707135 stripped
 Rigidbody:
   m_CorrespondingSourceObject: {fileID: 6751911775233490694, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
@@ -165,6 +170,7 @@ MonoBehaviour:
   rotateSpeed: 1080
   rotateMode: 3
   rb: {fileID: 3562958303719707135}
+  col: {fileID: 2939150663891954781}
   isFlying: 0
 --- !u!114 &-7734793605507807385
 MonoBehaviour:
