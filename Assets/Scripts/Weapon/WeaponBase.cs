@@ -105,7 +105,7 @@ public class WeaponBase : NetworkBehaviour
             spawnPoint = owner.weaponSpawnPoint;
         }
 
-        if (owner == null)   // ❌ fix crash
+        if (owner == null)   // fix crash
         {
             Debug.LogWarning($"[WeaponBase] ReturnToHand called but spawnPoint is null for {gameObject.name}");
             return;

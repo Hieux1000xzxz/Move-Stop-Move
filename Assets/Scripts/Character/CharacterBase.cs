@@ -157,10 +157,6 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected virtual void OnDisable()
     {
-        if (currentWeapon != null)
-        {
-            //currentWeapon.gameObject.SetActive(false);
-        }
         attackTarget = null;
         detectedTarget = null;
     }
@@ -358,19 +354,16 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (currentState == newState) return;
 
-        if (currentState == CharacterState.Attack)
-        {
-            if (animator != null)
-            {
-                animator.SetBool("IsAttacking", false);
-            }
-        }
+        // luôn để state theo server
         currentState = newState;
-        
-        if (IsServer) 
-            NetState.Value = newState;
-        
-        if (currentState == CharacterState.Attack)
+
+        if (IsServer)
+        {
+            NetState.Value = newState; // server sync xuống client
+        }
+
+        // chỉ server mới chỉnh agent
+        if (IsServer && newState == CharacterState.Attack)
         {
             if (agent != null && agent.isActiveAndEnabled)
             {
@@ -380,6 +373,7 @@ public abstract class CharacterBase : NetworkBehaviour
             }
         }
     }
+
 
     protected virtual void HandleIdle()
     {
@@ -607,33 +601,31 @@ public abstract class CharacterBase : NetworkBehaviour
         hasWeapon = true;
         if (IsServer) NetIsAttacking.Value = false;
 
-        if (animator != null)
+        if (IsServer)
         {
-            animator.SetBool("IsAttacking", false);
-            
-            if (cancelByMove)
-                animator.CrossFade("Run", 0.1f); 
-            else
-                animator.CrossFade("Idle", 0.1f);
-        }
-
-        if (currentWeapon != null && !currentWeapon.IsFlying)
-        {
-            currentWeapon.ResetWeapon();
-        }
-
-        if (agent != null && agent.isActiveAndEnabled && !isDead)
-        {
-            agent.isStopped = false;
+            PlayEndAttackAnimClientRpc(cancelByMove);
         }
 
         nextAttackTime = Time.time;
-        
+    
         if (IsMovingNow()) 
             ChangeState(CharacterState.Move);
         else
             ChangeState(CharacterState.Idle);
     }
+
+    [ClientRpc]
+    private void PlayEndAttackAnimClientRpc(bool cancelByMove)
+    {
+        if (animator == null) return;
+        animator.SetBool("IsAttacking", false);
+
+        if (cancelByMove)
+            animator.CrossFade("Run", 0.1f);
+        else
+            animator.CrossFade("Idle", 0.1f);
+    }
+
 
     #endregion
 
@@ -1009,6 +1001,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         base.OnNetworkDespawn();
         Score.OnValueChanged -= OnScoreChanged;
+        
         if (IsServer && currentWeapon != null)
         {
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);

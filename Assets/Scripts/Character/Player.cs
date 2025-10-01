@@ -11,6 +11,9 @@ public class Player : CharacterBase
     [SerializeField] private FloatingJoystick joystick;
     public FloatingJoystick Joystick => joystick;
     public bool isMovingInput;
+    public NetworkVariable<float> NetSpeed = new NetworkVariable<float>(
+        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
     protected override void Start()
     {
         base.Start();
@@ -28,8 +31,9 @@ public class Player : CharacterBase
 
         Vector3 input = GetMovementInput();
         isMovingInput = input.magnitude > 0.01f;
-        
-        NetIsMoving.Value = isMovingInput;
+
+        // ghi tốc độ vào NetSpeed
+        NetSpeed.Value = input.magnitude * moveSpeed;
 
         if (isMovingInput && currentState == CharacterState.Attack)
         {
@@ -38,13 +42,33 @@ public class Player : CharacterBase
         }
     }
 
+    
+    private float smoothSpeed = 0f;
 
     protected override void UpdateAnimator()
     {
         if (animator == null) return;
-        animator.SetBool("IsMoving", NetIsMoving.Value && !isAttacking);
+
+        float targetSpeed;
+
+        if (IsOwner)
+        {
+            targetSpeed = isMovingInput ? moveSpeed : 0f;  // local input
+        }
+        else
+        {
+            targetSpeed = NetSpeed.Value;                 
+        }
+        
+        smoothSpeed = Mathf.Lerp(smoothSpeed, targetSpeed, Time.deltaTime * 15f);
+
+        animator.SetFloat("Speed", smoothSpeed);         
+        
+        bool attackingNow = IsOwner ? isAttacking : NetIsAttacking.Value;
+        animator.SetBool("IsAttacking", attackingNow);
     }
 
+    
     protected override void OnTargetLost(Transform lostTarget)
     {
         base.OnTargetLost(lostTarget);
