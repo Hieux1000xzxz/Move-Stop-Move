@@ -177,7 +177,7 @@ public class AISpawner : NetworkBehaviour
         if (agent != null)
         {
             agent.enabled = false;
-            bool warped = agent.Warp(position); // Trả về true nếu thành công
+            bool warped = agent.Warp(position); 
             agent.enabled = true;
 
             if (warped && agent.isOnNavMesh)

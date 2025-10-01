@@ -79,7 +79,6 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private CinemachineCamera mainCamera;
     [SerializeField] private Sprite[] availableAvatars;
 
-    // Server URL updated for relay support
     private const string SERVER_URL = "https://mini-server-v6.onrender.com/api/lobby";
     private const string DEFAULT_LOBBY_NAME = "Lobby";
     private const string DEFAULT_PLAYER_NAME = "Player";

@@ -549,21 +549,18 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         yield return new WaitForSeconds(attackDelay);
 
-        // Nếu trong lúc chờ mà nhân vật đã move thì hủy attack
         if (currentState != CharacterState.Attack || isDead || IsMovingNow())
         {
-            EndAttack(true); // hủy và về Idle/Move
+            EndAttack(true); 
             yield break;
         }
 
-        // Đảm bảo weapon có
         if (currentWeapon == null || currentWeapon.IsFlying)
         {
             EndAttack(true);
             yield break;
         }
 
-        // Nếu vẫn còn đứng yên thì mới bắn
         if (IsOwner)
         {
             RequestLaunchServerRpc();
@@ -581,22 +578,7 @@ public abstract class CharacterBase : NetworkBehaviour
         hasWeapon = true;
     }
 
-    protected virtual void ThrowWeapon()
-    {
-        if (currentWeapon != null && attackTarget != null)
-        {
-            Vector3 dir = (attackTarget.position - weaponSpawnPoint.position).normalized;
-            Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(weaponRotationOffset);
-            currentWeapon.transform.rotation = rot;
-
-            if (IsServer)
-            {
-                currentWeapon.Launch(-dir, this.gameObject);
-
-                LaunchWeaponClientRPC(dir);
-            }
-        }
-    }
+    
 
     protected virtual void EndAttack(bool cancelByMove = false)
     {
@@ -1176,10 +1158,10 @@ public abstract class CharacterBase : NetworkBehaviour
     }
     private IEnumerator WaitUntilWeaponReady(Vector3 dir, Quaternion rot)
     {
-        yield return new WaitUntil(() => currentWeapon != null);
-
         currentWeapon.transform.rotation = rot;
         currentWeapon.Launch(dir, this.gameObject);
+        yield return new WaitUntil(() => currentWeapon != null);
+
     }
     [ServerRpc]
     public void RequestChangeWeaponServerRpc(WeaponType newWeaponType)

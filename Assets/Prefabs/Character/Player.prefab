@@ -566,7 +566,7 @@ MonoBehaviour:
   characterCollider: {fileID: 7201976662141129627}
   networkObject: {fileID: 4822096757030938270}
   weaponSpawnPoint: {fileID: 7101475273743860029}
-  weaponRotationOffset: {x: 100, y: 1111, z: 1111}
+  weaponRotationOffset: {x: -100, y: 0, z: 0}
   attackDelay: 0.3
   weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
