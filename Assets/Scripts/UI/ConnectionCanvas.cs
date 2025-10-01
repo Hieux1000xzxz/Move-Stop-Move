@@ -670,6 +670,7 @@ public class ConnectionCanvas : BaseCanvas
         if (playerInfoPanel != null)
         {
             playerInfoPanel.SetActive(true);
+            SelectAvatar(PlayerPrefs.GetInt("PlayerAvatar", selectedAvatarIndex));
             if (playerNameInputField != null)
             {
                 playerNameInputField.text = localUserName;
@@ -850,6 +851,7 @@ public class ConnectionCanvas : BaseCanvas
         currentRelayJoinCode = string.Empty;
         isSinglePlayerMode = false;
         currentLobbyInfo = null;
+        isReady = false;
     }
 
     private void ResetUIState()
@@ -868,7 +870,7 @@ public class ConnectionCanvas : BaseCanvas
         lobbyPanel.SetActive(true);
         lobbyId.text = $"Lobby ID: {lobby.lobbyId}";
         UpdatePlayerList(lobby);
-
+        UpdateReadyButtonStatus();
         if (networkManager.IsHost)
         {
             startGameButton.gameObject.SetActive(true);
@@ -885,6 +887,7 @@ public class ConnectionCanvas : BaseCanvas
             startGameButton.gameObject.SetActive(false);
             readyButton.gameObject.SetActive(true);
             settingButton.interactable = false;
+            isReady = false;
             string playerId = PlayerPrefs.GetString("PlayerId", "");
             var localUser = lobby.users.Find(u => u.userId == playerId);
             if (localUser != null)
@@ -1041,7 +1044,6 @@ public class ConnectionCanvas : BaseCanvas
                 RelayLobbyInfo lobby = JsonUtility.FromJson<RelayLobbyInfo>(www.downloadHandler.text);
                 currentLobbyId = lobbyId;
                 localUserName = playerName;
-                ShowLobbyUI(lobby);
 
                 yield return StartCoroutine(JoinRelayLobbyCoroutine(lobby.relayJoinCode));
 
@@ -1051,7 +1053,7 @@ public class ConnectionCanvas : BaseCanvas
                     clientHeartbeatRoutine = StartCoroutine(SendClientHeartbeatRoutine());
                     Debug.Log("Client heartbeat started");
                 }
-
+                ShowLobbyUI(lobby);
                 mainPanel.SetActive(false);
                 RefreshLobbyList();
             }
@@ -1175,21 +1177,61 @@ public class ConnectionCanvas : BaseCanvas
     private void OnClientDisconnected(ulong clientId)
     {
         Debug.LogWarning($"Client {clientId} disconnected. IsServer={NetworkManager.Singleton.IsServer}");
-        if (!NetworkManager.Singleton.ShutdownInProgress)
-        {
-            StartCoroutine(PollLobbyInfo());
-        }
+
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
             CleanupPlayerObjects(clientId);
 
+            if (!NetworkManager.Singleton.ShutdownInProgress)
+            {
+                StartCoroutine(PollLobbyInfo());
+            }
         }
-        else
+        else if (NetworkManager.Singleton != null && !NetworkManager.Singleton.IsServer)
         {
-            HandleClientDisconnect();
+            HandleHostDisconnected();
         }
     }
 
+    private void HandleHostDisconnected()
+    {
+        Debug.LogWarning("Host has disconnected from the game!");
+
+        if (clientHeartbeatRoutine != null)
+        {
+            StopCoroutine(clientHeartbeatRoutine);
+            clientHeartbeatRoutine = null;
+        }
+
+        if (pollLobbyRoutine != null)
+        {
+            StopCoroutine(pollLobbyRoutine);
+            pollLobbyRoutine = null;
+        }
+
+        SendNotification("Host has left the room. The match has ended.", 1);
+
+        if (gameplayCanvas != null)
+        {
+            gameplayCanvas.OnExitGame();
+        }
+        else
+        {
+            if (networkManager != null && networkManager.IsListening)
+            {
+                networkManager.Shutdown();
+            }
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.StopPowerupSpawning();
+            }
+
+            ResetState();
+            ResetUIState();
+            RefreshLobbyList();
+        }
+    }
     private void CleanupPlayerObjects(ulong clientId)
     {
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
@@ -1583,6 +1625,7 @@ public class ConnectionCanvas : BaseCanvas
             yield return new WaitForSeconds(5f);
         }
     }
+
 }
 
 [Serializable]

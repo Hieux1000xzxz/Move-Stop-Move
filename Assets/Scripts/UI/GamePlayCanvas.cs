@@ -84,7 +84,7 @@ public class GamePlayCanvas : BaseCanvas
         }
     }
 
-    private void OnExitGame()
+    public void OnExitGame()
     {
         Debug.Log("Exit Match");
 
