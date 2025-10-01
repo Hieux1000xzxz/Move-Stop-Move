@@ -566,7 +566,7 @@ MonoBehaviour:
   characterCollider: {fileID: 7201976662141129627}
   networkObject: {fileID: 4822096757030938270}
   weaponSpawnPoint: {fileID: 7101475273743860029}
-  weaponRotationOffset: {x: -100, y: 0, z: 0}
+  weaponRotationOffset: {x: 100, y: 0, z: 0}
   attackDelay: 0.3
   weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
@@ -617,6 +617,8 @@ MonoBehaviour:
         byte0028: 0
         byte0029: 0
   NetState:
+    m_InternalValue: 0
+  NetIsAttacking:
     m_InternalValue: 0
   joystick: {fileID: 6433299856123335784, guid: 0bd3649e64dbcd840962fac485ab370f, type: 3}
   isMovingInput: 0

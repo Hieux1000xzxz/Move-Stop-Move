@@ -80,7 +80,7 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private Sprite[] availableAvatars;
 
     // Server URL updated for relay support
-    private const string SERVER_URL = "https://mini-server-v3.onrender.com/api/lobby";
+    private const string SERVER_URL = "https://mini-server-v6.onrender.com/api/lobby";
     private const string DEFAULT_LOBBY_NAME = "Lobby";
     private const string DEFAULT_PLAYER_NAME = "Player";
 
@@ -98,6 +98,7 @@ public class ConnectionCanvas : BaseCanvas
     private RelayLobbyInfo currentLobbyInfo;
     private bool isUnityServicesInitialized = false;
     private bool canToggleReady = true;
+    private Coroutine clientHeartbeatRoutine;
     private async void Start()
     {
         InitializeButtons();
@@ -400,12 +401,12 @@ public class ConnectionCanvas : BaseCanvas
             string message = !isUnityServicesInitialized ?
                 "Unable to connect to online services. Please check your internet connection and try again." :
                 "Connection failed. Please check your internet connection.";
-            SendNotification(message,1);
+            SendNotification(message, 1);
         }
     }
     private void OnReadyClicked()
     {
-        if (!canToggleReady) return; 
+        if (!canToggleReady) return;
 
         isReady = !isReady;
 
@@ -498,7 +499,7 @@ public class ConnectionCanvas : BaseCanvas
 
     private void OnStartHostClicked()
     {
-        ResetNetworkManager(); 
+        ResetNetworkManager();
         StartHost();
     }
 
@@ -547,7 +548,7 @@ public class ConnectionCanvas : BaseCanvas
             maxPlayers = 6,
             hostName = hostName,
             AvatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0),
-            HostUserId = hostUserId 
+            HostUserId = hostUserId
         };
 
         Debug.Log($"Sending host registration with HostUserId: {hostUserId}");
@@ -643,7 +644,7 @@ public class ConnectionCanvas : BaseCanvas
         string lobbyId = lobbyIdInputField.text.Trim();
         if (!Regex.IsMatch(lobbyId, @"^[a-zA-Z0-9 ]+$"))
         {
-            SendNotification("Please use only letters and numbers. Special characters are not allowed.",1);
+            SendNotification("Please use only letters and numbers. Special characters are not allowed.", 1);
             return;
         }
         if (string.IsNullOrEmpty(lobbyId))
@@ -795,6 +796,12 @@ public class ConnectionCanvas : BaseCanvas
             ResetNetworkManager();
             modePanel.SetActive(true);
             return;
+        }
+        if (clientHeartbeatRoutine != null)
+        {
+            StopCoroutine(clientHeartbeatRoutine);
+            clientHeartbeatRoutine = null;
+            Debug.Log("Client heartbeat stopped");
         }
 
         if (networkManager == null) return;
@@ -1037,8 +1044,14 @@ public class ConnectionCanvas : BaseCanvas
                 localUserName = playerName;
                 ShowLobbyUI(lobby);
 
-                // Join using relay
                 yield return StartCoroutine(JoinRelayLobbyCoroutine(lobby.relayJoinCode));
+
+                if (!networkManager.IsHost)
+                {
+                    if (clientHeartbeatRoutine != null) StopCoroutine(clientHeartbeatRoutine);
+                    clientHeartbeatRoutine = StartCoroutine(SendClientHeartbeatRoutine());
+                    Debug.Log("Client heartbeat started");
+                }
 
                 mainPanel.SetActive(false);
                 RefreshLobbyList();
@@ -1052,7 +1065,7 @@ public class ConnectionCanvas : BaseCanvas
 
     private IEnumerator JoinRelayLobbyCoroutine(string joinCode)
     {
-        SendNotification("Connecting to the lobby...",2);
+        SendNotification("Connecting to the lobby...", 2);
 
         bool joinSuccess = false;
         yield return StartCoroutine(JoinRelayCoroutineWrapper(joinCode, (success) => joinSuccess = success));
@@ -1062,17 +1075,17 @@ public class ConnectionCanvas : BaseCanvas
             bool clientStarted = networkManager.StartClient();
             if (clientStarted)
             {
-                yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(2f);
                 UIManager.Instance?.CloseNotification();
             }
             else
             {
-               SendNotification("Failed to start client. Please try again.",1);
+                SendNotification("Failed to start client. Please try again.", 1);
             }
         }
         else
         {
-           SendNotification("Failed to connect to the relay server. Please check the Lobby ID and try again.",1);
+            SendNotification("Failed to connect to the relay server. Please check the Lobby ID and try again.", 1);
         }
     }
 
@@ -1157,7 +1170,7 @@ public class ConnectionCanvas : BaseCanvas
         Debug.Log($"Client {clientId} connected");
         if (pollLobbyRoutine != null) StopCoroutine(pollLobbyRoutine);
         pollLobbyRoutine = StartCoroutine(PollLobbyInfo());
-      
+
     }
 
     private void OnClientDisconnected(ulong clientId)
@@ -1170,7 +1183,7 @@ public class ConnectionCanvas : BaseCanvas
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
             CleanupPlayerObjects(clientId);
-         
+
         }
         else
         {
@@ -1322,7 +1335,7 @@ public class ConnectionCanvas : BaseCanvas
 
         if (!Regex.IsMatch(newName, @"^[a-zA-Z0-9 ]+$"))
         {
-            SendNotification("Please use only letters and numbers. Special characters are not allowed.",1);
+            SendNotification("Please use only letters and numbers. Special characters are not allowed.", 1);
             return;
         }
         if (string.IsNullOrEmpty(newName))
@@ -1371,7 +1384,7 @@ public class ConnectionCanvas : BaseCanvas
             }
         }
     }
- 
+
     private IEnumerator RefreshCurrentLobbyInfo()
     {
         if (string.IsNullOrEmpty(currentLobbyId)) yield break;
@@ -1395,6 +1408,10 @@ public class ConnectionCanvas : BaseCanvas
     private void OnDestroy()
     {
         StopAllCoroutines();
+        if (clientHeartbeatRoutine != null)
+        {
+            clientHeartbeatRoutine = null;
+        }
 
         if (networkManager != null)
         {
@@ -1419,6 +1436,10 @@ public class ConnectionCanvas : BaseCanvas
             {
                 StopCoroutine(pollLobbyRoutine);
                 pollLobbyRoutine = null;
+            }
+            if (clientHeartbeatRoutine != null)
+            {
+                clientHeartbeatRoutine = null;
             }
 
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
@@ -1528,6 +1549,41 @@ public class ConnectionCanvas : BaseCanvas
         UIManager.Instance?.SendNotification(message, type);
         UIManager.Instance?.OpenNotification();
     }
+
+    private IEnumerator SendClientHeartbeatRoutine()
+    {
+        while (networkManager != null && networkManager.IsClient && !networkManager.ShutdownInProgress)
+        {
+            if (!string.IsNullOrEmpty(currentLobbyId))
+            {
+                string playerId = PlayerPrefs.GetString("PlayerId", "");
+                if (!string.IsNullOrEmpty(playerId))
+                {
+                    var payload = new ClientHeartbeatRequest
+                    {
+                        UserId = playerId
+                    };
+                    string json = JsonUtility.ToJson(payload);
+
+                    using (var www = new UnityWebRequest($"{SERVER_URL}/{currentLobbyId}/client-heartbeat", "POST"))
+                    {
+                        www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+                        www.downloadHandler = new DownloadHandlerBuffer();
+                        www.SetRequestHeader("Content-Type", "application/json");
+                        www.timeout = 10;
+
+                        yield return www.SendWebRequest();
+
+                        if (www.result != UnityWebRequest.Result.Success)
+                        {
+                            Debug.LogWarning($"Client heartbeat failed: {www.error}");
+                        }
+                    }
+                }
+            }
+            yield return new WaitForSeconds(5f);
+        }
+    }
 }
 
 [Serializable]
@@ -1578,6 +1634,12 @@ public class UpdateLobbyNameRequest
     public string lobbyId;
     public string lobbyName;
     public string requestingUserId;
+}
+
+[Serializable]
+public class ClientHeartbeatRequest
+{
+    public string UserId;
 }
 
 public static class JsonHelper
