@@ -168,21 +168,32 @@ public abstract class CharacterBase : NetworkBehaviour
     
     #endregion
 
-    #region Movement
+    #region MovementIsMov
     protected bool IsMovingNow()
     {
         if (this is Player player)
         {
-            return player.isMovingInput || player.NetIsMoving.Value;
+            if (player.IsOwner)
+                return player.isMovingInput;
+            if (player.NetIsMoving.Value)
+                return true;
+
+            if (player.NetSpeed.Value > 0.1f)
+                return true;
+
+            if (agent != null && agent.isActiveAndEnabled)
+                return agent.velocity.magnitude > 0.05f;
+
+            return false;
         }
 
+        // AI or non-player
         if (agent != null && agent.isActiveAndEnabled)
-        {
             return agent.velocity.magnitude > 0.05f;
-        }
 
         return false;
     }
+
     protected virtual void Move(Vector3 direction)
     {
         if (agent == null || !agent.isActiveAndEnabled) return;

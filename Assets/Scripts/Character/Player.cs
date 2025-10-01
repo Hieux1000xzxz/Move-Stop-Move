@@ -26,14 +26,15 @@ public class Player : CharacterBase
     protected override void Update()
     {
         base.Update();
-
         if (!IsOwner) return;
 
         Vector3 input = GetMovementInput();
         isMovingInput = input.magnitude > 0.01f;
-
-        // ghi tốc độ vào NetSpeed
+        
         NetSpeed.Value = input.magnitude * moveSpeed;
+        
+        if (NetIsMoving.Value != isMovingInput)
+            NetIsMoving.Value = isMovingInput;
 
         if (isMovingInput && currentState == CharacterState.Attack)
         {
@@ -41,6 +42,7 @@ public class Player : CharacterBase
             ChangeState(CharacterState.Move);
         }
     }
+
 
     
     private float smoothSpeed = 0f;
@@ -60,7 +62,7 @@ public class Player : CharacterBase
             targetSpeed = NetSpeed.Value;                 
         }
         
-        smoothSpeed = Mathf.Lerp(smoothSpeed, targetSpeed, Time.deltaTime * 15f);
+        smoothSpeed = Mathf.Lerp(smoothSpeed, targetSpeed, Time.deltaTime * 25f);
 
         animator.SetFloat("Speed", smoothSpeed);         
         
