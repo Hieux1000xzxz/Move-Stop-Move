@@ -1,6 +1,5 @@
-﻿using System.Collections;
+﻿using Unity.Netcode;
 using UnityEngine;
-using Unity.Netcode;
 
 public class Powerup : NetworkBehaviour
 {
@@ -16,31 +15,23 @@ public class Powerup : NetworkBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!IsServer) return;
-
         CharacterBase character = other.GetComponent<CharacterBase>();
-        if (character != null)
-        {
-            character.ApplyPowerupClientRpc(type, duration);
+        if (character == null) return;
 
-            ObjectPool.Instance.ReleasePowerup(gameObject, type);
+        if (character.IsOwner)
+        {
+            gameObject.SetActive(false);
+
+            if (netObject != null && netObject.IsSpawned) 
+            {
+                character.RequestPickupPowerupServerRpc(netObject, type, duration);
+            }
         }
     }
-    public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn();
-
-        if (triggerCollider != null)
-        {
-            triggerCollider.enabled = IsServer;
-        }
-    }
-
     public void SetType(PowerupType newType)
     {
         type = newType;
     }
-
     private void OnDisable()
     {
         OnReleased?.Invoke();
