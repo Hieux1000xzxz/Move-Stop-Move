@@ -68,6 +68,9 @@ public class WeaponBase : NetworkBehaviour
             transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
         }
         
+        if (baseScale == Vector3.zero)
+            baseScale = Vector3.one;
+        
         transform.localScale = baseScale * BuffScaleMultiplier;
     }
 
@@ -181,8 +184,8 @@ public class WeaponBase : NetworkBehaviour
     private IEnumerator ReenableColliderNextFrame()
     {
         collider.enabled = false;
-        yield return null; // chờ 1 frame
-        if (isFlying) // chỉ bật lại nếu weapon vẫn đang bay
+        yield return null; 
+        if (isFlying) 
             collider.enabled = true;
     }
     private void HandleHit(CharacterBase victim)
@@ -201,11 +204,6 @@ public class WeaponBase : NetworkBehaviour
         {
             victim.characterCollider.enabled = false;
         }
-    }
-
-    public virtual void ResetWeapon()
-    {
-        ReturnToHand();
     }
 
     protected void StartRotation()
@@ -281,4 +279,13 @@ public class WeaponBase : NetworkBehaviour
     {
         StopRotation();
     }
+    
+    public void ApplyScale(float ownerScale = 1f)
+    {
+        if (baseScale == Vector3.zero)
+            baseScale = Vector3.one;
+
+        transform.localScale = baseScale * BuffScaleMultiplier * ownerScale;
+    }
+
 }

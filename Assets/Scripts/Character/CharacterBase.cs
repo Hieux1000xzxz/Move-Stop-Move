@@ -665,7 +665,7 @@ public abstract class CharacterBase : NetworkBehaviour
         if (currentWeapon != null)
         {
             float buffMultiplier = currentWeapon.BuffScaleMultiplier;
-            currentWeapon.transform.localScale = currentWeapon.BaseScale * newScale * buffMultiplier;
+            currentWeapon.ApplyScale(newScale); // newScale from score
         }
 
         attackRange += scoreDisplay.CurrentScore * rangePerScore;
@@ -1117,7 +1117,6 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (isSpeedBoostActive)
         {
-            // đang có buff -> chỉ reset lại timer, không tăng thêm speed
             StopCoroutine(speedBoostRoutine);
         }
         else
@@ -1141,8 +1140,7 @@ public abstract class CharacterBase : NetworkBehaviour
         isSpeedBoostActive = false;
         speedBoostRoutine = null;
     }
-
-
+    
     private IEnumerator ApplyWeaponGrowLocal(float duration, float scaleMultiplier = 1.5f, float speedMultiplier = 1.5f)
     {
         if (currentWeaponPublic == null) yield break;
@@ -1158,10 +1156,13 @@ public abstract class CharacterBase : NetworkBehaviour
 
             weapon.BuffScaleMultiplier = scaleMultiplier;
             weapon.speed = weapon.OriginalSpeed * speedMultiplier;
+            
+            weapon.ApplyScale();
         }
 
         weaponGrowRoutine = StartCoroutine(WeaponGrowTimer(duration));
     }
+
 
     private IEnumerator WeaponGrowTimer(float duration)
     {
@@ -1172,12 +1173,13 @@ public abstract class CharacterBase : NetworkBehaviour
             WeaponBase weapon = currentWeaponPublic;
             weapon.BuffScaleMultiplier = 1f;
             weapon.speed = weapon.OriginalSpeed;
+            
+            weapon.ApplyScale();
         }
 
         isWeaponGrowActive = false;
         weaponGrowRoutine = null;
     }
-
 
     
     public void ApplyPowerupLocal(PowerupType type, float duration)
