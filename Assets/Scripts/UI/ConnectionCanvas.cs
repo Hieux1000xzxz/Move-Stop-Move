@@ -92,7 +92,7 @@ public class ConnectionCanvas : BaseCanvas
     private Coroutine pollLobbyRoutine;
     private Coroutine autoRefreshLobbyRoutine;
     private RelayLobbyInfo pendingLobbyJoin;
-    private bool isSinglePlayerMode = false;
+    public bool isSinglePlayerMode = false;
     private bool isReady = false;
     private RelayLobbyInfo currentLobbyInfo;
     private bool isUnityServicesInitialized = false;
@@ -537,7 +537,7 @@ public class ConnectionCanvas : BaseCanvas
             return;
         }
 
-        StartCoroutine(StartHostRoutineCoroutine(localUserName, localUserName + "'s " + DEFAULT_LOBBY_NAME, joinCode, hostUserId));
+        StartCoroutine(StartHostRoutineCoroutine(localUserName, DEFAULT_LOBBY_NAME + " of " + localUserName , joinCode, hostUserId));
         mainPanel.SetActive(false);
     }
     private IEnumerator StartHostRoutineCoroutine(string hostName, string lobbyName, string joinCode, string hostUserId)
@@ -768,11 +768,20 @@ public class ConnectionCanvas : BaseCanvas
     {
         if (networkManager.IsHost)
         {
-            StartCoroutine(StartGameOnServerRoutine());
-            GameManager.Instance.StartGame();
-            GameManager.Instance.StartGameClientRpc();
-            GameManager.Instance.StartPowerupSpawning();
+            StartCoroutine(StartGameSequence());
         }
+    }
+
+    private IEnumerator StartGameSequence()
+    {
+        startGameButton.interactable = false;
+
+        yield return StartCoroutine(StartGameOnServerRoutine());
+
+        GameManager.Instance.StartGame();
+        GameManager.Instance.StartGameClientRpc();
+        GameManager.Instance.StartPowerupSpawning();
+
         if (gameplayCanvas != null)
         {
             gameplayCanvas.Init(this, currentLobbyId, localUserName);
@@ -1187,7 +1196,7 @@ public class ConnectionCanvas : BaseCanvas
     {
         Debug.LogWarning($"Client {clientId} disconnected. IsServer={NetworkManager.Singleton.IsServer}");
 
-        if (!isIntentionalDisconnect &&
+        if (!isIntentionalDisconnect && GameManager.Instance.IsGameStarted &&
             !NetworkManager.Singleton.IsServer &&
             !NetworkManager.Singleton.IsHost &&
             !NetworkManager.Singleton.ShutdownInProgress)

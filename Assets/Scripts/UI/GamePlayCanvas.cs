@@ -58,7 +58,7 @@ public class GamePlayCanvas : BaseCanvas
         backToMenuWinButton.onClick.AddListener(OnBackToMenu);
         menuButton.onClick.AddListener(OnMenuOpen);
         exitGameButton.onClick.AddListener(() => OnExitConfirm());
-        continueGameButton.onClick.AddListener(() => menuUI.SetActive(false));
+        continueGameButton.onClick.AddListener(() =>  OnContinueGame());
         continueViewGameButton.onClick.AddListener(OnContinueView);
         previousButton.onClick.AddListener(() => GameManager.Instance.RequestPreviousSpectatorTargetServerRpc());
         nextButton.onClick.AddListener(() => GameManager.Instance.RequestNextSpectatorTargetServerRpc());
@@ -81,9 +81,17 @@ public class GamePlayCanvas : BaseCanvas
         //    backToMenuButton.interactable = true;
         //}
     }
+
+    private void OnContinueGame()
+    {
+        menuButton.gameObject.SetActive(true);
+        menuUI.SetActive(false);
+    }
+
+
     private void OnExitConfirm()
     {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost && !connectionCanvas.isSinglePlayerMode)
         {
             var notify = UIManager.Instance?.BindNotification();
             if (notify != null)
@@ -156,6 +164,7 @@ public class GamePlayCanvas : BaseCanvas
     private void OnMenuOpen()
     {
         menuUI.SetActive(true);
+        menuButton.gameObject.SetActive(false);
     }
     private void OnBackToMenu()
     {

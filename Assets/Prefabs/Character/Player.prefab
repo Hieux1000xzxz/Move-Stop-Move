@@ -571,7 +571,7 @@ MonoBehaviour:
   weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
   sizePerScore: 0.05
-  rangePerScore: 0.04
+  rangePerScore: 0.03
   moveSpeedPerScore: 0.05
   maxScale: 2.5
   defaultWeapon: 5
