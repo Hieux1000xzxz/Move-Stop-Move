@@ -11,6 +11,12 @@ public class Player : CharacterBase
     [SerializeField] private FloatingJoystick joystick;
     public FloatingJoystick Joystick => joystick;
     public bool isMovingInput;
+    
+    private float lastMoveInputTime = 0f;
+    private float smoothSpeed = 0f;
+    
+    [SerializeField] private float minIdleDelay = 0.1f; 
+    
     public NetworkVariable<float> NetSpeed = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
@@ -31,6 +37,11 @@ public class Player : CharacterBase
         Vector3 input = GetMovementInput();
         isMovingInput = input.magnitude > 0.01f;
         
+        if (isMovingInput)
+        {
+            lastMoveInputTime = Time.time;
+        }
+        
         NetSpeed.Value = input.magnitude * moveSpeed;
         
         if (NetIsMoving.Value != isMovingInput)
@@ -38,15 +49,18 @@ public class Player : CharacterBase
 
         if (isMovingInput && currentState == CharacterState.Attack)
         {
-            EndAttack();
-            ChangeState(CharacterState.Move);
+            RequestEndAttackServerRpc();
         }
+
     }
 
 
+    [ServerRpc]
+    private void RequestEndAttackServerRpc()
+    {
+        EndAttack(true);
+    }
     
-    private float smoothSpeed = 0f;
-
     protected override void UpdateAnimator()
     {
         if (animator == null) return;
@@ -55,7 +69,8 @@ public class Player : CharacterBase
 
         if (IsOwner)
         {
-            targetSpeed = isMovingInput ? moveSpeed : 0f;  // local input
+            bool effectiveMoving = isMovingInput || (Time.time - lastMoveInputTime < minIdleDelay);
+            targetSpeed = effectiveMoving ? moveSpeed : 0f;
         }
         else
         {
@@ -162,14 +177,7 @@ public class Player : CharacterBase
     {
         joystick = js;
     }
-
-    private void OnDestroy()
-    {
-        if (IsServer)
-        {
-            GameManager.Instance.UnregisterPlayerInGame(this.networkObject);
-        }
-    }
+    
     private void OnDisable()
     {
         if (IsServer)

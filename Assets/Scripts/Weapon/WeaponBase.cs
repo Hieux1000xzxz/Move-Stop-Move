@@ -121,7 +121,6 @@ public class WeaponBase : NetworkBehaviour
 
     protected virtual void Update()
     {
-        //if (!NetworkManager.Singleton.IsServer) return; 
         if (isFlying && owner != null)
         {
             float dist = Vector3.Distance(launchPos, transform.position);
@@ -134,8 +133,9 @@ public class WeaponBase : NetworkBehaviour
 
     protected virtual void OnTriggerEnter(Collider other)
     {
+        if (!IsServer) return;
         if (!isFlying || other.gameObject == owner.gameObject) return;
-        
+
         if (collider != null)
         {
             collider.enabled = false;
@@ -144,34 +144,48 @@ public class WeaponBase : NetworkBehaviour
 
         if (other.CompareTag("Wall"))
         {
-            if (NetworkManager.Singleton.IsServer)
+            if (IsServer)
             {
-                ReturnToHandServerRpc();
+                ReturnToHand(); 
+                ReturnToHandClientRpc();
             }
-
-            NetworkObject wallNetObj = other.GetComponent<NetworkObject>();
-            if (wallNetObj != null && wallNetObj.IsSpawned)
-            {
-                wallNetObj.Despawn(true);
-            }
-            else
-            {
-                Destroy(other.gameObject);
-            }
+            return;
         }
 
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
-        { 
+        {
             hasHit = true;
-            NotifyHitServerRpc(victim.NetworkObject);
 
-            if (NetworkManager.Singleton.IsServer)
+            if (IsServer)
             {
-                ReturnToHandServerRpc();
+                HandleHit(victim);
+                ReturnToHand(); 
+                ReturnToHandClientRpc();
+            }
+            else
+            {
+                NotifyHitServerRpc(victim.NetworkObject);
             }
         }
+    }
 
+    private void HandleHit(CharacterBase victim)
+    {
+        if (victim == null || victim == owner) return;
+
+        Health h = victim.GetComponent<Health>();
+        if (h != null)
+        {
+            h.ApplyDamage(damage);
+        }
+
+        owner?.AddScore(1);
+
+        if (victim.characterCollider != null)
+        {
+            victim.characterCollider.enabled = false;
+        }
     }
 
     public virtual void ResetWeapon()
@@ -201,28 +215,11 @@ public class WeaponBase : NetworkBehaviour
     private void NotifyHitServerRpc(NetworkObjectReference victimRef)
     {
         if (!victimRef.TryGet(out NetworkObject victimObj)) return;
-
-        CharacterBase victim = victimObj.GetComponent<CharacterBase>();
-        if (victim == null || victim == owner) return;
-
-        if (victim.characterCollider != null)
-        {
-            victim.characterCollider.enabled = false;
-        }
-        
-        Health h = victim.GetComponent<Health>();
-        if (h != null)
-        {
-            h.ApplyDamage(damage);
-        }
-
-        owner.AddScore(1);
-
-        if (victim.characterCollider != null)
-        {
-            victim.characterCollider.enabled = false;
-        }
+        HandleHit(victimObj.GetComponent<CharacterBase>());
+        ReturnToHand();
+        ReturnToHandClientRpc();
     }
+
     
     [ServerRpc(RequireOwnership = false)]
     private void ReturnToHandServerRpc()

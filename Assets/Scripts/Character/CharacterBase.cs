@@ -554,6 +554,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         yield return new WaitForSeconds(attackDelay);
         
+        
         if (currentState != CharacterState.Attack || isDead || IsMovingNow())
         {
             EndAttack(true);
@@ -602,29 +603,30 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected virtual void EndAttack(bool cancelByMove = false)
     {
+        isAttacking = false;
+        hasWeapon = true;
+
         if (attackRoutine != null)
         {
             StopCoroutine(attackRoutine);
             attackRoutine = null;
         }
-
-        isAttacking = false;
-        hasWeapon = true;
-        if (IsServer) NetIsAttacking.Value = false;
-
+        
         if (IsServer)
         {
+            NetIsAttacking.Value = false;
+            nextAttackTime = Time.time;
+            
+            
+            if (IsMovingNow())
+                ChangeState(CharacterState.Move);
+            else
+                ChangeState(CharacterState.Idle);
+
             PlayEndAttackAnimClientRpc(cancelByMove);
         }
-
-        nextAttackTime = Time.time;
-    
-        if (IsMovingNow()) 
-            ChangeState(CharacterState.Move);
-        else
-            ChangeState(CharacterState.Idle);
     }
-
+   
     [ClientRpc]
     private void PlayEndAttackAnimClientRpc(bool cancelByMove)
     {
@@ -637,7 +639,7 @@ public abstract class CharacterBase : NetworkBehaviour
             animator.CrossFade("Idle", 0.1f);
     }
 
-
+    
     #endregion
 
     #region  Score & Stats
@@ -766,22 +768,6 @@ public abstract class CharacterBase : NetworkBehaviour
         AssignWeapon(currentWeapon);
         SetWeaponClientRpc(netObj, this.networkObject);
 
-    }
-    
-    protected virtual void LoadWeapon()
-    {
-        string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
-        if (!string.IsNullOrEmpty(selectedWeaponName))
-        {
-            foreach (WeaponData weapon in Resources.LoadAll<WeaponData>(""))
-            {
-                if (weapon.weaponName == selectedWeaponName)
-                {
-                    ChangeWeapon(weapon.weaponType);
-                    break;
-                }
-            }
-        }
     }
     
     private void HideOrReleaseWeapon()
