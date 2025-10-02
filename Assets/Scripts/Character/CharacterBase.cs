@@ -157,10 +157,6 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected virtual void OnDisable()
     {
-        if (currentWeapon != null)
-        {
-            //currentWeapon.gameObject.SetActive(false);
-        }
         attackTarget = null;
         detectedTarget = null;
     }
@@ -172,21 +168,32 @@ public abstract class CharacterBase : NetworkBehaviour
     
     #endregion
 
-    #region Movement
+    #region MovementIsMov
     protected bool IsMovingNow()
     {
         if (this is Player player)
         {
-            return player.isMovingInput || player.NetIsMoving.Value;
+            if (player.IsOwner)
+                return player.isMovingInput;
+            if (player.NetIsMoving.Value)
+                return true;
+
+            if (player.NetSpeed.Value > 0.1f)
+                return true;
+
+            if (agent != null && agent.isActiveAndEnabled)
+                return agent.velocity.magnitude > 0.05f;
+
+            return false;
         }
 
+        // AI or non-player
         if (agent != null && agent.isActiveAndEnabled)
-        {
             return agent.velocity.magnitude > 0.05f;
-        }
 
         return false;
     }
+
     protected virtual void Move(Vector3 direction)
     {
         if (agent == null || !agent.isActiveAndEnabled) return;
@@ -358,19 +365,16 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (currentState == newState) return;
 
-        if (currentState == CharacterState.Attack)
-        {
-            if (animator != null)
-            {
-                animator.SetBool("IsAttacking", false);
-            }
-        }
+        // luôn để state theo server
         currentState = newState;
-        
-        if (IsServer) 
-            NetState.Value = newState;
-        
-        if (currentState == CharacterState.Attack)
+
+        if (IsServer)
+        {
+            NetState.Value = newState; // server sync xuống client
+        }
+
+        // chỉ server mới chỉnh agent
+        if (IsServer && newState == CharacterState.Attack)
         {
             if (agent != null && agent.isActiveAndEnabled)
             {
@@ -380,6 +384,7 @@ public abstract class CharacterBase : NetworkBehaviour
             }
         }
     }
+
 
     protected virtual void HandleIdle()
     {
@@ -549,6 +554,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         yield return new WaitForSeconds(attackDelay);
         
+        
         if (currentState != CharacterState.Attack || isDead || IsMovingNow())
         {
             EndAttack(true);
@@ -582,44 +588,43 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected virtual void EndAttack(bool cancelByMove = false)
     {
+        isAttacking = false;
+        hasWeapon = true;
+
         if (attackRoutine != null)
         {
             StopCoroutine(attackRoutine);
             attackRoutine = null;
         }
-
-        isAttacking = false;
-        hasWeapon = true;
-        if (IsServer) NetIsAttacking.Value = false;
-
-        if (animator != null)
-        {
-            animator.SetBool("IsAttacking", false);
-            
-            if (cancelByMove)
-                animator.CrossFade("Run", 0.1f); 
-            else
-                animator.CrossFade("Idle", 0.1f);
-        }
-
-        if (currentWeapon != null && !currentWeapon.IsFlying)
-        {
-            currentWeapon.ResetWeapon();
-        }
-
-        if (agent != null && agent.isActiveAndEnabled && !isDead)
-        {
-            agent.isStopped = false;
-        }
-
-        nextAttackTime = Time.time;
         
-        if (IsMovingNow()) 
-            ChangeState(CharacterState.Move);
+        if (IsServer)
+        {
+            NetIsAttacking.Value = false;
+            nextAttackTime = Time.time;
+            
+            
+            if (IsMovingNow())
+                ChangeState(CharacterState.Move);
+            else
+                ChangeState(CharacterState.Idle);
+
+            PlayEndAttackAnimClientRpc(cancelByMove);
+        }
+    }
+   
+    [ClientRpc]
+    private void PlayEndAttackAnimClientRpc(bool cancelByMove)
+    {
+        if (animator == null) return;
+        animator.SetBool("IsAttacking", false);
+
+        if (cancelByMove)
+            animator.CrossFade("Run", 0.1f);
         else
-            ChangeState(CharacterState.Idle);
+            animator.CrossFade("Idle", 0.1f);
     }
 
+    
     #endregion
 
     #region  Score & Stats
@@ -748,22 +753,6 @@ public abstract class CharacterBase : NetworkBehaviour
         AssignWeapon(currentWeapon);
         SetWeaponClientRpc(netObj, this.networkObject);
 
-    }
-    
-    protected virtual void LoadWeapon()
-    {
-        string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
-        if (!string.IsNullOrEmpty(selectedWeaponName))
-        {
-            foreach (WeaponData weapon in Resources.LoadAll<WeaponData>(""))
-            {
-                if (weapon.weaponName == selectedWeaponName)
-                {
-                    ChangeWeapon(weapon.weaponType);
-                    break;
-                }
-            }
-        }
     }
     
     private void HideOrReleaseWeapon()
@@ -994,6 +983,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         base.OnNetworkDespawn();
         Score.OnValueChanged -= OnScoreChanged;
+        
         if (IsServer && currentWeapon != null)
         {
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
@@ -1138,6 +1128,20 @@ public abstract class CharacterBase : NetworkBehaviour
 
         if (currentWeaponPublic != null)
             weaponTransform.localScale = oldScale;
+    }
+    
+    public void ApplyPowerupLocal(PowerupType type, float duration)
+    {
+        switch (type)
+        {
+            case PowerupType.SpeedBoost:
+                StartCoroutine(ApplySpeedBoostLocal(duration));
+                break;
+
+            case PowerupType.WeaponGrow:
+                StartCoroutine(ApplyWeaponGrowLocal(duration));
+                break;
+        }
     }
 
     #endregion

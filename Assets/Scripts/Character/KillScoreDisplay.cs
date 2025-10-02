@@ -58,15 +58,8 @@ public class KillScoreDisplay : MonoBehaviour
             lastScale = transform.localScale;
         }
 
-        //if (faceCamera && cam != null && cam.transform.forward != lastCameraForward)
-        //{
-        //    needsRotationUpdate = true;
-        //    lastCameraForward = cam.transform.forward;
-        //}
-
         if (needsPositionUpdate)
             UpdatePosition();
-
             UpdateRotation();
     }
 
