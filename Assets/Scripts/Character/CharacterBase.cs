@@ -668,7 +668,6 @@ public abstract class CharacterBase : NetworkBehaviour
             currentWeapon.transform.localScale = currentWeapon.BaseScale * newScale * buffMultiplier;
         }
 
-
         attackRange += scoreDisplay.CurrentScore * rangePerScore;
         moveSpeed += moveSpeedPerScore;
 
