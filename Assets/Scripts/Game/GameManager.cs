@@ -174,7 +174,11 @@ public class GameManager : NetworkBehaviour
     private void CheckLastSurvivor()
     {
         if (!IsServer) return;
+        if (!isGameStarted) return;
+
         if (EnemyCount.Value > 0) return;
+
+        if (totalSpawned < 2) return;
         if (activeEntities.Count == 1)
         {
             var lastNetObj = activeEntities[0];

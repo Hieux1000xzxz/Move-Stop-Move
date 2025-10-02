@@ -19,8 +19,6 @@ public class GamePlayCanvas : BaseCanvas
     [SerializeField] private Button continueViewGameButton;
     [SerializeField] private Button previousButton;
     [SerializeField] private Button nextButton;
-    [SerializeField] private VideoPlayer videoPlayer;
-    [SerializeField] private RawImage rawImage;
     private ConnectionCanvas connectionCanvas;
     private string lobbyId;
     private string playerName;
@@ -48,7 +46,7 @@ public class GamePlayCanvas : BaseCanvas
             winExitTimer -= Time.deltaTime;
             if (winExitTimer <= 0)
             {
-                OnExitGame();
+                OnExitGame(false);
                 winExitTimer = -1f;
             }
         }
@@ -56,10 +54,10 @@ public class GamePlayCanvas : BaseCanvas
 
     private void Start()
     {
-        backToMenuButton.onClick.AddListener(OnExitGame);
+        backToMenuButton.onClick.AddListener(() => OnExitConfirm());
         backToMenuWinButton.onClick.AddListener(OnBackToMenu);
         menuButton.onClick.AddListener(OnMenuOpen);
-        exitGameButton.onClick.AddListener(OnExitGame);
+        exitGameButton.onClick.AddListener(() => OnExitConfirm());
         continueGameButton.onClick.AddListener(() => menuUI.SetActive(false));
         continueViewGameButton.onClick.AddListener(OnContinueView);
         previousButton.onClick.AddListener(() => GameManager.Instance.RequestPreviousSpectatorTargetServerRpc());
@@ -72,45 +70,80 @@ public class GamePlayCanvas : BaseCanvas
 
         int playerCount = lobby.users != null ? lobby.users.Count : 0;
 
+        //if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
+        //{
+        //    exitGameButton.interactable = (playerCount <= 1);
+        //    backToMenuButton.interactable = (playerCount <= 1);
+        //}
+        //else
+        //{
+        //    exitGameButton.interactable = true;
+        //    backToMenuButton.interactable = true;
+        //}
+    }
+    private void OnExitConfirm()
+    {
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
         {
-            exitGameButton.interactable = (playerCount <= 1);
-            backToMenuButton.interactable = (playerCount <= 1);
+            var notify = UIManager.Instance?.BindNotification();
+            if (notify != null)
+            {
+                notify.SetText("If you leave, the game ends for all players. Continue?");
+                notify.HideCloseButton();
+                notify.ShowConfirmButton();
+                notify.SetCallback((isConfirm) =>
+                {
+                    if (isConfirm)
+                    {
+                        OnExitGame(false);
+                    }
+                    else
+                    {
+                    }
+                });
+            }
         }
         else
         {
-            exitGameButton.interactable = true;
-            backToMenuButton.interactable = true;
+            OnExitGame(false);
         }
     }
-
-    public void OnExitGame()
+    public void OnExitGame(bool showHostLeftMessage = false)
     {
-        Debug.Log("Exit Match");
+        Debug.Log($"Exit Match - showHostLeftMessage: {showHostLeftMessage}");
 
-        if (NetworkManager.Singleton == null)
+        if (showHostLeftMessage &&
+            NetworkManager.Singleton != null &&
+            !NetworkManager.Singleton.IsHost)
+        {
+            UIManager.Instance?.SendNotification("Host has left the room. Returning to lobby...", 1);
+        }
 
-            return;
-
-        if (NetworkManager.Singleton.IsHost)
+        if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.Shutdown();
             Destroy(NetworkManager.Singleton.gameObject);
         }
-        else if (NetworkManager.Singleton.IsClient)
-        {
 
-            NetworkManager.Singleton.Shutdown();
-            Destroy(NetworkManager.Singleton.gameObject);
+        if (GameManager.Instance != null)
+        {
+            Destroy(GameManager.Instance.gameObject);
+        }
+
+        if (UIManager.Instance != null)
+        {
+            Destroy(UIManager.Instance.gameObject);
         }
 
         if (connectionCanvas != null)
         {
             connectionCanvas.HandleExitLogic();
         }
-        UIManager.Instance.OpenLoadingCanvas();
+
+        UIManager.Instance?.OpenLoadingCanvas();
         Invoke(nameof(OnBackToMenu), 2.4f);
     }
+
 
     private void OnContinueView()
     {
@@ -152,16 +185,6 @@ public class GamePlayCanvas : BaseCanvas
         gameOverUI.SetActive(false);
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
-        PlayWinVideo();
-    }
-
-    private void PlayWinVideo()
-    {
-        videoPlayer.Prepare();
-        videoPlayer.prepareCompleted += (vp) =>
-        {
-            rawImage.texture = vp.texture;
-            vp.Play();
-        };
     }
 }
+

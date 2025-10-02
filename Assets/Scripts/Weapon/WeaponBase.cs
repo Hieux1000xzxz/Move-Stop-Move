@@ -258,10 +258,7 @@ public class WeaponBase : NetworkBehaviour
     }
 
     public void ClearOwner()
-    {
-        owner = null;
-        spawnPoint = null;
-        
+    {        
         StopRotation();
         gameObject.SetActive(false);
     }

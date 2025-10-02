@@ -998,7 +998,7 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
             currentWeapon.ClearOwner();
-            currentWeapon = null;
+   
         }
         
         if (IsOwner && ownerType == OwnerType.Player)

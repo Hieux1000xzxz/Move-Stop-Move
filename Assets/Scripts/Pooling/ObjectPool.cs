@@ -332,8 +332,6 @@ public class ObjectPool : Singleton<ObjectPool>
         obj.SetActive(false);
     }
 
-
-
     // ================== REGION: HELPERS ==================
     #region HELPERS
     private GameObject CreateGobject(GameObject item)

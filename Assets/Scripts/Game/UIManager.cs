@@ -78,17 +78,28 @@ public class UIManager : Singleton<UIManager>
             if (type == 1)
             {
                 notificationCanvas.ShowCloseButton();
+                notificationCanvas.HideConfirmButton();
             }
             else if (type == 2)
             {
                 notificationCanvas.HideCloseButton();
+                notificationCanvas.HideConfirmButton();
             }
-
+            else if (type == 3)
+            {
+                notificationCanvas.HideCloseButton();
+                notificationCanvas.ShowConfirmButton();
+            }
             notificationCanvas.Show();
         }
     }
+    public NotificationCanvas BindNotification()
+    {
+        OpenNoti(notificationCanvas);
+        return notificationCanvas;
+    }
 
-    public void HideCloseNotifiButton() 
+    public void HideClosreNotifiButton() 
     {
         if (notificationCanvas != null)
         {

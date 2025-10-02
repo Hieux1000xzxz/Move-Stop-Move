@@ -98,6 +98,8 @@ public class ConnectionCanvas : BaseCanvas
     private bool isUnityServicesInitialized = false;
     private bool canToggleReady = true;
     private Coroutine clientHeartbeatRoutine;
+    private bool isIntentionalDisconnect = false;
+
     private async void Start()
     {
         InitializeButtons();
@@ -708,7 +710,6 @@ public class ConnectionCanvas : BaseCanvas
         SavePlayerPrefs(localUserName);
         HidePlayerInfoPanel();
 
-        // Cập nhật thông tin người chơi trong lobby nếu đang trong lobby
         if (!string.IsNullOrEmpty(currentLobbyId) && networkManager.IsClient)
         {
             StartCoroutine(UpdatePlayerInfoInLobby());
@@ -797,6 +798,9 @@ public class ConnectionCanvas : BaseCanvas
             modePanel.SetActive(true);
             return;
         }
+
+        isIntentionalDisconnect = true;
+
         if (clientHeartbeatRoutine != null)
         {
             StopCoroutine(clientHeartbeatRoutine);
@@ -815,7 +819,9 @@ public class ConnectionCanvas : BaseCanvas
         {
             networkManager.Shutdown();
         }
+
         ResetNetworkManager();
+
         if (wasHost)
         {
             if (heartbeatRoutine != null) StopCoroutine(heartbeatRoutine);
@@ -843,8 +849,9 @@ public class ConnectionCanvas : BaseCanvas
         ResetState();
         ResetUIState();
         RefreshLobbyList();
-    }
 
+        isIntentionalDisconnect = false;
+    }
     private void ResetState()
     {
         currentLobbyId = string.Empty;
@@ -1054,7 +1061,6 @@ public class ConnectionCanvas : BaseCanvas
                     Debug.Log("Client heartbeat started");
                 }
                 ShowLobbyUI(lobby);
-                mainPanel.SetActive(false);
                 RefreshLobbyList();
             }
             else
@@ -1077,16 +1083,19 @@ public class ConnectionCanvas : BaseCanvas
             if (clientStarted)
             {
                 yield return new WaitForSeconds(2f);
+                mainPanel.SetActive(false);
                 UIManager.Instance?.CloseNotification();
             }
             else
             {
                 SendNotification("Failed to start client. Please try again.", 1);
+                ResetUIState();
             }
         }
         else
         {
             SendNotification("Failed to connect to the relay server. Please check the Lobby ID and try again.", 1);
+            ResetUIState();
         }
     }
 
@@ -1178,60 +1187,41 @@ public class ConnectionCanvas : BaseCanvas
     {
         Debug.LogWarning($"Client {clientId} disconnected. IsServer={NetworkManager.Singleton.IsServer}");
 
+        if (!isIntentionalDisconnect &&
+            !NetworkManager.Singleton.IsServer &&
+            !NetworkManager.Singleton.IsHost &&
+            !NetworkManager.Singleton.ShutdownInProgress)
+        {
+            if (gameplayCanvas != null)
+            {
+                Debug.Log("Host disconnected - calling OnExitGame for client cleanup");
+                gameplayCanvas.OnExitGame(true);
+            }
+            else
+            {
+                UIManager.Instance?.SendNotification("Host has left the room. The game has ended.", 1);
+                UIManager.Instance?.OpenNotification();
+                HandleClientDisconnect();
+            }
+            return;
+        }
+
+        if (!NetworkManager.Singleton.ShutdownInProgress)
+        {
+            StartCoroutine(PollLobbyInfo());
+        }
+
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
             CleanupPlayerObjects(clientId);
-
-            if (!NetworkManager.Singleton.ShutdownInProgress)
-            {
-                StartCoroutine(PollLobbyInfo());
-            }
         }
-        else if (NetworkManager.Singleton != null && !NetworkManager.Singleton.IsServer)
+        else if (!isIntentionalDisconnect)
         {
-            HandleHostDisconnected();
+            HandleClientDisconnect();
         }
     }
 
-    private void HandleHostDisconnected()
-    {
-        Debug.LogWarning("Host has disconnected from the game!");
 
-        if (clientHeartbeatRoutine != null)
-        {
-            StopCoroutine(clientHeartbeatRoutine);
-            clientHeartbeatRoutine = null;
-        }
-
-        if (pollLobbyRoutine != null)
-        {
-            StopCoroutine(pollLobbyRoutine);
-            pollLobbyRoutine = null;
-        }
-
-        SendNotification("Host has left the room. The match has ended.", 1);
-
-        if (gameplayCanvas != null)
-        {
-            gameplayCanvas.OnExitGame();
-        }
-        else
-        {
-            if (networkManager != null && networkManager.IsListening)
-            {
-                networkManager.Shutdown();
-            }
-
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.StopPowerupSpawning();
-            }
-
-            ResetState();
-            ResetUIState();
-            RefreshLobbyList();
-        }
-    }
     private void CleanupPlayerObjects(ulong clientId)
     {
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
@@ -1241,14 +1231,13 @@ public class ConnectionCanvas : BaseCanvas
         {
             if (netObj != null && netObj.OwnerClientId == clientId)
             {
-                netObj.gameObject.SetActive(false);
+                netObj.Despawn();  
             }
         }
     }
 
     private void HandleClientDisconnect()
     {
-        HandleExitLogic();
         if (!string.IsNullOrEmpty(currentLobbyId) && !string.IsNullOrEmpty(localUserName))
         {
             string playerId = PlayerPrefs.GetString("PlayerId", "");
