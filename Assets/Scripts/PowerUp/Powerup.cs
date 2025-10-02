@@ -26,6 +26,11 @@ public class Powerup : NetworkBehaviour
             {
                 character.RequestPickupPowerupServerRpc(netObject, type, duration);
             }
+            
+            else
+            {
+                character.ApplyPowerupLocal(type, duration);
+            }
         }
     }
     public void SetType(PowerupType newType)

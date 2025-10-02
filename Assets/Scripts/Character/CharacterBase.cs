@@ -1144,6 +1144,20 @@ public abstract class CharacterBase : NetworkBehaviour
         if (currentWeaponPublic != null)
             weaponTransform.localScale = oldScale;
     }
+    
+    public void ApplyPowerupLocal(PowerupType type, float duration)
+    {
+        switch (type)
+        {
+            case PowerupType.SpeedBoost:
+                StartCoroutine(ApplySpeedBoostLocal(duration));
+                break;
+
+            case PowerupType.WeaponGrow:
+                StartCoroutine(ApplyWeaponGrowLocal(duration));
+                break;
+        }
+    }
 
     #endregion
     #region Attack Animation Event
