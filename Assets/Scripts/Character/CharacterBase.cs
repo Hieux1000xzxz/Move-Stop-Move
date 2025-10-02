@@ -59,6 +59,14 @@ public abstract class CharacterBase : NetworkBehaviour
     private bool hasSpawnedBefore = false;
     private bool queuedMove = false;
 
+    // Powerup state
+    private Coroutine speedBoostRoutine;
+    private Coroutine weaponGrowRoutine;
+    private bool isSpeedBoostActive = false;
+    private bool isWeaponGrowActive = false;
+    
+    private float baseMoveSpeed;
+
     public float currentAttackRange => attackRange;
     public WeaponBase currentWeaponPublic => currentWeapon;
 
@@ -96,13 +104,14 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected virtual void Start()
     {
+        baseMoveSpeed = moveSpeed;
+        
         if (agent != null)
         {
             agent.speed = moveSpeed;
             lastPosition = transform.position;
         }
-
-
+        
         OnWeaponReturned();
     }
 
@@ -670,8 +679,10 @@ public abstract class CharacterBase : NetworkBehaviour
 
         if (currentWeapon != null)
         {
-            currentWeapon.transform.localScale = Vector3.one * newScale;
+            float buffMultiplier = currentWeapon.BuffScaleMultiplier;
+            currentWeapon.transform.localScale = currentWeapon.BaseScale * newScale * buffMultiplier;
         }
+
 
         attackRange += scoreDisplay.CurrentScore * rangePerScore;
         moveSpeed += moveSpeedPerScore;
@@ -1120,30 +1131,70 @@ public abstract class CharacterBase : NetworkBehaviour
 
     private IEnumerator ApplySpeedBoostLocal(float duration, float multiplier = 2f)
     {
-        float oldSpeed = moveSpeed;
-        moveSpeed *= multiplier;
-        if (agent != null) agent.speed = moveSpeed;
+        if (isSpeedBoostActive)
+        {
+            // đang có buff -> chỉ reset lại timer, không tăng thêm speed
+            StopCoroutine(speedBoostRoutine);
+        }
+        else
+        {
+            isSpeedBoostActive = true;
+            moveSpeed = baseMoveSpeed * multiplier;
+            if (agent != null) agent.speed = moveSpeed;
+        }
 
-        yield return new WaitForSeconds(duration);
-
-        moveSpeed = oldSpeed;
-        if (agent != null) agent.speed = moveSpeed;
+        speedBoostRoutine = StartCoroutine(SpeedBoostTimer(duration));
+        yield break;
     }
 
-    private IEnumerator ApplyWeaponGrowLocal(float duration, float scaleMultiplier = 1.5f)
+    private IEnumerator SpeedBoostTimer(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        
+        moveSpeed = baseMoveSpeed;
+        if (agent != null) agent.speed = moveSpeed;
+
+        isSpeedBoostActive = false;
+        speedBoostRoutine = null;
+    }
+
+
+    private IEnumerator ApplyWeaponGrowLocal(float duration, float scaleMultiplier = 1.5f, float speedMultiplier = 1.5f)
     {
         if (currentWeaponPublic == null) yield break;
+        WeaponBase weapon = currentWeaponPublic;
 
-        Transform weaponTransform = currentWeaponPublic.transform;
-        Vector3 oldScale = weaponTransform.localScale;
+        if (isWeaponGrowActive)
+        {
+            StopCoroutine(weaponGrowRoutine);
+        }
+        else
+        {
+            isWeaponGrowActive = true;
 
-        weaponTransform.localScale = oldScale * scaleMultiplier;
+            weapon.BuffScaleMultiplier = scaleMultiplier;
+            weapon.speed = weapon.OriginalSpeed * speedMultiplier;
+        }
 
+        weaponGrowRoutine = StartCoroutine(WeaponGrowTimer(duration));
+    }
+
+    private IEnumerator WeaponGrowTimer(float duration)
+    {
         yield return new WaitForSeconds(duration);
 
         if (currentWeaponPublic != null)
-            weaponTransform.localScale = oldScale;
+        {
+            WeaponBase weapon = currentWeaponPublic;
+            weapon.BuffScaleMultiplier = 1f;
+            weapon.speed = weapon.OriginalSpeed;
+        }
+
+        isWeaponGrowActive = false;
+        weaponGrowRoutine = null;
     }
+
+
     
     public void ApplyPowerupLocal(PowerupType type, float duration)
     {

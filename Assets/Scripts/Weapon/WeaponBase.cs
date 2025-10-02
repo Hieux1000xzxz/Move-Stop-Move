@@ -3,11 +3,11 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
-
+using System.Collections;
 public class WeaponBase : NetworkBehaviour 
 {
     [Header("Weapon Settings")]
-    [SerializeField] protected float speed = 12f;
+    [SerializeField] public float speed = 12f;
     [SerializeField] protected int damage = 1;
     [SerializeField] protected Vector3 handRotationOffset = Vector3.zero;
 
@@ -22,19 +22,29 @@ public class WeaponBase : NetworkBehaviour
     protected Transform spawnPoint;
     protected Vector3 launchPos;
     protected Tween rotateTween;
+    
+    private float originalSpeed;
+    public float OriginalSpeed => originalSpeed;
+    
     public bool isFlying;
     public bool IsFlying => isFlying;
-
+    private Vector3 baseScale;
+    public Vector3 BaseScale => baseScale;
     private bool isFollowing = false;
     
     private bool hasHit = false;
+    
+    public float BuffScaleMultiplier { get; set; } = 1f;
     public virtual void Init(CharacterBase character, Transform hand)
     {
         owner = character;
         spawnPoint = hand;
+        baseScale = transform.localScale;
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.Euler(handRotationOffset);
 
+        originalSpeed = speed;
+        
         var netObj = GetComponent<NetworkObject>();
         if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
         {
@@ -57,6 +67,8 @@ public class WeaponBase : NetworkBehaviour
             transform.position = spawnPoint.position;
             transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
         }
+        
+        transform.localScale = baseScale * BuffScaleMultiplier;
     }
 
     public virtual void Launch(Vector3 dir, GameObject shooter)
@@ -138,8 +150,7 @@ public class WeaponBase : NetworkBehaviour
 
         if (collider != null)
         {
-            collider.enabled = false;
-            DisableColliderClientRpc();
+            StartCoroutine(ReenableColliderNextFrame());
         }
 
         if (other.CompareTag("Wall"))
@@ -169,7 +180,13 @@ public class WeaponBase : NetworkBehaviour
             }
         }
     }
-
+    private IEnumerator ReenableColliderNextFrame()
+    {
+        collider.enabled = false;
+        yield return null; // chờ 1 frame
+        if (isFlying) // chỉ bật lại nếu weapon vẫn đang bay
+            collider.enabled = true;
+    }
     private void HandleHit(CharacterBase victim)
     {
         if (victim == null || victim == owner) return;

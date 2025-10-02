@@ -20,7 +20,7 @@ public class Powerup : NetworkBehaviour
 
         if (character.IsOwner)
         {
-            gameObject.SetActive(false);
+            ObjectPool.Instance.ReleasePowerup(gameObject, type);
 
             if (netObject != null && netObject.IsSpawned) 
             {
