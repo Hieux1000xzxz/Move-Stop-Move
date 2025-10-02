@@ -4363,7 +4363,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &291114690
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4865,7 +4865,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60.2
+  field of view: 36.9
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -4891,8 +4891,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.22975297, y: 0.000000019813626, z: -0.000000004677364, w: 0.973249}
-  m_LocalPosition: {x: 10.3, y: 9.29, z: -23.869999}
+  m_LocalRotation: {x: 0.16929756, y: 0.000000029372128, z: -0.000000005045461, w: 0.985565}
+  m_LocalPosition: {x: 10.3, y: 6.37, z: -23.869999}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -13846,7 +13846,7 @@ MonoBehaviour:
     AngularDampingMode: 0
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
-  FollowOffset: {x: 0, y: 10, z: -20}
+  FollowOffset: {x: 0, y: 7.08, z: -20}
 --- !u!114 &1246925138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13871,7 +13871,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 60.2
+    FieldOfView: 36.9
     OrthographicSize: 5
     NearClipPlane: 0.3
     FarClipPlane: 1000
@@ -13898,8 +13898,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1246925135}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.22975294, y: 0.000000019813625, z: -0.0000000046773625, w: 0.973249}
-  m_LocalPosition: {x: 10.3, y: 9.29, z: -23.869999}
+  m_LocalRotation: {x: 0.16929756, y: 0.000000029372128, z: -0.000000005045461, w: 0.985565}
+  m_LocalPosition: {x: 10.3, y: 6.37, z: -23.869999}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -19523,7 +19523,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1406031923
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19544,7 +19544,6 @@ MonoBehaviour:
   winnerUI: {fileID: 1126894211}
   menuButton: {fileID: 616720771}
   backToMenuButton: {fileID: 9988004}
-  backToMenuWinButton: {fileID: 9988004}
   exitGameButton: {fileID: 1823643926}
   continueGameButton: {fileID: 314070392}
   continueViewGameButton: {fileID: 1494473537}

@@ -915,7 +915,7 @@ public class ConnectionCanvas : BaseCanvas
 
     private IEnumerator DelayedHostReady()
     {
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(0.3f);
 
         if (currentLobbyInfo?.users != null)
         {

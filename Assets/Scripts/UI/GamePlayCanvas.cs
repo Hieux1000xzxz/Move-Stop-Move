@@ -13,7 +13,6 @@ public class GamePlayCanvas : BaseCanvas
     [SerializeField] private GameObject winnerUI;
     [SerializeField] private Button menuButton;
     [SerializeField] private Button backToMenuButton;
-    [SerializeField] private Button backToMenuWinButton;
     [SerializeField] private Button exitGameButton;
     [SerializeField] private Button continueGameButton;
     [SerializeField] private Button continueViewGameButton;
@@ -55,7 +54,6 @@ public class GamePlayCanvas : BaseCanvas
     private void Start()
     {
         backToMenuButton.onClick.AddListener(() => OnExitConfirm());
-        backToMenuWinButton.onClick.AddListener(OnBackToMenu);
         menuButton.onClick.AddListener(OnMenuOpen);
         exitGameButton.onClick.AddListener(() => OnExitConfirm());
         continueGameButton.onClick.AddListener(() =>  OnContinueGame());
@@ -124,7 +122,7 @@ public class GamePlayCanvas : BaseCanvas
             NetworkManager.Singleton != null &&
             !NetworkManager.Singleton.IsHost)
         {
-            UIManager.Instance?.SendNotification("Host has left the room. Returning to lobby...", 1);
+            UIManager.Instance?.SendNotification("Host has left the room. Returning to the menu scene...", 1);
         }
 
         if (NetworkManager.Singleton != null)
