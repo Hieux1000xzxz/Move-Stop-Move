@@ -15,7 +15,7 @@ public class Player : CharacterBase
     private float lastMoveInputTime = 0f;
     private float smoothSpeed = 0f;
     
-    [SerializeField] private float minIdleDelay = 0.1f; 
+    [SerializeField] private float minIdleDelay = 0.08f; 
     
     public NetworkVariable<float> NetSpeed = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);

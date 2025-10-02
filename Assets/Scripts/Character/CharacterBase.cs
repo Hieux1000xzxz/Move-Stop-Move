@@ -525,6 +525,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
         isAttacking = true;
         if (IsServer) NetIsAttacking.Value = true;
+        
         hasWeapon = false;
         nextAttackTime = Time.time + attackDelay;
 
@@ -617,22 +618,9 @@ public abstract class CharacterBase : NetworkBehaviour
             else
                 ChangeState(CharacterState.Idle);
 
-            PlayEndAttackAnimClientRpc(cancelByMove);
+            animator?.SetBool("IsAttacking", false);
         }
     }
-   
-    [ClientRpc]
-    private void PlayEndAttackAnimClientRpc(bool cancelByMove)
-    {
-        if (animator == null) return;
-        animator.SetBool("IsAttacking", false);
-
-        if (cancelByMove)
-            animator.CrossFade("Run", 0.1f);
-        else
-            animator.CrossFade("Idle", 0.1f);
-    }
-
     
     #endregion
 
