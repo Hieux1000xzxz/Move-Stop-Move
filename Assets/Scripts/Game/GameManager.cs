@@ -120,7 +120,7 @@ public class GameManager : NetworkBehaviour
         {
             activeEntities.Add(aiNetworkObject);
         }
-
+        totalSpawned++;
         return true;
     }
     public void CaculateTotalQuota()

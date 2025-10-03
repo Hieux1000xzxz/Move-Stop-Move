@@ -1,4 +1,5 @@
-﻿using Unity.Netcode;
+﻿using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -18,6 +19,7 @@ public class GamePlayCanvas : BaseCanvas
     [SerializeField] private Button continueViewGameButton;
     [SerializeField] private Button previousButton;
     [SerializeField] private Button nextButton;
+    [SerializeField] private TextMeshProUGUI countDown;
     private ConnectionCanvas connectionCanvas;
     private string lobbyId;
     private string playerName;
@@ -37,19 +39,36 @@ public class GamePlayCanvas : BaseCanvas
         gameWinUI.SetActive(false);
         menuUI.SetActive(false);
         viewUI.SetActive(false);
+        countDown.gameObject.SetActive(false);
     }
     private void Update()
     {
         if (winExitTimer > 0)
         {
             winExitTimer -= Time.deltaTime;
+
+            if (countDown != null)
+            {
+                countDown.gameObject.SetActive(true);
+                int secondsLeft = Mathf.CeilToInt(winExitTimer);
+                countDown.text = $"Returning to menu in {secondsLeft}s...";
+            }
+
             if (winExitTimer <= 0)
             {
-                OnExitGame(false);
                 winExitTimer = -1f;
+                OnExitGame(false);
+            }
+        }
+        else
+        {
+            if (countDown != null && countDown.gameObject.activeSelf)
+            {
+                countDown.gameObject.SetActive(false);
             }
         }
     }
+
 
     private void Start()
     {
@@ -183,6 +202,8 @@ public class GamePlayCanvas : BaseCanvas
         gameOverUI.SetActive(false);
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
+        countDown.gameObject.SetActive(true);
+
     }
 
     public void OnWinner()
@@ -192,6 +213,8 @@ public class GamePlayCanvas : BaseCanvas
         gameOverUI.SetActive(false);
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
+        countDown.gameObject.SetActive(true);
+
     }
 }
 

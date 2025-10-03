@@ -714,8 +714,7 @@ public class ConnectionCanvas : BaseCanvas
         {
             StartCoroutine(UpdatePlayerInfoInLobby());
         }
-
-        SendNotification("Profile updated successfully", 1);
+        SendNotification("Profile updated successfully", 4);
     }
 
     private IEnumerator UpdatePlayerInfoInLobby()
@@ -902,7 +901,7 @@ public class ConnectionCanvas : BaseCanvas
         {
             startGameButton.gameObject.SetActive(false);
             readyButton.gameObject.SetActive(true);
-            settingButton.interactable = false;
+            settingButton.gameObject.SetActive(false);
             isReady = false;
             string playerId = PlayerPrefs.GetString("PlayerId", "");
             var localUser = lobby.users.Find(u => u.userId == playerId);
@@ -1414,7 +1413,7 @@ public class ConnectionCanvas : BaseCanvas
 
             if (www.result == UnityWebRequest.Result.Success)
             {
-                SendNotification("Room name updated successfully", 1);
+                SendNotification("Room name updated successfully", 4);
                 StartCoroutine(RefreshCurrentLobbyInfo());
             }
             else

@@ -78,7 +78,7 @@ public class PowerupSpawner : NetworkBehaviour
 
             if (IsServer)
             {
-                StartCoroutine(RespawnAfterDelay(pos, rot, key, 2f));
+                StartCoroutine(RespawnAfterDelay(pos, rot, key, 10f));
             }
         };
     }
