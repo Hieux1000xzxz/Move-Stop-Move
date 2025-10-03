@@ -436,6 +436,10 @@ PrefabInstance:
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 9109480823393303125, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      propertyPath: m_UseGravity
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9109480823393303125, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       propertyPath: m_Constraints
       value: 116
       objectReference: {fileID: 0}
@@ -478,6 +482,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4202064593646546705}
+    - targetCorrespondingSourceObject: {fileID: 2861685149886788096, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7943132614046436159}
   m_SourcePrefab: {fileID: 100100000, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}
 --- !u!95 &1840719375837626499 stripped
 Animator:
@@ -557,23 +564,67 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   characterCollider: {fileID: 7201976662141129627}
+  networkObject: {fileID: 4822096757030938270}
   weaponSpawnPoint: {fileID: 7101475273743860029}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
-  attackDelay: 0.03
+  attackDelay: 0.3
   weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
   sizePerScore: 0.05
-  rangePerScore: 0.02
+  rangePerScore: 0.03
   moveSpeedPerScore: 0.05
   maxScale: 2.5
   defaultWeapon: 5
   ownerType: 0
+  detectAttackDelay: 0
   Score:
     m_InternalValue: 0
   NetIsMoving:
     m_InternalValue: 0
+  PlayerName:
+    m_InternalValue:
+      utf8LengthInBytes: 6
+      bytes:
+        offset0000:
+          byte0000: 80
+          byte0001: 108
+          byte0002: 97
+          byte0003: 121
+          byte0004: 101
+          byte0005: 114
+          byte0006: 0
+          byte0007: 0
+          byte0008: 0
+          byte0009: 0
+          byte0010: 0
+          byte0011: 0
+          byte0012: 0
+          byte0013: 0
+          byte0014: 0
+          byte0015: 0
+        byte0016: 0
+        byte0017: 0
+        byte0018: 0
+        byte0019: 0
+        byte0020: 0
+        byte0021: 0
+        byte0022: 0
+        byte0023: 0
+        byte0024: 0
+        byte0025: 0
+        byte0026: 0
+        byte0027: 0
+        byte0028: 0
+        byte0029: 0
+  NetState:
+    m_InternalValue: 0
+  NetIsAttacking:
+    m_InternalValue: 0
   joystick: {fileID: 6433299856123335784, guid: 0bd3649e64dbcd840962fac485ab370f, type: 3}
   isMovingInput: 0
+  minIdleDelay: 0.05
+  NetSpeed:
+    m_InternalValue: 0
 --- !u!114 &1186641312026304189
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -660,7 +711,7 @@ LineRenderer:
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 1, g: 1, b: 1, a: 1}
+      key0: {r: 0.735849, g: 0.060997758, b: 0, a: 1}
       key1: {r: 1, g: 1, b: 1, a: 1}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}
@@ -685,7 +736,7 @@ LineRenderer:
       atime6: 0
       atime7: 0
       m_Mode: 0
-      m_ColorSpace: -1
+      m_ColorSpace: 0
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
     numCornerVertices: 0
@@ -714,6 +765,8 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   line: {fileID: 7545416753985370068}
   character: {fileID: 3008413264066109357}
+  circleResolution: 50
+  lineWidth: 0.02
 --- !u!114 &746300112721650876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -775,6 +828,18 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &7943132614046436159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7926306860219652939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96e5ea3401142254c8b0208a24c659c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &8885232775652440427 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3533048899575648288, guid: f5d874e82def8db4289f23aa1902e1b7, type: 3}

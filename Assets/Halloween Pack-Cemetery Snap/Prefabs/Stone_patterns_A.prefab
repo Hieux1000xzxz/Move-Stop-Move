@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 5838430194460457897}
   - component: {fileID: 7397618416254055436}
   - component: {fileID: 4705533221572772038}
-  - component: {fileID: -5933330912209954741}
   - component: {fileID: -8648315281238910262}
   m_Layer: 7
   m_Name: Stone_patterns_A
@@ -88,28 +87,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &-5933330912209954741
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6507021931152843027}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -4118897754747107875, guid: 8b1fb817af6c7f84bbeb5684c25ba0e3, type: 3}
 --- !u!65 &-8648315281238910262
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
+using System.Collections;
 
 public class PowerupSpawner : NetworkBehaviour
 {
@@ -17,69 +18,88 @@ public class PowerupSpawner : NetworkBehaviour
         }
     }
 
-
     private void SpawnAllOnce()
     {
         foreach (var point in spawnPoints)
-        {
+        { 
+            Debug.Log($"[PowerupSpawner] SpawnPoint: {point.name} at {point.position}");
             if (!activePowerups.ContainsKey(point) || activePowerups[point] == null)
             {
-                SpawnAtPoint(point);
+                SpawnAtPoint(point.position, point.rotation, point);
             }
         }
     }
 
-    private void SpawnAtPoint(Transform point)
+    private void SpawnAtPoint(Vector3 pos, Quaternion rot, Transform key)
     {
-        // Nếu network chưa chạy thì bỏ qua
-        if (!IsServer || !NetworkManager.Singleton.IsListening)
+        if (!IsServer) return;
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening) return;
+        
+        if (activePowerups.ContainsKey(key) && activePowerups[key] != null)
             return;
 
-        if (activePowerups.ContainsKey(point) && activePowerups[point] != null)
+        GameObject obj = GetPowerupFromPool(pos, rot, out PowerupType type);
+        if (obj == null) return;
+
+        SetupNetworkObject(obj);
+        SetupPowerup(obj, type, pos, rot, key);
+
+        activePowerups[key] = obj;
+    }
+    
+    #region Sub Functions
+    
+    private bool CanSpawnAt(Transform key)
+    {
+        if (!IsServer) return false;
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening) return false;
+        if (activePowerups.ContainsKey(key) && activePowerups[key] != null) return false;
+        return true;
+    }
+    
+    private GameObject GetPowerupFromPool(Vector3 pos, Quaternion rot, out PowerupType type)
+    {
+        type = (Random.value > 0.5f) ? PowerupType.SpeedBoost : PowerupType.WeaponGrow;
+        return ObjectPool.Instance.SpawnPowerup(type, pos, rot);
+    }
+    
+    private void SetupNetworkObject(GameObject obj)
+    {
+        var netObj = obj.GetComponent<NetworkObject>();
+        if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsListening)
         {
-            return;
-        }
-
-        PowerupType type = (Random.value > 0.5f) ? PowerupType.SpeedBoost : PowerupType.WeaponGrow;
-        GameObject obj = ObjectPool.Instance.SpawnPowerup(type, point.position, point.rotation);
-
-        if (obj != null)
-        {
-            var netObj = obj.GetComponent<NetworkObject>();
-            if (netObj != null && !netObj.IsSpawned)
-            {
-                netObj.Spawn(true);
-            }
-
-            Powerup pu = obj.GetComponent<Powerup>();
-            pu.SetType(type);
-
-            pu.OnReleased = () =>
-            {
-                if (IsServer && NetworkManager.Singleton.IsListening && netObj != null && netObj.IsSpawned)
-                {
-                    netObj.Despawn();
-                }
-
-                activePowerups[point] = null;
-                StartCoroutine(RespawnAfterDelay(point, 5.0f));
-            };
-
-            activePowerups[point] = obj;
+            netObj.Spawn(true);
         }
     }
+    
+    private void SetupPowerup(GameObject obj, PowerupType type, Vector3 pos, Quaternion rot, Transform key)
+    {
+        Powerup pu = obj.GetComponent<Powerup>();
+        pu.SetType(type);
 
+        pu.OnReleased = () =>
+        {
+            activePowerups[key] = null;
 
+            if (IsServer)
+            {
+                StartCoroutine(RespawnAfterDelay(pos, rot, key, 10f));
+            }
+        };
+    }
 
-
-    private System.Collections.IEnumerator RespawnAfterDelay(Transform point, float delayTime)
+    #endregion
+    
+    private IEnumerator RespawnAfterDelay(Vector3 pos, Quaternion rot, Transform key, float delayTime)
     {
         yield return new WaitForSeconds(delayTime);
 
         if (IsServer && NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            SpawnAtPoint(point);
+            if (!activePowerups.ContainsKey(key) || activePowerups[key] == null)
+            {
+                SpawnAtPoint(pos, rot, key);
+            }
         }
     }
-
 }

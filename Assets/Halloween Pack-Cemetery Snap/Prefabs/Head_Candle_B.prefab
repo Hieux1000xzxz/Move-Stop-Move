@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 7015616997949848184}
   - component: {fileID: 6265529524489893341}
   - component: {fileID: 8149077304247697687}
-  - component: {fileID: 4318996122303020006}
   m_Layer: 7
   m_Name: Head_Candle_B
   m_TagString: Untagged
@@ -88,25 +87,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &4318996122303020006
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7644766710738608322}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 916683238776967753, guid: 3f9e6190864f0ac47affc5174c92158e, type: 3}

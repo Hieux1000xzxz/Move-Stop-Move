@@ -1,23 +1,34 @@
-﻿using Unity.Netcode;
+﻿using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 public class GamePlayCanvas : BaseCanvas
 {
-    [SerializeField] GameObject gameOverUI;
-    [SerializeField] GameObject gameWinUI;
-    [SerializeField] GameObject menuUI;
+    [SerializeField] private GameObject gameOverUI;
+    [SerializeField] private GameObject gameWinUI;
+    [SerializeField] private GameObject menuUI;
+    [SerializeField] private GameObject viewUI;
+    [SerializeField] private GameObject winnerUI;
     [SerializeField] private Button menuButton;
     [SerializeField] private Button backToMenuButton;
-    [SerializeField] private Button backToMenu1Button;
     [SerializeField] private Button exitGameButton;
     [SerializeField] private Button continueGameButton;
-
+    [SerializeField] private Button continueViewGameButton;
+    [SerializeField] private Button previousButton;
+    [SerializeField] private Button nextButton;
+    [SerializeField] private TextMeshProUGUI countDown;
     private ConnectionCanvas connectionCanvas;
     private string lobbyId;
     private string playerName;
+    private float winExitTimer = -1f;
+    private float winExitDelay = 5f;
 
+    //Winner
+    [SerializeField] private TextMeshProUGUI totalCoinText;
+    
     public void Init(ConnectionCanvas connection, string lobbyId, string playerName)
     {
         this.connectionCanvas = connection;
@@ -28,62 +39,154 @@ public class GamePlayCanvas : BaseCanvas
     private void Awake()
     {
         gameOverUI.SetActive(false);
+        gameWinUI.SetActive(false);
+        menuUI.SetActive(false);
+        viewUI.SetActive(false);
+        countDown.gameObject.SetActive(false);
+        
+        totalCoinText.gameObject.SetActive(false);
     }
-    private void Start()
+    private void Update()
     {
-        backToMenuButton.onClick.AddListener(OnBackToMenu);
-        backToMenu1Button.onClick.AddListener(OnBackToMenu);
-        menuButton.onClick.AddListener(OnMenuOpen);
-        exitGameButton.onClick.AddListener(OnExitGame);
-        continueGameButton.onClick.AddListener(() => menuUI.SetActive(false));
+        if (winExitTimer > 0)
+        {
+            winExitTimer -= Time.deltaTime;
+
+            if (countDown != null)
+            {
+                countDown.gameObject.SetActive(true);
+                int secondsLeft = Mathf.CeilToInt(winExitTimer);
+                countDown.text = $"Returning to menu in {secondsLeft}s...";
+            }
+
+            if (winExitTimer <= 0)
+            {
+                winExitTimer = -1f;
+                OnExitGame(false);
+            }
+        }
+        else
+        {
+            if (countDown != null && countDown.gameObject.activeSelf)
+            {
+                countDown.gameObject.SetActive(false);
+            }
+        }
     }
 
-    public void UpdateExitButtonState(LobbyInfo lobby)
+
+    private void Start()
+    {
+        backToMenuButton.onClick.AddListener(() => OnExitConfirm());
+        menuButton.onClick.AddListener(OnMenuOpen);
+        exitGameButton.onClick.AddListener(() => OnExitConfirm());
+        continueGameButton.onClick.AddListener(() =>  OnContinueGame());
+        continueViewGameButton.onClick.AddListener(OnContinueView);
+        previousButton.onClick.AddListener(() => GameManager.Instance.RequestPreviousSpectatorTargetServerRpc());
+        nextButton.onClick.AddListener(() => GameManager.Instance.RequestNextSpectatorTargetServerRpc());
+    }
+
+    public void UpdateExitButtonState(RelayLobbyInfo lobby)
     {
         if (lobby == null) return;
 
         int playerCount = lobby.users != null ? lobby.users.Count : 0;
 
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
+        //if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
+        //{
+        //    exitGameButton.interactable = (playerCount <= 1);
+        //    backToMenuButton.interactable = (playerCount <= 1);
+        //}
+        //else
+        //{
+        //    exitGameButton.interactable = true;
+        //    backToMenuButton.interactable = true;
+        //}
+    }
+
+    private void OnContinueGame()
+    {
+        menuButton.gameObject.SetActive(true);
+        menuUI.SetActive(false);
+    }
+
+
+    private void OnExitConfirm()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost && !connectionCanvas.isSinglePlayerMode)
         {
-            exitGameButton.interactable = (playerCount <= 1);
+            var notify = UIManager.Instance?.BindNotification();
+            if (notify != null)
+            {
+                notify.SetText("If you leave, the game ends for all players. Continue?");
+                notify.HideCloseButton();
+                notify.ShowConfirmButton();
+                notify.SetCallback((isConfirm) =>
+                {
+                    if (isConfirm)
+                    {
+                        OnExitGame(false);
+                    }
+                    else
+                    {
+                    }
+                });
+            }
         }
         else
         {
-            exitGameButton.interactable = true;
+            OnExitGame(false);
         }
     }
-
-    private void OnExitGame()
+    public void OnExitGame(bool showHostLeftMessage = false)
     {
-        Debug.Log("Exit Match");
+        Debug.Log($"Exit Match - showHostLeftMessage: {showHostLeftMessage}");
 
-        if (NetworkManager.Singleton == null) return;
-        if (NetworkManager.Singleton.IsHost)
+        if (showHostLeftMessage &&
+            NetworkManager.Singleton != null &&
+            !NetworkManager.Singleton.IsHost)
         {
-            // Host: shutdown toàn bộ
+            UIManager.Instance?.SendNotification("Host has left the room. Returning to the menu scene...", 1);
+        }
+
+        if (NetworkManager.Singleton != null)
+        {
             NetworkManager.Singleton.Shutdown();
             Destroy(NetworkManager.Singleton.gameObject);
         }
-        else if (NetworkManager.Singleton.IsClient)
-        {
 
-            // Sau đó tự disconnect local
-            NetworkManager.Singleton.Shutdown();
-            Destroy(NetworkManager.Singleton.gameObject);
+        if (GameManager.Instance != null)
+        {
+            Destroy(GameManager.Instance.gameObject);
+        }
+
+        if (UIManager.Instance != null)
+        {
+            Destroy(UIManager.Instance.gameObject);
         }
 
         if (connectionCanvas != null)
         {
             connectionCanvas.HandleExitLogic();
         }
-        UIManager.Instance.OpenLoadingCanvas();
+
+        UIManager.Instance?.OpenLoadingCanvas();
         Invoke(nameof(OnBackToMenu), 2.4f);
+    }
+
+
+    private void OnContinueView()
+    {
+        GameManager.Instance.EnableSpectatorMode();
+        viewUI.SetActive(true);
+        gameOverUI.SetActive(false);
+        menuButton.gameObject.SetActive(true);
     }
 
     private void OnMenuOpen()
     {
         menuUI.SetActive(true);
+        menuButton.gameObject.SetActive(false);
     }
     private void OnBackToMenu()
     {
@@ -93,11 +196,39 @@ public class GamePlayCanvas : BaseCanvas
 
     public void OnGameOver()
     {
+        menuButton.gameObject.SetActive(false);
+        UIManager.Instance.HideCountText();
         gameOverUI.SetActive(true);
+        
+        int totalCoins = CoinManager.Instance.GetTotalCoins();
+        
+        totalCoinText.gameObject.SetActive(true);
+        totalCoinText.text = $"Total coins: {totalCoins}";
     }
 
     public void OnGameWin()
     {
         gameWinUI.SetActive(true);
+        gameOverUI.SetActive(false);
+        menuButton.gameObject.SetActive(false);
+        winExitTimer = winExitDelay;
+        countDown.gameObject.SetActive(true);
+
+    }
+
+    public void OnWinner()
+    {
+        winnerUI.SetActive(true);
+        gameWinUI.SetActive(false);
+        gameOverUI.SetActive(false);
+        menuButton.gameObject.SetActive(false);
+        winExitTimer = winExitDelay;
+        countDown.gameObject.SetActive(true);
+        
+        int totalCoins = CoinManager.Instance.GetTotalCoins();
+        
+        totalCoinText.gameObject.SetActive(true);
+        totalCoinText.text = $"Total coins: {totalCoins}";
     }
 }
+

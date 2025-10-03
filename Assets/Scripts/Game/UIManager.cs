@@ -5,7 +5,7 @@ using Unity.Netcode;
 public class UIManager : Singleton<UIManager>
 {
     [Header("AI Counter")]
-    [SerializeField] private TextMeshProUGUI aiCounterText;
+    [SerializeField] private TextMeshProUGUI enemyCountText;
     [SerializeField] private string displayFormat = "Enemies Left: {0}";
 
     [Header("Canvases")]
@@ -14,35 +14,28 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] private ConnectionCanvas connectionCanvas;
     [SerializeField] private LoadingCanvas loadingCanvas;
     [SerializeField] private NotificationCanvas notificationCanvas;
-    private void Update()
+    public void UpdateEnemyCount(int count)
     {
-        UpdateAICounter();
-    }
-
-    private void UpdateAICounter()
-    {
-        if (GameManager.Instance == null || aiCounterText == null) return;
-
-        int remainingAI = GameManager.Instance.GetRemainingQuota();
-        int activeAI = GameManager.Instance.GetActiveAICount();
-        int totalRemaining = remainingAI + activeAI;
-
-        if (totalRemaining <= 0)
+        if (count <= 0)
         {
-            aiCounterText.text = "All Enemies Defeated!";
-            aiCounterText.color = Color.green;
+            enemyCountText.text = "All Enemies Defeated!";
+            enemyCountText.color = Color.green;
         }
         else
         {
-            aiCounterText.text = string.Format(displayFormat, totalRemaining);
-            aiCounterText.color = totalRemaining <= 10 ? Color.red : Color.white;
+            enemyCountText.text = string.Format(displayFormat, count);
+            enemyCountText.color = count <= 10 ? Color.red : Color.white;
         }
+    }
+
+    public void HideCountText() 
+    { 
+        enemyCountText.text = string.Empty;
     }
 
     public void OpenUI(BaseCanvas canvas)
     {
         if (canvas == null) return;
-
         CloseAllUI();
         canvas.Show();
     }
@@ -58,41 +51,87 @@ public class UIManager : Singleton<UIManager>
         if (shopCanvas != null) shopCanvas.Hide();
         if (connectionCanvas != null) connectionCanvas.Hide();
     }
+
     public void StartGame()
     {
         mainMenuCanvas.Hide();
         shopCanvas.Hide();
-
-        if(NetworkManager.Singleton.IsServer)
+        if (NetworkManager.Singleton.IsServer)
         {
             GameManager.Instance.StartGame();
             GameManager.Instance.StartGameClientRpc();
         }
-
         else
         {
             GameManager.Instance.RequestStartGameServerRpc();
         }
     }
-    public void OpenNoti(BaseCanvas canvas)
-    {
-        canvas.Show();
-    }
-    public void SendNotification(string message)
+
+    public void OpenNoti(BaseCanvas canvas) => canvas.Show();
+
+    public void SendNotification(string message, int type = 1)
     {
         if (notificationCanvas != null)
         {
             notificationCanvas.SetText(message);
+
+            if (type == 1)
+            {
+                notificationCanvas.ShowMainPanel();
+                notificationCanvas.ShowCloseButton();
+                notificationCanvas.HideConfirmButton();
+            }
+            else if (type == 2)
+            {
+                notificationCanvas.ShowMainPanel();
+                notificationCanvas.HideCloseButton();
+                notificationCanvas.HideConfirmButton();
+            }
+            else if (type == 3)
+            {
+                notificationCanvas.ShowMainPanel();
+                notificationCanvas.HideCloseButton();
+                notificationCanvas.ShowConfirmButton();
+            }
+            else if (type == 4)
+            {
+                notificationCanvas.HideMainPanel();
+                notificationCanvas.ShowToast(message);
+            }
+            notificationCanvas.Show();
+
         }
     }
+
+   
+
+    public NotificationCanvas BindNotification()
+    {
+        OpenNoti(notificationCanvas);
+        return notificationCanvas;
+    }
+
+    public void HideClosreNotifiButton() 
+    {
+        if (notificationCanvas != null)
+        {
+            notificationCanvas.HideCloseButton();
+        }
+    }
+
     public void OpenLoadingCanvas() => OpenUI(loadingCanvas);
     public void OpenMainMenu() => OpenUI(mainMenuCanvas);
-    public void OpenShop() => OpenUI(shopCanvas);
-    public void OpenConnection() => OpenUI(connectionCanvas);
+    public void OpenShop()  
+    {
+        OpenUI(shopCanvas);
+        shopCanvas.UpdateCoinUI();
+    }
+
+    public void OpenConnection() =>OpenUI(connectionCanvas);
     public void OpenNotification() => OpenNoti(notificationCanvas);
 
     public void CloseMainMenu() => CloseUI(mainMenuCanvas);
     public void CloseShop() => CloseUI(shopCanvas);
     public void CloseNetwork() => CloseUI(connectionCanvas);
-    public void CloseNotification() => CloseUI(notificationCanvas); 
+    public void CloseNotification() => CloseUI(notificationCanvas);
 }

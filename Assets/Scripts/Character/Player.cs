@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections;
+using System.Globalization;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
@@ -10,6 +11,15 @@ public class Player : CharacterBase
     [SerializeField] private FloatingJoystick joystick;
     public FloatingJoystick Joystick => joystick;
     public bool isMovingInput;
+    
+    private float lastMoveInputTime = 0f;
+    private float smoothSpeed = 0f;
+    
+    [SerializeField] private float minIdleDelay = 0.08f; 
+    
+    public NetworkVariable<float> NetSpeed = new NetworkVariable<float>(
+        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
     protected override void Start()
     {
         base.Start();
@@ -22,33 +32,60 @@ public class Player : CharacterBase
     protected override void Update()
     {
         base.Update();
-
         if (!IsOwner) return;
 
         Vector3 input = GetMovementInput();
         isMovingInput = input.magnitude > 0.01f;
-
-        NetIsMoving.Value = isMovingInput;
+        
+        if (isMovingInput)
+        {
+            lastMoveInputTime = Time.time;
+        }
+        
+        NetSpeed.Value = input.magnitude * moveSpeed;
+        
+        if (NetIsMoving.Value != isMovingInput)
+            NetIsMoving.Value = isMovingInput;
 
         if (isMovingInput && currentState == CharacterState.Attack)
         {
-            EndAttack();
-            ChangeState(CharacterState.Move);
+            RequestEndAttackServerRpc();
         }
 
-        if (currentState == CharacterState.Attack && !isAttacking) 
-        {
-            Debug.Log("Player Attack requested");
-            RequestAttackServerRpc();
-        }
     }
 
+
+    [ServerRpc]
+    private void RequestEndAttackServerRpc()
+    {
+        EndAttack(true);
+    }
+    
     protected override void UpdateAnimator()
     {
         if (animator == null) return;
-        animator.SetBool("IsMoving", NetIsMoving.Value && !isAttacking);
+
+        float targetSpeed;
+
+        if (IsOwner)
+        {
+            bool effectiveMoving = isMovingInput || (Time.time - lastMoveInputTime < minIdleDelay);
+            targetSpeed = effectiveMoving ? moveSpeed : 0f;
+        }
+        else
+        {
+            targetSpeed = NetSpeed.Value;                 
+        }
+        
+        smoothSpeed = Mathf.Lerp(smoothSpeed, targetSpeed, Time.deltaTime * 25f);
+
+        animator.SetFloat("Speed", smoothSpeed);         
+        
+        bool attackingNow = IsOwner ? isAttacking : NetIsAttacking.Value;
+        animator.SetBool("IsAttacking", attackingNow);
     }
 
+    
     protected override void OnTargetLost(Transform lostTarget)
     {
         base.OnTargetLost(lostTarget);
@@ -61,6 +98,9 @@ public class Player : CharacterBase
     protected override void OnNewTargetFound(Transform newTarget)
     {
         base.OnNewTargetFound(newTarget);
+
+        if (!IsServer) return;
+
         if (!isMovingInput)
         {
             float distance = Vector3.Distance(transform.position, newTarget.position);
@@ -111,10 +151,15 @@ public class Player : CharacterBase
 
         if (IsServer)
         {
-            GameManager.Instance.RegisterPlayerInGame(this);
+            StartCoroutine(DeferredRegister());
         }
     }
 
+    private IEnumerator DeferredRegister()
+    {
+        yield return null; 
+        GameManager.Instance.RegisterPlayerInGame(this.networkObject);
+    }
     protected override void Move(Vector3 direction)
     {
         if (isDead) return;
@@ -132,5 +177,12 @@ public class Player : CharacterBase
     {
         joystick = js;
     }
-
+    
+    private void OnDisable()
+    {
+        if (IsServer)
+        {
+            GameManager.Instance.UnregisterPlayerInGame(this.networkObject);
+        }
+    }
 }

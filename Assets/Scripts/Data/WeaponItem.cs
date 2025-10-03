@@ -9,9 +9,9 @@ public class WeaponItem : MonoBehaviour
     [SerializeField] private Image weaponIcon;
     [SerializeField] private TextMeshProUGUI weaponNameText;
     [SerializeField] private TextMeshProUGUI priceText;
-    [SerializeField] private GameObject chooseHighlight;   // highlight khi chỉ chọn
-    [SerializeField] private GameObject selectedHighlight; // highlight khi đang dùng
-    [SerializeField] private GameObject boughtOverlay;     // overlay đã mua
+    [SerializeField] private GameObject chooseHighlight;   
+    [SerializeField] private GameObject selectedHighlight;
+    [SerializeField] private GameObject boughtOverlay; 
     [SerializeField] private Button itemButton;
 
     public WeaponData WeaponData { get; private set; }
@@ -25,9 +25,12 @@ public class WeaponItem : MonoBehaviour
         weaponNameText.text = weapon.weaponName;
         priceText.text = weapon.price.ToString();
 
+        boughtOverlay.SetActive(false);
+        priceText.gameObject.SetActive(true);
+        
         SetBought(isBought);
         SetSelected(isSelected);
-        SetChosen(false); // ban đầu chưa chọn
+        SetChosen(false); 
 
         itemButton.onClick.AddListener(OnItemClicked);
     }
@@ -43,13 +46,11 @@ public class WeaponItem : MonoBehaviour
         priceText.gameObject.SetActive(!isBought);
     }
 
-    // highlight khi bấm "Select" → đang sử dụng
     public void SetSelected(bool isSelected)
     {
         selectedHighlight.SetActive(isSelected);
     }
 
-    // highlight khi click vào item trong shop
     public void SetChosen(bool isChosen)
     {
         chooseHighlight.SetActive(isChosen);

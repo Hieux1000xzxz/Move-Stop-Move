@@ -4,33 +4,40 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 
+[System.Serializable]
+public class SpawnPointData
+{
+    public Transform point;
+    public float spawnRadius = 10f; 
+}
+
 public class AISpawner : NetworkBehaviour
 {
     [Header("Spawn Settings")]
-    [SerializeField] private Transform[] spawnPoints;
+    [SerializeField] private SpawnPointData[] spawnPoints;
     [SerializeField] private float baseSpawnDelay = 1f;
     [SerializeField] private float delayIncrement = 0.5f;
     [SerializeField] private float maxSpawnDelay = 8f;
-
+    [SerializeField] private int spawnPerWave = 2;
     private Dictionary<Transform, GameObject> spawnPointAIs = new Dictionary<Transform, GameObject>();
-    private bool isFirstWave = true;
     private Coroutine spawnCoroutine;
     private int waveCount = 0;
 
     private void Start()
     {
         if (!IsServer) return;
-        foreach (Transform point in spawnPoints)
-            spawnPointAIs[point] = null;
 
-        SpawnWave();
-        isFirstWave = false;
+        foreach (var sp in spawnPoints)
+            spawnPointAIs[sp.point] = null;
     }
 
     private void Update()
     {
         if (!IsServer) return;
+
         CleanupDeadAIs();
+
+        if (!gameObject.activeInHierarchy) return;
 
         if (HasEmptyPoints() && GameManager.Instance.CanSpawnAI() && spawnCoroutine == null)
         {
@@ -45,10 +52,7 @@ public class AISpawner : NetworkBehaviour
         foreach (var kvp in spawnPointAIs)
         {
             if (kvp.Value != null && !kvp.Value.activeInHierarchy)
-            {
-                GameManager.Instance.UnregisterAI(kvp.Value);
                 toRemove.Add(kvp.Key);
-            }
         }
 
         foreach (Transform point in toRemove)
@@ -64,81 +68,74 @@ public class AISpawner : NetworkBehaviour
 
     private void SpawnWave()
     {
-        if (isFirstWave)
-        {
-            FillAllPoints();
-        }
-        else
-        {
-            waveCount++;
-            spawnCoroutine = StartCoroutine(DelayedSpawn());
-        }
-    }
-
-
-    private void FillAllPoints()
-    {
-        foreach (Transform point in spawnPoints)
-        {
-            if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
-                SpawnAtPoint(point);
-        }
+        waveCount++;
+        spawnCoroutine = StartCoroutine(DelayedSpawn());
     }
 
     private IEnumerator DelayedSpawn()
     {
+        if (!GameManager.Instance.CanSpawnAI())
+        {
+            spawnCoroutine = null;
+            yield break;
+        }
+
         float delay = Mathf.Min(baseSpawnDelay + (waveCount - 1) * delayIncrement, maxSpawnDelay);
 
-        foreach (Transform point in spawnPoints)
+        List<SpawnPointData> availablePoints = new List<SpawnPointData>();
+        foreach (var sp in spawnPoints)
         {
-            if (spawnPointAIs[point] == null && GameManager.Instance.CanSpawnAI())
+            if (spawnPointAIs[sp.point] == null && !IsPlayerInRange(sp))
             {
-                SpawnAtPoint(point);
-                yield return new WaitForSeconds(delay);
+                availablePoints.Add(sp);
             }
+        }
+
+        if (availablePoints.Count < spawnPerWave)
+        {
+            spawnCoroutine = null;
+            yield break;
+        }
+
+        for (int i = 0; i < spawnPerWave; i++)
+        {
+            if (!GameManager.Instance.CanSpawnAI()) break;
+
+            int index = Random.Range(0, availablePoints.Count);
+            SpawnAtPoint(availablePoints[index].point);
+
+            availablePoints.RemoveAt(index); 
+            yield return new WaitForSeconds(delay);
         }
 
         spawnCoroutine = null;
     }
 
+    private bool IsPlayerInRange(SpawnPointData sp)
+    {
+        Collider[] colliders = Physics.OverlapSphere(sp.point.position, sp.spawnRadius);
+        foreach (var col in colliders)
+        {
+            if (col.CompareTag("Player"))
+                return true;
+        }
+        return false;
+    }
+
     private void SpawnAtPoint(Transform spawnPoint)
     {
         if (!GameManager.Instance.CanSpawnAI()) return;
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
-            return;
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening) return;
 
         GameObject enemy = ObjectPool.Instance.SpawnRandomEnemy();
         if (enemy == null) return;
 
-        var character = enemy.GetComponent<CharacterBase>();
-        if (character != null) character.ResetState();
+        PrepareEnemy(enemy);
 
-        var agent = enemy.GetComponent<NavMeshAgent>();
-
-        if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+        if (TryPlaceOnNavMesh(enemy, spawnPoint, out Vector3 position, out Quaternion rotation))
         {
-            if (agent != null)
-            {
-                agent.enabled = false;
-                enemy.transform.position = hit.position;
-                agent.enabled = true;
-
-                if (agent.isOnNavMesh)
-                    agent.Warp(hit.position);
-            }
-            else
-            {
-                enemy.transform.position = hit.position;
-            }
-
-            enemy.transform.rotation = spawnPoint.rotation;
-
-            var netObj = enemy.GetComponent<NetworkObject>();
-            if (netObj != null && !netObj.IsSpawned)
-                netObj.Spawn(true); // sync đến tất cả client
-
-            spawnPointAIs[spawnPoint] = enemy;
-            GameManager.Instance.RegisterAI(enemy);
+            PositionEnemy(enemy, position, rotation);
+            SyncNetworkObject(enemy, spawnPoint);
         }
         else
         {
@@ -146,20 +143,86 @@ public class AISpawner : NetworkBehaviour
         }
     }
 
+    private void PrepareEnemy(GameObject enemy)
+    {
+        var character = enemy.GetComponent<CharacterBase>();
+        if (character != null)
+        {
+            character.ResetState();
+            character.ChangeWeapon(character.weaponType);
+        }
+    }
+
+    private bool TryPlaceOnNavMesh(GameObject enemy, Transform spawnPoint, out Vector3 position, out Quaternion rotation)
+    {
+        position = spawnPoint.position;
+        rotation = spawnPoint.rotation;
+
+        if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+        {
+            position = hit.position;
+            rotation = spawnPoint.rotation;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void PositionEnemy(GameObject enemy, Vector3 position, Quaternion rotation)
+    {
+        enemy.transform.position = position;
+        enemy.transform.rotation = rotation;
+
+        var agent = enemy.GetComponent<NavMeshAgent>();
+        if (agent != null)
+        {
+            agent.enabled = false;
+            bool warped = agent.Warp(position); 
+            agent.enabled = true;
+
+            if (warped && agent.isOnNavMesh)
+            {
+                agent.isStopped = false;
+            }
+            else
+            {
+                Debug.LogWarning($"[AISpawner] Failed to warp {enemy.name} onto NavMesh at {position}");
+                enemy.SetActive(false);
+            }
+        }
+    }
 
 
+    private void SyncNetworkObject(GameObject enemy, Transform spawnPoint)
+    {
+        var netObj = enemy.GetComponent<NetworkObject>();
+        if (netObj == null) return;
 
+        if (netObj.IsSpawned)
+        {
+            netObj.Despawn(false);
+        }
+
+        enemy.SetActive(true);
+        
+        netObj.Spawn(true);
+
+        if (GameManager.Instance.TryRegisterAI(netObj))
+        {
+            spawnPointAIs[spawnPoint] = enemy;
+        }
+        else
+        {
+            netObj.Despawn(false);
+            enemy.SetActive(false);
+        }
+    }
+    
     public int GetActiveAICount()
     {
         int count = 0;
         foreach (var ai in spawnPointAIs.Values)
             if (ai != null) count++;
         return count;
-    }
-
-    private void OnDestroy()
-    {
-        if (spawnCoroutine != null)
-            StopCoroutine(spawnCoroutine);
     }
 }

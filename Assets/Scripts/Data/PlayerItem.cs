@@ -5,34 +5,33 @@ using UnityEngine.UI;
 public class PlayerItem : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI playerNameText;
-    [SerializeField] private Button kickButton;
-
+    [SerializeField] private Image avatarImage;
+    [SerializeField] private Image readyHighlight;
     private string userId;
     private ulong clientId;
     private ConnectionCanvas connectionCanvas;
+    private bool canKick;
 
-    public void Setup(string playerName, string userId, ulong clientId, ConnectionCanvas canvas, bool canKick)
+    public void Setup(string playerName, string userId, ulong clientId, ConnectionCanvas canvas, bool canKick, Sprite avatarSprite, bool isReady)
     {
         this.userId = userId;
         this.clientId = clientId;
         this.connectionCanvas = canvas;
+        this.canKick = canKick;
 
-        if (playerNameText != null)
-            playerNameText.text = playerName;
-
-        if (kickButton != null)
+        playerNameText.text = playerName;
+        if (avatarImage != null && avatarSprite != null)
         {
-            kickButton.gameObject.SetActive(canKick);
-            kickButton.onClick.RemoveAllListeners();
-            kickButton.onClick.AddListener(OnKickClicked);
+            avatarImage.sprite = avatarSprite;
         }
-    }
 
-    private void OnKickClicked()
-    {
-        if (connectionCanvas != null && !string.IsNullOrEmpty(userId))
+        if (isReady)
         {
-            //connectionCanvas.KickPlayer(userId, clientId);
+            readyHighlight.gameObject.SetActive(true);
+        }
+        else
+        {
+            readyHighlight.gameObject.SetActive(false);
         }
     }
 }

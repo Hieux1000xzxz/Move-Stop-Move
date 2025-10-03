@@ -20,6 +20,14 @@ public class ShopCanvas : BaseCanvas
     private WeaponData selectedWeapon;
     private Dictionary<string, WeaponItem> weaponItems = new Dictionary<string, WeaponItem>();
   
+    [SerializeField] private TextMeshProUGUI coinText;
+
+    private void Awake()
+    {
+        if (coinText != null)
+            coinText.gameObject.SetActive(false);
+    }
+    
     private void Start()
     {
         buyButton.onClick.AddListener(OnBuyWeapon);
@@ -28,13 +36,13 @@ public class ShopCanvas : BaseCanvas
         InitializeWeaponsGrid();
         InitSelectedWeapon();
     }
+    
     public void InitSelectedWeapon()
     {
         string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
 
         if (!string.IsNullOrEmpty(selectedWeaponName) && weaponItems.ContainsKey(selectedWeaponName))
         {
-            // Đã có vũ khí được chọn từ trước
             WeaponItem selectedItem = weaponItems[selectedWeaponName];
             selectedWeapon = selectedItem.WeaponData;
 
@@ -54,23 +62,20 @@ public class ShopCanvas : BaseCanvas
         }
         else
         {
-            // 🔥 Lần đầu vào game -> mặc định lấy vũ khí đầu tiên trong danh sách
             if (weapons.Length > 0)
             {
-                WeaponData defaultWeapon = weapons[0]; // vũ khí đầu tiên
+                WeaponData defaultWeapon = weapons[0];
                 selectedWeapon = defaultWeapon;
 
-                // Cập nhật PlayerPrefs để lưu lại
                 PlayerPrefs.SetString("SelectedWeapon", defaultWeapon.weaponName);
-                PlayerPrefs.SetInt("WeaponBought_" + defaultWeapon.weaponName, 1); // coi như đã mua
+                PlayerPrefs.SetInt("WeaponBought_" + defaultWeapon.weaponName, 1); 
                 PlayerPrefs.Save();
 
-                // Cập nhật UI
                 foreach (var item in weaponItems.Values)
                 {
                     bool isSelected = item.WeaponData.weaponName == defaultWeapon.weaponName;
-                    item.SetBought(isSelected);   // vũ khí đầu tiên đã mua
-                    item.SetSelected(isSelected); // vũ khí đầu tiên được chọn
+                    item.SetBought(isSelected);   
+                    item.SetSelected(isSelected); 
                     item.SetChosen(isSelected);
                 }
 
@@ -115,6 +120,15 @@ public class ShopCanvas : BaseCanvas
         }
     }
 
+    public void UpdateCoinUI()
+    {
+        if (coinText != null)
+        {
+            coinText.gameObject.SetActive(true);
+            coinText.text = $"Coins: {CoinManager.Instance.GetTotalCoins()}";
+        }
+    }
+    
     private void OnWeaponSelected(WeaponData weapon)
     {
         selectedWeapon = weapon;
@@ -148,23 +162,29 @@ public class ShopCanvas : BaseCanvas
     {
         if (selectedWeapon == null) return;
 
-        // int currentCoins = PlayerPrefs.GetInt("Coins", 0);
-        // if (currentCoins >= selectedWeapon.price)
-        // {
-        //     currentCoins -= selectedWeapon.price;
-        //     PlayerPrefs.SetInt("Coins", currentCoins);
+        int price = selectedWeapon.price;
 
-        PlayerPrefs.SetInt("WeaponBought_" + selectedWeapon.weaponName, 1);
-        PlayerPrefs.Save();
+        if (!CoinManager.Instance.SpendCoin(price))
+        {
+            UIManager.Instance.SendNotification("Not enough coins to buy this weapon!", 1);
+            return;
+        }
+        
+        if (CoinManager.Instance.SpendCoin(price))  
+        {
+            PlayerPrefs.SetInt("WeaponBought_" + selectedWeapon.weaponName, 1);
+            PlayerPrefs.Save();
 
-        weaponItems[selectedWeapon.weaponName].SetBought(true);
-        UpdateButtons();
-        // }
-        // else
-        // {
-        //     Debug.Log("Không đủ tiền!");
-        // }
+            weaponItems[selectedWeapon.weaponName].SetBought(true);
+            UpdateButtons();
+            UpdateCoinUI();  
+        }
+        else
+        {
+            Debug.Log("Not enough coins to buy " + selectedWeapon.weaponName);
+        }
     }
+
 
     private void OnSelectWeapon()
     {
@@ -177,6 +197,7 @@ public class ShopCanvas : BaseCanvas
         {
             bool isSelected = item.WeaponData.weaponName == selectedWeapon.weaponName;
             item.SetSelected(isSelected);
+            
         }
 
         if (player != null)
@@ -221,6 +242,7 @@ public class ShopCanvas : BaseCanvas
     private void CloseShop()
     {
         root.SetActive(false);
+        coinText.gameObject.SetActive(false);
         InitSelectedWeapon();
         UIManager.Instance.OpenMainMenu();
     }

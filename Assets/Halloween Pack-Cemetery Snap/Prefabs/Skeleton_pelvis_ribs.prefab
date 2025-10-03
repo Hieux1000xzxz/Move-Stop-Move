@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 1327096957144128961}
   - component: {fileID: 2721599365324788324}
   - component: {fileID: 153658373832451758}
-  - component: {fileID: 11998771581852660}
   m_Layer: 7
   m_Name: Skeleton_pelvis_ribs
   m_TagString: Untagged
@@ -87,25 +86,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &11998771581852660
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1810758255541192571}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -3995457367949202468, guid: 2a4da459ce4f85f4f85c735f29987e9d, type: 3}

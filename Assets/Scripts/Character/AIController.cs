@@ -24,15 +24,16 @@ public class AIController : CharacterBase
     private float targetFoundTime;
     private float lastDecisionTime;
     private bool isObserving;
-    
+
     protected override void Start()
     {
         base.Start();
         ChangeWeapon(weaponType);
     }
+
     protected override void Update()
     {
-         if (!GameManager.Instance || !GameManager.Instance.IsGameStarted)
+        if (!GameManager.Instance || !GameManager.Instance.IsGameStarted)
             return;
 
         if (!IsServer) return;
@@ -73,7 +74,7 @@ public class AIController : CharacterBase
     protected override void OnNewTargetFound(Transform newTarget)
     {
         base.OnNewTargetFound(newTarget);
-        targetFoundTime = Time.time; 
+        targetFoundTime = Time.time;
     }
 
     protected override void OnTargetSwitched(Transform oldTarget, Transform newTarget)
@@ -91,14 +92,16 @@ public class AIController : CharacterBase
         }
     }
 
+    protected override void CheckForAttack()
+    {
+    }
+
     private void MakeDecision()
     {
         lastDecisionTime = Time.time;
 
-        // ❌ Nếu chưa có target
         if (detectedTarget == null || !detectedTarget.gameObject.activeInHierarchy)
         {
-            // ✅ Chỉ gọi remainingDistance khi agent hợp lệ
             if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
             {
                 if (!isObserving && (!agent.pathPending && agent.remainingDistance <= 0.5f))
@@ -107,7 +110,6 @@ public class AIController : CharacterBase
             return;
         }
 
-        // Nếu có target
         float distance = Vector3.Distance(transform.position, detectedTarget.position);
         float timeSinceFound = Time.time - targetFoundTime;
 
@@ -125,29 +127,30 @@ public class AIController : CharacterBase
         }
     }
 
-
     private void DecideInCombat()
     {
-        if (currentState == CharacterState.Attack && Random.value < fearLevel * 0.3f)
-        {
-            if (Random.value < 0.5f) MoveAway();
-            else StartWandering();
-            return;
-        }
+        float attackDesire = aggressionLevel - fearLevel + Random.Range(-0.2f, 0.2f);
 
-        if (Random.value < aggressionLevel || currentState == CharacterState.Attack)
+        if (attackDesire > 0.5f)
         {
-            if (!isAttacking)
+            if (currentState != CharacterState.Attack)
             {
                 attackTarget = detectedTarget;
-                agent.isStopped = true;
                 ChangeState(CharacterState.Attack);
             }
         }
+        else if (Random.value < fearLevel)
+        {
+            MoveAway();
+        }
         else if (Random.value < curiosityLevel)
+        {
             ObserveTarget();
+        }
         else
+        {
             CircleTarget();
+        }
     }
 
     private void DecideNearTarget()
@@ -253,7 +256,7 @@ public class AIController : CharacterBase
     {
         if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
             return false;
-        
+
         if (NavMesh.SamplePosition(targetPos, out NavMeshHit hit, sampleDistance, NavMesh.AllAreas))
         {
             agent.isStopped = false;
@@ -264,14 +267,9 @@ public class AIController : CharacterBase
         return false;
     }
 
-    protected override void CheckForAttack()
+    protected override void EndAttack(bool cancelByMove = false)
     {
-        base.CheckForAttack();
-    }
-
-    protected override void EndAttack()
-    {
-        base.EndAttack();
+        base.EndAttack(cancelByMove);
         lastInterestPoint = transform.position;
         if (Random.value < 0.4f) detectedTarget = null;
         agent.isStopped = false;
@@ -288,6 +286,4 @@ public class AIController : CharacterBase
             Gizmos.DrawWireSphere(lastInterestPoint, 1f);
         }
     }
-
-
 }

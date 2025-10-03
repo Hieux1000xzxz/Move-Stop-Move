@@ -28,33 +28,11 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log("Server started");
     }
 
-    private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
+    private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request,
+        NetworkManager.ConnectionApprovalResponse response)
     {
-        ulong clientId = request.ClientNetworkId;
-
-        Vector3 spawnPos = Vector3.zero;
-
-        if (clientId == 0)
-        {
-            spawnPos = new Vector3(-10f, 0f, 0f);
-        }
-        else if (clientId == 1) 
-        {
-            spawnPos = new Vector3(10f, 0f, 0f);
-        }
-        else
-        {
-            float angle = (clientId - 1) * 90f;
-            float radius = 15f;
-            spawnPos = new Vector3(Mathf.Cos(angle * Mathf.Deg2Rad),
-                                   0f,
-                                   Mathf.Sin(angle * Mathf.Deg2Rad)) * radius;
-        }
-
         response.Approved = true;
-        response.CreatePlayerObject = false;   
-        response.Position = spawnPos;
-        response.Rotation = Quaternion.identity;
+        response.CreatePlayerObject = false;  
     }
 
     private void OnEnable()
@@ -71,12 +49,12 @@ public class GameNetworkManager : MonoBehaviour
     private void HandleClientConnected(ulong clientId)
     {
         if (!NetworkManager.Singleton.IsServer) return;
-
+        
         Vector3 spawnPos = SpawnPlayerManager.Instance.GetSpawnPosition(clientId);
+
         GameObject playerPrefab = NetworkManager.Singleton.NetworkConfig.PlayerPrefab;
         GameObject playerObj = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-
-        playerObj.GetComponent<NetworkObject>().SpawnWithOwnership(clientId);
+        
+        playerObj.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, true);
     }
-
 }

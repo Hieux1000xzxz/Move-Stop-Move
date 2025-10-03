@@ -1,5 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Cinemachine;
+using System.Collections;
 
 public class CinemachineZoomController : MonoBehaviour
 {
@@ -16,33 +17,58 @@ public class CinemachineZoomController : MonoBehaviour
     [SerializeField] private CinemachineFollow transposer;
 
     private KillScoreDisplay scoreDisplay;
+    private Coroutine zoomRoutine;
+
     public void SetUp(KillScoreDisplay killScore)
     {
-        this.scoreDisplay = killScore;
+        if (scoreDisplay != null)
+            scoreDisplay.OnScoreChanged -= HandleScoreChanged;
+
+        scoreDisplay = killScore;
+
+        if (scoreDisplay != null)
+            scoreDisplay.OnScoreChanged += HandleScoreChanged;
+
+        HandleScoreChanged(scoreDisplay.CurrentScore);
     }
-    private void Update()
+
+    private void HandleScoreChanged(int newScore)
     {
-        if (scoreDisplay == null || virtualCamera == null || transposer == null) return;
+        float targetFOV = Mathf.Min(baseFOV + (newScore * fovPerScore), maxFOV);
+        float targetFollowY = Mathf.Min(baseFollowY + (newScore * followYPerScore), maxFollowY);
 
-        float targetFOV = baseFOV + (scoreDisplay.CurrentScore * fovPerScore);
-        targetFOV = Mathf.Min(targetFOV, maxFOV);
+        if (zoomRoutine != null) StopCoroutine(zoomRoutine);
+        zoomRoutine = StartCoroutine(SmoothZoom(targetFOV, targetFollowY));
+    }
 
-        virtualCamera.Lens.FieldOfView = Mathf.Lerp(
-            virtualCamera.Lens.FieldOfView,
-            targetFOV,
-            Time.deltaTime * zoomSpeed
-        );
+    private IEnumerator SmoothZoom(float targetFOV, float targetFollowY)
+    {
+        while (virtualCamera != null && transposer != null &&
+               (Mathf.Abs(virtualCamera.Lens.FieldOfView - targetFOV) > 0.01f ||
+                Mathf.Abs(transposer.FollowOffset.y - targetFollowY) > 0.01f))
+        {
+            virtualCamera.Lens.FieldOfView = Mathf.Lerp(
+                virtualCamera.Lens.FieldOfView,
+                targetFOV,
+                Time.deltaTime * zoomSpeed
+            );
 
-        float targetFollowY = baseFollowY + (scoreDisplay.CurrentScore * followYPerScore);
-        targetFollowY = Mathf.Min(targetFollowY, maxFollowY);
+            Vector3 currentOffset = transposer.FollowOffset;
+            Vector3 targetOffset = new Vector3(currentOffset.x, targetFollowY, currentOffset.z);
 
-        Vector3 currentOffset = transposer.FollowOffset;
-        Vector3 targetOffset = new Vector3(currentOffset.x, targetFollowY, currentOffset.z);
+            transposer.FollowOffset = Vector3.Lerp(
+                currentOffset,
+                targetOffset,
+                Time.deltaTime * zoomSpeed
+            );
 
-        transposer.FollowOffset = Vector3.Lerp(
-            currentOffset,
-            targetOffset,
-            Time.deltaTime * zoomSpeed
-        );
+            yield return null;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (scoreDisplay != null)
+            scoreDisplay.OnScoreChanged -= HandleScoreChanged;
     }
 }

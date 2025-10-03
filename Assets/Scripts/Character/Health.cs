@@ -64,8 +64,28 @@ public class Health : NetworkBehaviour
             gameObject.layer = deadLayer;
 
         if (IsServer)
+        {
+            Player player = GetComponent<Player>();
+            if (player != null)
+            {
+                var ownerClientId = player.OwnerClientId;
+
+                GameManager.Instance.GameOverTargetClientRpc(new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new ulong[] { ownerClientId }
+                    }
+                });
+            }
+            else
+            {
+            }
+
             DieClientRpc();
+        }
     }
+
 
     [ClientRpc]
     private void DieClientRpc()
@@ -83,9 +103,5 @@ public class Health : NetworkBehaviour
 
     private void EnsureHealthSynced()
     {
-        if (CurrentHealth.Value <= 0 && !IsServer)
-        {
-            Debug.LogWarning($"{name} Client thấy health=0, nhưng chờ sync từ server...");
-        }
     }
 }

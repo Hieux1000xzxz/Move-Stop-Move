@@ -217,6 +217,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8889638765023126380, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
   m_PrefabInstance: {fileID: 7836738682889203449}
   m_PrefabAsset: {fileID: 0}
+--- !u!65 &2939150663891954781 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 4902244865759134372, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
+  m_PrefabInstance: {fileID: 7836738682889203449}
+  m_PrefabAsset: {fileID: 0}
 --- !u!54 &3562958303719707135 stripped
 Rigidbody:
   m_CorrespondingSourceObject: {fileID: 6751911775233490694, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
@@ -267,11 +272,12 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   speed: 14
   damage: 10
-  handRotationOffset: {x: 0, y: 0, z: -90}
-  rotateAxis: {x: 0, y: 1, z: 0}
+  handRotationOffset: {x: -90, y: 0, z: 0}
+  rotateAxis: {x: 0, y: -1, z: 0}
   rotateSpeed: 1080
   rotateMode: 3
   rb: {fileID: 3562958303719707135}
+  collider: {fileID: 2939150663891954781}
   isFlying: 0
 --- !u!114 &-1379304877831391949
 MonoBehaviour:
@@ -280,7 +286,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7795159553526056017}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ac31dc6908d324742a0c0ef7dcf1e8b4, type: 3}
   m_Name: 

@@ -2,4 +2,5 @@
 
 public class Axe : WeaponBase
 {
+
 }

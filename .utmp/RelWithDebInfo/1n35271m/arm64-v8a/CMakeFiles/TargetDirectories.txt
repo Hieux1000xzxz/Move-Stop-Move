@@ -1,0 +1,5 @@
+D:/Move-Stop-Move_Multi/.utmp/RelWithDebInfo/1n35271m/arm64-v8a/CMakeFiles/edit_cache.dir
+D:/Move-Stop-Move_Multi/.utmp/RelWithDebInfo/1n35271m/arm64-v8a/CMakeFiles/rebuild_cache.dir
+D:/Move-Stop-Move_Multi/.utmp/RelWithDebInfo/1n35271m/arm64-v8a/GameActivity/CMakeFiles/game.dir
+D:/Move-Stop-Move_Multi/.utmp/RelWithDebInfo/1n35271m/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
+D:/Move-Stop-Move_Multi/.utmp/RelWithDebInfo/1n35271m/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir
