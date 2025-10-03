@@ -199,9 +199,11 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         UIManager.Instance.HideCountText();
         gameOverUI.SetActive(true);
-        
+
+        Debug.Log("[GamePlayCanvas] OnGameOver -> Commit coin");
+        CoinManager.Instance.CommitSessionCoins();
+
         int totalCoins = CoinManager.Instance.GetTotalCoins();
-        
         totalCoinText.gameObject.SetActive(true);
         totalCoinText.text = $"Total coins: {totalCoins}";
     }
@@ -213,7 +215,8 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
         countDown.gameObject.SetActive(true);
-
+        Debug.Log("[GamePlayCanvas] OnGameWin -> Commit coin");
+        CoinManager.Instance.CommitSessionCoins();
     }
 
     public void OnWinner()

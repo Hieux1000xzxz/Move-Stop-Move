@@ -120,14 +120,20 @@ public class ShopCanvas : BaseCanvas
         }
     }
 
+    private void OnEnable()
+    {
+        UpdateCoinUI();
+    }
+
     public void UpdateCoinUI()
     {
         if (coinText != null)
         {
             coinText.gameObject.SetActive(true);
-            coinText.text = $"Coins: {CoinManager.Instance.GetTotalCoins()}";
+            coinText.text = $"Coins: {CoinManager.Instance.GetShopCoins()}";
         }
     }
+
     
     private void OnWeaponSelected(WeaponData weapon)
     {
@@ -164,26 +170,21 @@ public class ShopCanvas : BaseCanvas
 
         int price = selectedWeapon.price;
 
-        if (!CoinManager.Instance.SpendCoin(price))
+        bool success = CoinManager.Instance.SpendCoin(price);
+        if (!success)
         {
             UIManager.Instance.SendNotification("Not enough coins to buy this weapon!", 1);
             return;
         }
-        
-        if (CoinManager.Instance.SpendCoin(price))  
-        {
-            PlayerPrefs.SetInt("WeaponBought_" + selectedWeapon.weaponName, 1);
-            PlayerPrefs.Save();
 
-            weaponItems[selectedWeapon.weaponName].SetBought(true);
-            UpdateButtons();
-            UpdateCoinUI();  
-        }
-        else
-        {
-            Debug.Log("Not enough coins to buy " + selectedWeapon.weaponName);
-        }
+        PlayerPrefs.SetInt("WeaponBought_" + selectedWeapon.weaponName, 1);
+        PlayerPrefs.Save();
+
+        weaponItems[selectedWeapon.weaponName].SetBought(true);
+        UpdateButtons();
+        UpdateCoinUI();
     }
+
 
 
     private void OnSelectWeapon()
