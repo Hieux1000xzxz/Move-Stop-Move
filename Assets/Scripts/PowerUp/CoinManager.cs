@@ -4,14 +4,16 @@ using TMPro;
 public class CoinManager : Singleton<CoinManager>
 {
     [Header("Coin Settings")]
-    [SerializeField] private int totalCoins = 0;
-
-    [Header("UI")]
     [SerializeField] private TMP_Text coinText;
-    
+
     private const string COIN_KEY = "ShopCoins";
+
+    private int sessionCoins = 0; 
+    private int shopCoins = 0;    
     
-    public int GetTotalCoins() => totalCoins;
+    public int GetShopCoins() => shopCoins;
+    public int GetSessionCoins() => sessionCoins;
+    public int GetTotalCoins() => shopCoins + sessionCoins;
 
     private void Awake()
     {
@@ -20,11 +22,12 @@ public class CoinManager : Singleton<CoinManager>
             Destroy(gameObject);
             return;
         }
-        DontDestroyOnLoad(gameObject);
-        
-        totalCoins = PlayerPrefs.GetInt(COIN_KEY, 0);
+
+        shopCoins = PlayerPrefs.GetInt(COIN_KEY, 0);
+        sessionCoins = 0;
+
     }
-    
+
     private void Start()
     {
         UpdateCoinUI();
@@ -32,32 +35,49 @@ public class CoinManager : Singleton<CoinManager>
 
     public void AddCoin(int amount)
     {
-        totalCoins += amount;
+        sessionCoins += amount;
+
+        UpdateCoinUI();
+    }
+
+    public void CommitSessionCoins()
+    {
+        shopCoins += sessionCoins;
+        sessionCoins = 0;
+        SaveCoins();
+        PlayerPrefs.Save();
         UpdateCoinUI();
     }
 
     public bool SpendCoin(int amount)
     {
-        if (totalCoins >= amount)
+        if (shopCoins >= amount)
         {
-            totalCoins -= amount;
+            shopCoins -= amount;
             SaveCoins();
             UpdateCoinUI();
             return true;
         }
+
         return false;
     }
-    
+
     private void SaveCoins()
     {
-        PlayerPrefs.SetInt(COIN_KEY, totalCoins);
+        PlayerPrefs.SetInt(COIN_KEY, shopCoins);
         PlayerPrefs.Save();
+
     }
-    
+
+    public static int LoadCoinsFromPrefs()
+    {
+        int coins = PlayerPrefs.GetInt(COIN_KEY, 0);
+        return coins;
+    }
+
     private void UpdateCoinUI()
     {
         if (coinText != null)
-            coinText.text = $"Coins: {totalCoins}";
+            coinText.text = $"Coins: {sessionCoins}";
     }
-
 }
