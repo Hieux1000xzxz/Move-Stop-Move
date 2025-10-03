@@ -54,7 +54,8 @@ public class GameManager : NetworkBehaviour
     public bool IsGameStarted => isGameStarted;
 
     protected void Awake()
-    {
+    { PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
         Instance = this;
         isGameStarted = false;
         currentAIQuota = totalAIQuota;

@@ -167,6 +167,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   value: 1
+  col: {fileID: 2469434912461025924}
 --- !u!65 &3091149035508829673
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -4,12 +4,7 @@ public class Coin : MonoBehaviour
 {
     [SerializeField] private int value = 100;
     private bool isCollected;
-    private Collider col;
-
-    private void Awake()
-    {
-        col = GetComponent<Collider>();
-    }
+    [SerializeField] private Collider col;
 
     private void OnEnable()
     {
@@ -17,18 +12,21 @@ public class Coin : MonoBehaviour
         if (col != null) col.enabled = true;
     }
 
+   
     private void OnTriggerEnter(Collider other)
     {
         if (isCollected) return;
-        if (!other.CompareTag("Player")) return;
-        
-        isCollected = true;
-        
-        if (col != null) col.enabled = false;
-        gameObject.SetActive(false);  
 
-        CoinManager.Instance.AddCoin(value);
+        CharacterBase character = other.GetComponent<CharacterBase>();
+        if (character == null) return;
 
-        ObjectPool.Instance.ReleaseCoin(gameObject);
+        if (character.ownerType == CharacterBase.OwnerType.Player && character.IsOwner)
+        {
+            isCollected = true;
+            if (col != null) col.enabled = false;
+
+            CoinManager.Instance.AddCoin(value);
+            ObjectPool.Instance.ReleaseCoin(gameObject);
+        }
     }
 }

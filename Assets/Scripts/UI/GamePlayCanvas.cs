@@ -26,6 +26,9 @@ public class GamePlayCanvas : BaseCanvas
     private float winExitTimer = -1f;
     private float winExitDelay = 5f;
 
+    //Winner
+    [SerializeField] private TextMeshProUGUI totalCoinText;
+    
     public void Init(ConnectionCanvas connection, string lobbyId, string playerName)
     {
         this.connectionCanvas = connection;
@@ -40,6 +43,8 @@ public class GamePlayCanvas : BaseCanvas
         menuUI.SetActive(false);
         viewUI.SetActive(false);
         countDown.gameObject.SetActive(false);
+        
+        totalCoinText.gameObject.SetActive(false);
     }
     private void Update()
     {
@@ -194,6 +199,11 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         UIManager.Instance.HideCountText();
         gameOverUI.SetActive(true);
+        
+        int totalCoins = CoinManager.Instance.GetTotalCoins();
+        
+        totalCoinText.gameObject.SetActive(true);
+        totalCoinText.text = $"Total coins: {totalCoins}";
     }
 
     public void OnGameWin()
@@ -214,7 +224,11 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
         countDown.gameObject.SetActive(true);
-
+        
+        int totalCoins = CoinManager.Instance.GetTotalCoins();
+        
+        totalCoinText.gameObject.SetActive(true);
+        totalCoinText.text = $"Total coins: {totalCoins}";
     }
 }
 

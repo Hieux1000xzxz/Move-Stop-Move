@@ -8,13 +8,23 @@ public class CoinManager : Singleton<CoinManager>
 
     [Header("UI")]
     [SerializeField] private TMP_Text coinText;
+    
+    private const string COIN_KEY = "ShopCoins";
+    
     public int GetTotalCoins() => totalCoins;
 
-    protected override void Awake() 
+    private void Awake()
     {
-        base.Awake();
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        DontDestroyOnLoad(gameObject);
+        
+        totalCoins = PlayerPrefs.GetInt(COIN_KEY, 0);
     }
-
+    
     private void Start()
     {
         UpdateCoinUI();
@@ -31,12 +41,19 @@ public class CoinManager : Singleton<CoinManager>
         if (totalCoins >= amount)
         {
             totalCoins -= amount;
+            SaveCoins();
             UpdateCoinUI();
             return true;
         }
         return false;
     }
-
+    
+    private void SaveCoins()
+    {
+        PlayerPrefs.SetInt(COIN_KEY, totalCoins);
+        PlayerPrefs.Save();
+    }
+    
     private void UpdateCoinUI()
     {
         if (coinText != null)
