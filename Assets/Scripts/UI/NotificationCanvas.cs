@@ -1,8 +1,9 @@
+﻿using DG.Tweening;
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 
 public class NotificationCanvas : BaseCanvas
 {
@@ -12,12 +13,14 @@ public class NotificationCanvas : BaseCanvas
     [SerializeField] private Button confirmButton;
     [SerializeField] private Button cancelButton;
 
-    [Header("Toast Simple")]
     [SerializeField] private TextMeshProUGUI toastText;
+    [SerializeField] private float toastDuration = 0.5f;
+    [SerializeField] private float toastFadeTime = 0.25f;
     [Header("Countdown Toast")]
     [SerializeField] private TextMeshProUGUI countdownToastText;
     private Action<bool> onDecision;
 
+    private Tween currentToastTween;
 
     void Start()
     {
@@ -38,11 +41,6 @@ public class NotificationCanvas : BaseCanvas
             onDecision?.Invoke(true);
             CloseNotificationCanvas();
         });
-
-        if (toastText != null)
-        {
-            toastText.gameObject.SetActive(false);
-        }
     }
 
     public void SetText(string message)
@@ -86,7 +84,32 @@ public class NotificationCanvas : BaseCanvas
 
     public void ShowToast(string message)
     {
+        if (toastText == null) return;
+
+        currentToastTween?.Kill();
+
         toastText.gameObject.SetActive(true);
         toastText.text = message;
+
+        Color c = toastText.color;
+        c.a = 0f;
+        toastText.color = c;
+
+        Vector3 originalPos = toastText.rectTransform.anchoredPosition;
+        toastText.rectTransform.anchoredPosition = originalPos + new Vector3(0, -50f, 0);
+
+        Sequence seq = DOTween.Sequence();
+
+        seq.Append(toastText.DOFade(1f, toastFadeTime)); 
+        seq.Join(toastText.rectTransform.DOAnchorPos(originalPos, toastFadeTime).SetEase(Ease.OutBack));
+
+        seq.AppendInterval(toastDuration); 
+        seq.Append(toastText.DOFade(0f, toastFadeTime));
+        seq.Join(toastText.rectTransform.DOAnchorPos(originalPos + new Vector3(0, 50f, 0), toastFadeTime).SetEase(Ease.InBack));
+
+        seq.OnComplete(() => toastText.gameObject.SetActive(false));
+
+        currentToastTween = seq;
     }
+
 }

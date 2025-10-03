@@ -97,9 +97,9 @@ public class UIManager : Singleton<UIManager>
             {
                 notificationCanvas.HideMainPanel();
                 notificationCanvas.ShowToast(message);
-                Invoke(nameof(CloseNotification), 1.5f);
             }
             notificationCanvas.Show();
+
         }
     }
 

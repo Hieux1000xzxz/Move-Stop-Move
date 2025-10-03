@@ -705,7 +705,8 @@ public class ConnectionCanvas : BaseCanvas
             SendNotification("Player name cannot be empty", 1);
             return;
         }
-
+        SendNotification("Profile updated successfully", 4);
+        
         localUserName = newName;
         SavePlayerPrefs(localUserName);
         HidePlayerInfoPanel();
@@ -714,7 +715,6 @@ public class ConnectionCanvas : BaseCanvas
         {
             StartCoroutine(UpdatePlayerInfoInLobby());
         }
-        SendNotification("Profile updated successfully", 4);
     }
 
     private IEnumerator UpdatePlayerInfoInLobby()
@@ -890,6 +890,7 @@ public class ConnectionCanvas : BaseCanvas
         {
             startGameButton.gameObject.SetActive(true);
             readyButton.gameObject.SetActive(false);
+            settingButton.gameObject.SetActive(true);
 
             isReady = true;
 
@@ -1265,6 +1266,7 @@ public class ConnectionCanvas : BaseCanvas
         lobbyPanel.SetActive(false);
         if (joinByIdPanel != null) joinByIdPanel.SetActive(false);
         GameManager.Instance.ShowPlayerPreview();
+        UIManager.Instance?.CloseNotification();
         UIManager.Instance?.CloseNetwork();
         UIManager.Instance?.OpenMainMenu();
     }
