@@ -21,7 +21,8 @@ public class PowerupSpawner : NetworkBehaviour
     private void SpawnAllOnce()
     {
         foreach (var point in spawnPoints)
-        {
+        { 
+            Debug.Log($"[PowerupSpawner] SpawnPoint: {point.name} at {point.position}");
             if (!activePowerups.ContainsKey(point) || activePowerups[point] == null)
             {
                 SpawnAtPoint(point.position, point.rotation, point);
@@ -31,7 +32,11 @@ public class PowerupSpawner : NetworkBehaviour
 
     private void SpawnAtPoint(Vector3 pos, Quaternion rot, Transform key)
     {
-        if (!CanSpawnAt(key)) return;
+        if (!IsServer) return;
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening) return;
+        
+        if (activePowerups.ContainsKey(key) && activePowerups[key] != null)
+            return;
 
         GameObject obj = GetPowerupFromPool(pos, rot, out PowerupType type);
         if (obj == null) return;
@@ -41,7 +46,7 @@ public class PowerupSpawner : NetworkBehaviour
 
         activePowerups[key] = obj;
     }
-
+    
     #region Sub Functions
     
     private bool CanSpawnAt(Transform key)
@@ -91,7 +96,10 @@ public class PowerupSpawner : NetworkBehaviour
 
         if (IsServer && NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            SpawnAtPoint(pos, rot, key);
+            if (!activePowerups.ContainsKey(key) || activePowerups[key] == null)
+            {
+                SpawnAtPoint(pos, rot, key);
+            }
         }
     }
 }

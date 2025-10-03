@@ -64,6 +64,7 @@ public abstract class CharacterBase : NetworkBehaviour
     private Coroutine weaponGrowRoutine;
     private bool isSpeedBoostActive = false;
     private bool isWeaponGrowActive = false;
+    private bool hasDied = false;
     
     private float baseMoveSpeed;
 
@@ -708,6 +709,7 @@ public abstract class CharacterBase : NetworkBehaviour
         }
 
         hasSpawnedBefore = true;
+        hasDied = false;
     }
 
     #endregion
@@ -782,8 +784,9 @@ public abstract class CharacterBase : NetworkBehaviour
     #region Death
     protected virtual void CheckForDead()
     {
-        if (health.IsDead == true)
+        if (health.IsDead == true && !hasDied)
         {
+            hasDied = true;
             isDead = true;
 
             if (IsServer)
@@ -793,7 +796,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
             StopAllCoroutines();
             scoreDisplay.gameObject.SetActive(false);
-            characterCollider.enabled = false;
+            characterCollider.enabled = true;
             if (agent != null && agent.isActiveAndEnabled)
             {
                 agent.isStopped = true;
@@ -833,16 +836,29 @@ public abstract class CharacterBase : NetworkBehaviour
 
             HideOrReleaseWeapon();
 
-            StartCoroutine(DelayedDisable(1.5f));
+            Debug.Log("Check FOr dead");
+            StartCoroutine(DelayedDisable(0f));
         }
     }
     
     private IEnumerator DelayedDisable(float delay)
     {
+        SpawnCoinUniversal();
+        
         yield return new WaitForSeconds(delay);
+
         gameObject.SetActive(false);
     }
+    
+    private void SpawnCoinUniversal()
+    {
+        GameObject coin = ObjectPool.Instance.SpawnCoin(transform.position + Vector3.up * 1f, Quaternion.identity);
+
+        coin.SetActive(true); 
+    }
+
     #endregion
+    
 
     #region Network Methods
 

@@ -25,6 +25,7 @@ public enum ObjectType
     Weapon,
     Weapon1,
     Powerup,
+    Coin,
     Other
 }
 
@@ -280,46 +281,71 @@ public class ObjectPool : Singleton<ObjectPool>
         return null;
     }
     #endregion
-    public void RebuildPool()
+    
+    public GameObject SpawnCoin(Vector3 pos, Quaternion rot)
     {
-        pooledGobjects.Clear();
+        GameObject obj = null;
 
-        foreach (Preallocation item in preAllocations)
-        {
-            for (int i = 0; i < item.count; ++i)
-            {
-                pooledGobjects.Add(CreateGobject(item.gameObject));
-            }
-        }
-    }
-    public void ClearAll()
-    {
+        // tìm coin chưa active
         for (int i = pooledGobjects.Count - 1; i >= 0; i--)
         {
-            var obj = pooledGobjects[i];
-            if (obj == null)
+            var go = pooledGobjects[i];
+            if (go == null)
             {
                 pooledGobjects.RemoveAt(i);
                 continue;
             }
 
-            var netObj = obj.GetComponent<NetworkObject>();
-            if (netObj != null && netObj.IsSpawned)
+            if (!go.activeSelf)
             {
-                if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+                foreach (var pre in preAllocations)
                 {
-                    netObj.Despawn(false);
-                }
-                else
-                {
-                    netObj.Despawn(true);
+                    if (pre.type == ObjectType.Coin && go.name.Contains(pre.gameObject.name))
+                    {
+                        obj = go;
+                        break;
+                    }
                 }
             }
-
-            obj.SetActive(false);
+            if (obj != null) break;
         }
-    }
 
+        // nếu không có thì tạo thêm
+        if (obj == null)
+        {
+            foreach (var pre in preAllocations)
+            {
+                if (pre.type == ObjectType.Coin && pre.expandable)
+                {
+                    obj = CreateGobject(pre.gameObject);
+                    pooledGobjects.Add(obj);
+                    break;
+                }
+            }
+        }
+
+        if (obj == null) return null;
+
+        obj.transform.position = pos;
+        obj.transform.rotation = rot;
+        obj.SetActive(true);
+
+        var netObj = obj.GetComponent<NetworkObject>();
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            if (NetworkManager.Singleton.IsServer && netObj != null && !netObj.IsSpawned)
+            {
+                netObj.Spawn(true); // spawn cho client thấy
+            }
+        }
+        else
+        {
+            // Single player mode
+            obj.SetActive(true);
+        }
+
+        return obj;
+    }
 
     public void ReleaseWeapon(GameObject obj)
     {
@@ -327,6 +353,18 @@ public class ObjectPool : Singleton<ObjectPool>
         if (netObj != null && netObj.IsSpawned && NetworkManager.Singleton.IsServer)
         {
             netObj.Despawn(true);
+        }
+
+        obj.SetActive(false);
+    }
+    public void ReleaseCoin(GameObject obj)
+    {
+        if (obj == null) return;
+
+        var netObj = obj.GetComponent<NetworkObject>();
+        if (netObj != null && netObj.IsSpawned && NetworkManager.Singleton.IsServer)
+        {
+            netObj.Despawn(false);
         }
 
         obj.SetActive(false);
