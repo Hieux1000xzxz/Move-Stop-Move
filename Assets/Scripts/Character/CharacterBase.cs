@@ -675,7 +675,8 @@ public abstract class CharacterBase : NetworkBehaviour
         isAttacking = false;
         isDead = false;
         hasWeapon = true;
-
+        agent.enabled = true;
+        
         if (IsServer && health != null)
         {
             health.CurrentHealth.Value = health.maxHealth;
@@ -700,12 +701,6 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             StopCoroutine(attackRoutine);
             attackRoutine = null;
-        }
-
-        if (agent != null && agent.isActiveAndEnabled)
-        {
-            agent.ResetPath();
-            agent.velocity = Vector3.zero;
         }
 
         hasSpawnedBefore = true;
@@ -797,12 +792,7 @@ public abstract class CharacterBase : NetworkBehaviour
             StopAllCoroutines();
             scoreDisplay.gameObject.SetActive(false);
             characterCollider.enabled = true;
-            if (agent != null && agent.isActiveAndEnabled)
-            {
-                agent.isStopped = true;
-                agent.velocity = Vector3.zero;
-                agent.ResetPath();
-            }
+            agent.enabled = false;
 
             if (animator != null)
             {
@@ -837,7 +827,7 @@ public abstract class CharacterBase : NetworkBehaviour
             HideOrReleaseWeapon();
 
             Debug.Log("Check FOr dead");
-            StartCoroutine(DelayedDisable(0f));
+            StartCoroutine(DelayedDisable(1.5f));
         }
     }
     

@@ -129,18 +129,11 @@ public class AISpawner : NetworkBehaviour
 
         GameObject enemy = ObjectPool.Instance.SpawnRandomEnemy();
         if (enemy == null) return;
-
+        
+        PositionEnemy(enemy, spawnPoint.position, spawnPoint.rotation);
         PrepareEnemy(enemy);
-
-        if (TryPlaceOnNavMesh(enemy, spawnPoint, out Vector3 position, out Quaternion rotation))
-        {
-            PositionEnemy(enemy, position, rotation);
-            SyncNetworkObject(enemy, spawnPoint);
-        }
-        else
-        {
-            enemy.SetActive(false);
-        }
+        
+        SyncNetworkObject(enemy, spawnPoint);
     }
 
     private void PrepareEnemy(GameObject enemy)
@@ -153,45 +146,12 @@ public class AISpawner : NetworkBehaviour
         }
     }
 
-    private bool TryPlaceOnNavMesh(GameObject enemy, Transform spawnPoint, out Vector3 position, out Quaternion rotation)
-    {
-        position = spawnPoint.position;
-        rotation = spawnPoint.rotation;
-
-        if (NavMesh.SamplePosition(spawnPoint.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
-        {
-            position = hit.position;
-            rotation = spawnPoint.rotation;
-            return true;
-        }
-
-        return false;
-    }
-
     private void PositionEnemy(GameObject enemy, Vector3 position, Quaternion rotation)
     {
         enemy.transform.position = position;
         enemy.transform.rotation = rotation;
 
-        var agent = enemy.GetComponent<NavMeshAgent>();
-        if (agent != null)
-        {
-            agent.enabled = false;
-            bool warped = agent.Warp(position); 
-            agent.enabled = true;
-
-            if (warped && agent.isOnNavMesh)
-            {
-                agent.isStopped = false;
-            }
-            else
-            {
-                Debug.LogWarning($"[AISpawner] Failed to warp {enemy.name} onto NavMesh at {position}");
-                enemy.SetActive(false);
-            }
-        }
     }
-
 
     private void SyncNetworkObject(GameObject enemy, Transform spawnPoint)
     {

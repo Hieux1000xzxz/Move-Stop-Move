@@ -155,6 +155,8 @@ public class AIController : CharacterBase
 
     private void DecideNearTarget()
     {
+        if(agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+            return;
         float approachChance = aggressionLevel * (1f - fearLevel);
 
         if (Random.value < approachChance)
@@ -197,6 +199,8 @@ public class AIController : CharacterBase
 
     private void ObserveTarget()
     {
+        if(agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+            return;
         agent.isStopped = true;
         ChangeState(CharacterState.Idle);
         if (detectedTarget != null)

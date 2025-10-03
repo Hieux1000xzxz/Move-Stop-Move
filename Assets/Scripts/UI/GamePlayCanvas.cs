@@ -146,7 +146,7 @@ public class GamePlayCanvas : BaseCanvas
             NetworkManager.Singleton != null &&
             !NetworkManager.Singleton.IsHost)
         {
-            UIManager.Instance?.SendNotification("Host has left the room. Returning to the menu scene...", 1);
+            UIManager.Instance?.SendNotification("Host has left the room. Returning to the menu scene...", 2);
         }
 
         if (NetworkManager.Singleton != null)

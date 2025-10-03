@@ -537,7 +537,7 @@ public class ConnectionCanvas : BaseCanvas
             return;
         }
 
-        StartCoroutine(StartHostRoutineCoroutine(localUserName, DEFAULT_LOBBY_NAME + " of " + localUserName , joinCode, hostUserId));
+        StartCoroutine(StartHostRoutineCoroutine(localUserName, "" + joinCode, joinCode, hostUserId));
         mainPanel.SetActive(false);
     }
     private IEnumerator StartHostRoutineCoroutine(string hostName, string lobbyName, string joinCode, string hostUserId)

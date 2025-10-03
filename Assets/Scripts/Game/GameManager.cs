@@ -180,6 +180,7 @@ public class GameManager : NetworkBehaviour
         if (EnemyCount.Value > 0) return;
 
         if (totalSpawned < 2) return;
+
         if (activeEntities.Count == 1)
         {
             var lastNetObj = activeEntities[0];
@@ -187,20 +188,25 @@ public class GameManager : NetworkBehaviour
             {
                 FocusCameraOnTargetClientRpc(lastNetObj);
 
-                GameWinClientRpc();
-
-                if (lastNetObj.TryGetComponent(out NetworkObject netObj))
+                if (ActivePlayerCount.Value > 0)
                 {
-                    var winnerId = netObj.OwnerClientId;
+                    GameWinClientRpc();
+
+                    var winnerId = lastNetObj.OwnerClientId;
                     var clientRpcParams = new ClientRpcParams
                     {
                         Send = new ClientRpcSendParams { TargetClientIds = new[] { winnerId } }
                     };
                     WinnerClientRpc(clientRpcParams);
                 }
+                else
+                {
+                    GameWinClientRpc();
+                }
             }
         }
     }
+
 
 
     [ClientRpc]
@@ -496,7 +502,7 @@ public class GameManager : NetworkBehaviour
     public void RequestNextSpectatorTargetServerRpc(ServerRpcParams rpcParams = default)
     {
         var alive = GetAliveSpectatorTargets();
-        if (alive.Count == 0) return;
+        if (alive.Count == 1) return;
 
         spectatorIndex = (spectatorIndex + 1) % alive.Count;
 
