@@ -25,6 +25,9 @@ public class WeaponItem : MonoBehaviour
         weaponNameText.text = weapon.weaponName;
         priceText.text = weapon.price.ToString();
 
+        boughtOverlay.SetActive(false);
+        priceText.gameObject.SetActive(true);
+        
         SetBought(isBought);
         SetSelected(isSelected);
         SetChosen(false); 

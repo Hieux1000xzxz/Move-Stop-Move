@@ -121,8 +121,13 @@ public class UIManager : Singleton<UIManager>
 
     public void OpenLoadingCanvas() => OpenUI(loadingCanvas);
     public void OpenMainMenu() => OpenUI(mainMenuCanvas);
-    public void OpenShop() => OpenUI(shopCanvas);
-    public void OpenConnection() => OpenUI(connectionCanvas);
+    public void OpenShop()  
+    {
+        OpenUI(shopCanvas);
+        shopCanvas.UpdateCoinUI();
+    }
+
+    public void OpenConnection() =>OpenUI(connectionCanvas);
     public void OpenNotification() => OpenNoti(notificationCanvas);
 
     public void CloseMainMenu() => CloseUI(mainMenuCanvas);
