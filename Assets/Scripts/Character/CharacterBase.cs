@@ -1231,7 +1231,6 @@ public abstract class CharacterBase : NetworkBehaviour
         currentWeapon.transform.rotation = rot;
         currentWeapon.Launch(dir, this.gameObject);
         yield return new WaitUntil(() => currentWeapon != null);
-
     }
     [ServerRpc]
     public void RequestChangeWeaponServerRpc(WeaponType newWeaponType)
@@ -1249,4 +1248,21 @@ public abstract class CharacterBase : NetworkBehaviour
     }
 
     #endregion
+
+    [ClientRpc]
+    private void AddCoinClientRpc(int amount, ClientRpcParams rpcParams = default)
+    {
+        CoinManager.Instance.AddCoin(amount);
+    }
+    public void AddCoinToClient(ulong clientId, int amount)
+    {
+        AddCoinClientRpc(amount, new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { clientId }
+            }
+        });
+    }
+
 }

@@ -1,6 +1,7 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class Coin : MonoBehaviour
+public class Coin : NetworkBehaviour
 {
     [SerializeField] private int value = 100;
     private bool isCollected;
@@ -15,17 +16,18 @@ public class Coin : MonoBehaviour
    
     private void OnTriggerEnter(Collider other)
     {
+        if (!IsServer) return; 
         if (isCollected) return;
 
         CharacterBase character = other.GetComponent<CharacterBase>();
         if (character == null) return;
 
-        if (character.ownerType == CharacterBase.OwnerType.Player && character.IsOwner)
+        if (character.ownerType == CharacterBase.OwnerType.Player)
         {
             isCollected = true;
             if (col != null) col.enabled = false;
 
-            CoinManager.Instance.AddCoin(value);
+            character.AddCoinToClient(character.OwnerClientId, value);
             ObjectPool.Instance.ReleaseCoin(gameObject);
         }
     }

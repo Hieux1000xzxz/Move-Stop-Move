@@ -148,7 +148,7 @@ public class ObjectPool : Singleton<ObjectPool>
         if (obj == null) return null;
 
         obj.SetActive(true);
-
+    
         if (parent != null)
         {
             obj.transform.position = parent.position;
@@ -375,10 +375,7 @@ public class ObjectPool : Singleton<ObjectPool>
     private GameObject CreateGobject(GameObject item)
     {
         GameObject gobject = Instantiate(item);
-
-        gobject.transform.position = new Vector3(9999, 9999, 9999);
         gobject.SetActive(false);
-
         return gobject;
     }
 
