@@ -35,7 +35,9 @@ public class WeaponBase : NetworkBehaviour
     private bool hasHit = false;
     
     public float BuffScaleMultiplier { get; set; } = 1f;
-    public virtual void Init(CharacterBase character, Transform hand)
+    
+    #region INIT
+    public void Init(CharacterBase character, Transform hand)
     {
         owner = character;
         spawnPoint = hand;
@@ -44,13 +46,9 @@ public class WeaponBase : NetworkBehaviour
         transform.localRotation = Quaternion.Euler(handRotationOffset);
 
         originalSpeed = speed;
-        
-        var netObj = GetComponent<NetworkObject>();
-        if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
-        {
-            netObj.Spawn(true);
-        }
 
+        TrySpawnNetworkObject();
+        
         isFollowing = true;
         isFlying = false;
 
@@ -60,39 +58,48 @@ public class WeaponBase : NetworkBehaviour
 
     }
 
+    private void TrySpawnNetworkObject()
+    {
+        var netObj = GetComponent<NetworkObject>();
+        if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
+        {
+            netObj.Spawn(true);
+        }
+    }
+    #endregion
+    
+    #region FOLLOW HAND
     private void LateUpdate()
+    {
+        FollowHandIfNeeded();
+        UpdateScale();
+    }
+    private void FollowHandIfNeeded()
     {
         if (isFollowing && !isFlying && spawnPoint != null)
         {
             transform.position = spawnPoint.position;
             transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
         }
-        
+    }
+    private void UpdateScale()
+    {
         if (baseScale == Vector3.zero)
             baseScale = Vector3.one;
-        
+
         transform.localScale = baseScale * BuffScaleMultiplier;
     }
-
-    public virtual void Launch(Vector3 dir, GameObject shooter)
+    #endregion
+    
+    #region Launch & Return
+    public void Launch(Vector3 dir, GameObject shooter)
     {
-        bool isServer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
-        bool isClient = NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient;
-
-        if (isFlying)
-        {
-            return;
-        }
-
-        if (rb == null)
-        {
-            return;
-        }
+        if (isFlying || rb == null) return;
 
         isFlying = true;
         isFollowing = false;
-
         rb.isKinematic = false;
+        
         transform.position = spawnPoint.position;
         rb.linearVelocity = dir * speed;
         launchPos = transform.position;
@@ -100,39 +107,62 @@ public class WeaponBase : NetworkBehaviour
         StartRotation();
     }
 
-    protected virtual void ReturnToHand()
+    protected void ReturnToHand()
     {
-        hasHit  = false; 
-        StopRotation();
+        ResetState();
+        ResetPhysics();
+        EnsureSpawnPoint();
+        ValidateOwner();
+        SnapToHand();
+        NotifyOwnerReturned();
+        RestartRotation();
+    }
+    private void ResetState()
+    {
+        hasHit = false;
         isFlying = false;
         isFollowing = true;
-        rb.isKinematic = true;
-        
-        if (rb != null && collider != null)
-        {
-            collider.enabled = true; 
-        }
-        
+        StopRotation();
+    }
+    private void ResetPhysics()
+    {
+        if (rb != null) rb.isKinematic = true;
+        if (rb != null && collider != null) collider.enabled = true;
+    }
+    private void EnsureSpawnPoint()
+    {
         if (spawnPoint == null && owner != null)
-        {
             spawnPoint = owner.weaponSpawnPoint;
-        }
-
-        if (owner == null)   // fix crash
+    }
+    private bool ValidateOwner()
+    {
+        if (owner == null)
         {
-            Debug.LogWarning($"[WeaponBase] ReturnToHand called but spawnPoint is null for {gameObject.name}");
-            return;
+            return false;
         }
-
+        return true;
+    }
+    private void SnapToHand()
+    {
         transform.position = spawnPoint.position;
         transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
-
+    }
+    private void NotifyOwnerReturned()
+    {
         owner?.OnWeaponReturned();
-
+    }
+    private void RestartRotation()
+    {
         StartRotation();
     }
-
+    #endregion
+    
+    #region Collision
     protected virtual void Update()
+    {
+        CheckMaxDistance();
+    }
+    private void CheckMaxDistance()
     {
         if (isFlying && owner != null)
         {
@@ -143,43 +173,68 @@ public class WeaponBase : NetworkBehaviour
             }
         }
     }
-
     protected virtual void OnTriggerEnter(Collider other)
     {
-        if (!IsServer) return;
-        if (!isFlying || other.gameObject == owner.gameObject) return;
+        if (!IsServer || !isFlying) return;
+        if (other.gameObject == owner?.gameObject) return;
 
-        if (collider != null)
-        {
-            StartCoroutine(ReenableColliderNextFrame());
-        }
+        HandleTemporaryColliderDisable();
 
-        if (other.CompareTag("Wall"))
+        if (IsWall(other))
         {
-            if (IsServer)
-            {
-                ReturnToHand(); 
-                ReturnToHandClientRpc();
-            }
+            HandleWallCollision();
             return;
         }
 
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
         {
-            hasHit = true;
-
-            if (IsServer)
-            {
-                HandleHit(victim);
-                ReturnToHand(); 
-                ReturnToHandClientRpc();
-            }
-            else
-            {
-                NotifyHitServerRpc(victim.NetworkObject);
-            }
+            HandleVictimHit(victim);
         }
+    }
+    private void HandleTemporaryColliderDisable()
+    {
+        if (collider != null)
+            StartCoroutine(ReenableColliderNextFrame());
+    }
+    private bool IsWall(Collider other)
+    {
+        return other.CompareTag("Wall");
+    }
+    private void HandleWallCollision()
+    {
+        ReturnToHand();
+        ReturnToHandClientRpc();
+    }
+    private void HandleVictimHit(CharacterBase victim)
+    {
+        hasHit = true;
+
+        if (IsServer)
+        {
+            ApplyDamageAndScore(victim);
+            ReturnToHand();
+            ReturnToHandClientRpc();
+        }
+        else
+        {
+            NotifyHitServerRpc(victim.NetworkObject);
+        }
+    }
+    private void ApplyDamageAndScore(CharacterBase victim)
+    {
+        if (victim == null || victim == owner) return;
+
+        Health h = victim.GetComponent<Health>();
+        if (h != null)
+        {
+            h.ApplyDamage(damage);
+        }
+
+        owner?.AddScore(1);
+
+        if (victim.characterCollider != null)
+            victim.characterCollider.enabled = false;
     }
     private IEnumerator ReenableColliderNextFrame()
     {
@@ -206,6 +261,9 @@ public class WeaponBase : NetworkBehaviour
         }
     }
 
+    #endregion
+    
+    #region ROTATION
     protected void StartRotation()
     {
         StopRotation();
@@ -223,7 +281,9 @@ public class WeaponBase : NetworkBehaviour
             rotateTween = null;
         }
     }
-
+    #endregion
+    
+    #region NETWORK
     [ServerRpc(RequireOwnership = false)]
     private void NotifyHitServerRpc(NetworkObjectReference victimRef)
     {
@@ -232,8 +292,6 @@ public class WeaponBase : NetworkBehaviour
         ReturnToHand();
         ReturnToHandClientRpc();
     }
-
-    
     [ServerRpc(RequireOwnership = false)]
     private void ReturnToHandServerRpc()
     {
@@ -249,17 +307,9 @@ public class WeaponBase : NetworkBehaviour
             ReturnToHand();
         }
     }
+    #endregion
     
-    [ClientRpc]
-    private void DisableColliderClientRpc()
-    {
-        if (collider != null)
-        {
-            collider.enabled = false;
-        }
-    }
-
-
+    #region UTILITY
     public void SetOwner(CharacterBase newOwner)
     {
         owner = newOwner;
@@ -287,5 +337,5 @@ public class WeaponBase : NetworkBehaviour
 
         transform.localScale = baseScale * BuffScaleMultiplier * ownerScale;
     }
-
+    #endregion
 }

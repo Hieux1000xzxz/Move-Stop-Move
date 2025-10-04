@@ -22,7 +22,6 @@ public class PowerupSpawner : NetworkBehaviour
     {
         foreach (var point in spawnPoints)
         { 
-            Debug.Log($"[PowerupSpawner] SpawnPoint: {point.name} at {point.position}");
             if (!activePowerups.ContainsKey(point) || activePowerups[point] == null)
             {
                 SpawnAtPoint(point.position, point.rotation, point);
