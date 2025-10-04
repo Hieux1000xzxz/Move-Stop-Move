@@ -11,9 +11,19 @@ public class Coin : NetworkBehaviour
     {
         isCollected = false;
         if (col != null) col.enabled = true;
+        
+        CancelInvoke();
+        Invoke(nameof(DespawnSelf), 3f);
     }
 
-   
+    private void DespawnSelf()
+    {
+        if (isCollected) return; 
+        if (!IsServer) return;  
+
+        ObjectPool.Instance.ReleaseCoin(gameObject);
+    }
+    
     private void OnTriggerEnter(Collider other)
     {
         if (!IsServer) return; 
@@ -28,6 +38,8 @@ public class Coin : NetworkBehaviour
             if (col != null) col.enabled = false;
 
             character.AddCoinToClient(character.OwnerClientId, value);
+            
+            CancelInvoke();
             ObjectPool.Instance.ReleaseCoin(gameObject);
         }
     }

@@ -236,26 +236,14 @@ public abstract class CharacterBase : NetworkBehaviour
             speed = (Time.deltaTime > 0f) ? (delta.magnitude / Time.deltaTime) : 0f;
         }
 
-        bool isMovingNow;
-
-        if (IsOwner) 
-        {
-            // Local player
-            isMovingNow = this is Player player ? player.isMovingInput : speed > 0.01f;
-        }
-        else
-        {
-            // Remote/AI → sync server
-            isMovingNow = NetIsMoving.Value;
-        }
-
-        animator.SetBool("IsMoving", isMovingNow);
+        animator.SetFloat("Speed", speed);
 
         bool attackingNow = IsOwner ? isAttacking : NetIsAttacking.Value;
-        animator.SetBool("IsAttacking", isAttacking);
+        animator.SetBool("IsAttacking", attackingNow);
 
         lastPosition = transform.position;
     }
+
     
     public abstract Vector3 GetMovementInput();
     #endregion
@@ -814,6 +802,8 @@ public abstract class CharacterBase : NetworkBehaviour
             {
                 DisableColliderClientRpc();
                 PlayDeathAnimationClientRpc();
+                
+                SpawnCoinUniversal();
             }
 
             if (IsServer)
