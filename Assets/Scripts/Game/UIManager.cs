@@ -6,7 +6,7 @@ public class UIManager : Singleton<UIManager>
 {
     [Header("AI Counter")]
     [SerializeField] private TextMeshProUGUI enemyCountText;
-    [SerializeField] private string displayFormat = "Enemies Left: {0}";
+    [SerializeField] private string displayFormat = "ALive player: {0}";
 
     [Header("Canvases")]
     [SerializeField] private MainMenuCanvas mainMenuCanvas;
@@ -30,7 +30,11 @@ public class UIManager : Singleton<UIManager>
 
     public void HideCountText() 
     { 
-        enemyCountText.text = string.Empty;
+        enemyCountText.gameObject.SetActive(false);
+    }
+    public void ShowCountText()
+    {
+        enemyCountText.gameObject.SetActive(true);
     }
 
     public void OpenUI(BaseCanvas canvas)
@@ -102,8 +106,6 @@ public class UIManager : Singleton<UIManager>
 
         }
     }
-
-   
 
     public NotificationCanvas BindNotification()
     {

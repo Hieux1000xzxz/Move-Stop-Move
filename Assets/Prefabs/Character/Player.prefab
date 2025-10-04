@@ -573,7 +573,7 @@ MonoBehaviour:
   sizePerScore: 0.05
   rangePerScore: 0.03
   moveSpeedPerScore: 0.05
-  maxScale: 2.5
+  maxScale: 2
   defaultWeapon: 5
   ownerType: 0
   detectAttackDelay: 0

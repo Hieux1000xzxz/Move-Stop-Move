@@ -29,7 +29,7 @@ public class Health : NetworkBehaviour
         CurrentHealth.OnValueChanged += OnHealthChanged;
     }
 
-    private void OnDestroy()
+    private new void OnDestroy()
     {
         CurrentHealth.OnValueChanged -= OnHealthChanged;
     }

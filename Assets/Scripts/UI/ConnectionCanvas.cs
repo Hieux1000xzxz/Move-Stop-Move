@@ -37,12 +37,12 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private Button joinByIdButton;
     [SerializeField] private Button editProfileButton;
     [SerializeField] private Transform lobbyListContainer;
-    [SerializeField] private GameObject lobbyItemPrefab;
+    [SerializeField] private LobbyItem lobbyItemPrefab;
 
     [Header("Lobby Panel")]
     [SerializeField] private Transform playerListContainer;
     [SerializeField] private TextMeshProUGUI lobbyId;
-    [SerializeField] private GameObject playerItemPrefab;
+    [SerializeField] private PlayerItem playerItemPrefab;
     [SerializeField] private Button startGameButton;
     [SerializeField] private Button settingButton;
     [SerializeField] private Button exitButton;
@@ -60,7 +60,7 @@ public class ConnectionCanvas : BaseCanvas
     [Header("Player Info Panel")]
     [SerializeField] private TMP_InputField playerNameInputField;
     [SerializeField] private Transform avatarSelectionContainer;
-    [SerializeField] private GameObject avatarItemPrefab;
+    [SerializeField] private AvatarItem avatarItemPrefab;
     [SerializeField] private Button confirmPlayerInfoButton;
     [SerializeField] private Button cancelPlayerInfoButton;
     [SerializeField] private TextMeshProUGUI playerInfoTitle;
@@ -78,6 +78,11 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private GameObject playerPreview;
     [SerializeField] private CinemachineCamera mainCamera;
     [SerializeField] private Sprite[] availableAvatars;
+
+    [Header("Cache Lists")]
+    [SerializeField] private List<AvatarItem> cachedAvatarItems = new List<AvatarItem>();
+    [SerializeField] private List<PlayerItem> cachedPlayerItems = new List<PlayerItem>();
+    [SerializeField] private List<LobbyItem> cachedLobbyItems = new List<LobbyItem>();
 
     private const string SERVER_URL = "https://mini-server-v6.onrender.com/api/lobby";
     private const string DEFAULT_LOBBY_NAME = "Lobby";
@@ -139,70 +144,153 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-    private async Task<string> CreateRelayAllocation(int maxConnections = 5)
+    // ========== CACHE MANAGEMENT ==========
+    private T GetOrCreateCachedItem<T>(List<T> itemCache, T prefab, Transform parent, int index) where T : Component
     {
-        if (!isUnityServicesInitialized)
+        if (index < itemCache.Count && itemCache[index] != null)
         {
-            Debug.LogError("Unity Services not initialized");
-            return null;
+            itemCache[index].gameObject.SetActive(true);
+            return itemCache[index];
         }
-
-        try
+        else
         {
-            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxConnections);
-            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-
-            RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
-            transport.SetRelayServerData(relayServerData);
-            currentRelayJoinCode = joinCode;
-            Debug.Log($"Relay allocation created. Join Code: {joinCode}");
-            UIManager.Instance?.CloseNotification();
-            return joinCode;
-        }
-        catch (RelayServiceException e)
-        {
-            Debug.LogError($"Failed to create relay allocation: {e.Message}");
-            return null;
-        }
-    }
-
-    private async Task<bool> JoinRelayAllocation(string joinCode)
-    {
-        if (!isUnityServicesInitialized)
-        {
-            Debug.LogError("Unity Services not initialized");
-            return false;
-        }
-
-        try
-        {
-            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
-
-            RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
-            transport.SetRelayServerData(relayServerData);
-
-            Debug.Log($"Successfully joined relay with code: {joinCode}");
-            return true;
-        }
-        catch (RelayServiceException e)
-        {
-            Debug.LogError($"Failed to join relay: {e.Message}");
-            return false;
-        }
-    }
-
-    private IEnumerator AutoRefreshLobbyList()
-    {
-        while (true)
-        {
-            if (mainPanel.activeInHierarchy)
+            var newItem = Instantiate(prefab, parent);
+            if (index >= itemCache.Count)
             {
-                RefreshLobbyList();
+                itemCache.Add(newItem);
             }
-            yield return new WaitForSeconds(3f);
+            else
+            {
+                itemCache[index] = newItem;
+            }
+
+            return newItem;
         }
     }
 
+    private void ClearContainerCache<T>(List<T> itemCache) where T : Component
+    {
+        foreach (var item in itemCache)
+        {
+            if (item != null && item.gameObject != null)
+                item.gameObject.SetActive(false);
+        }
+    }
+
+    // ========== AVATAR SELECTION ==========
+    private void InitializeAvatarSelection()
+    {
+        if (avatarSelectionContainer == null || avatarItemPrefab == null)
+        {
+            Debug.LogError("Avatar components not assigned!");
+            return;
+        }
+
+        if (availableAvatars == null || availableAvatars.Length == 0)
+        {
+            Debug.LogWarning("No available avatars assigned.");
+            return;
+        }
+
+        ClearContainer(avatarSelectionContainer);
+        cachedAvatarItems.Clear();
+
+        for (int i = 0; i < availableAvatars.Length; i++)
+        {
+            var avatarItem = Instantiate(avatarItemPrefab, avatarSelectionContainer);
+            if (avatarItem != null)
+            {
+                avatarItem.Initialize(i, availableAvatars[i], SelectAvatar);
+                cachedAvatarItems.Add(avatarItem);
+            }
+        }
+
+        SelectAvatar(selectedAvatarIndex);
+    }
+
+    private void SelectAvatar(int index)
+    {
+        selectedAvatarIndex = index;
+        for (int i = 0; i < cachedAvatarItems.Count; i++)
+        {
+            if (cachedAvatarItems[i] != null)
+                cachedAvatarItems[i].SetHighlight(i == index);
+        }
+    }
+    // ========== PLAYER LIST ==========
+    private void UpdatePlayerList(RelayLobbyInfo lobby)
+    {
+        ClearContainerCache(cachedPlayerItems);
+
+        if (lobby?.users == null) return;
+
+        for (int i = 0; i < lobby.users.Count; i++)
+        {
+            var user = lobby.users[i];
+            var playerItem = GetOrCreateCachedItem(cachedPlayerItems, playerItemPrefab, playerListContainer, i);
+
+            if (playerItem != null)
+            {
+                playerItem.gameObject.SetActive(true);
+                bool canKick = networkManager.IsHost && user.userId != PlayerPrefs.GetString("PlayerId", "");
+                Sprite avatar = user.avatarIndex >= 0 && user.avatarIndex < availableAvatars.Length
+                    ? availableAvatars[user.avatarIndex] : null;
+
+                playerItem.Setup(user.userName, user.userId, user.clientId, this, canKick, avatar, user.isReady);
+            }
+        }
+
+        if (networkManager.IsHost)
+        {
+            bool allReady = AreAllPlayersReady(lobby);
+            bool hasEnoughPlayers = lobby.users.Count >= 2;
+            startGameButton.interactable = allReady && hasEnoughPlayers;
+        }
+        else
+        {
+            startGameButton.interactable = false;
+        }
+    }
+
+    private bool AreAllPlayersReady(RelayLobbyInfo lobby)
+    {
+        if (lobby?.users == null || lobby.users.Count == 0) return false;
+        foreach (var user in lobby.users)
+            if (!user.isReady) return false;
+        return true;
+    }
+
+    // ========== LOBBY LIST ==========
+    public void RefreshLobbyList()
+    {
+        if (this != null)
+            StartCoroutine(RefreshLobbyListRoutine());
+    }
+
+    private IEnumerator RefreshLobbyListRoutine()
+    {
+        using (var www = UnityWebRequest.Get($"{SERVER_URL}/list"))
+        {
+            www.timeout = 10;
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                string json = www.downloadHandler.text;
+                RelayLobbyInfo[] lobbies = JsonHelper.FromJson<RelayLobbyInfo>(json);
+                ClearContainerCache(cachedLobbyItems);
+
+                for (int i = 0; i < lobbies.Length; i++)
+                {
+                    var lobbyItem = GetOrCreateCachedItem(cachedLobbyItems, lobbyItemPrefab, lobbyListContainer, i);
+                    if (lobbyItem != null)
+                        lobbyItem.Setup(lobbies[i], this);
+                }
+            }
+        }
+    }
+
+    // ========== BUTTON HANDLERS ==========
     private void InitializeButtons()
     {
         singleButton.onClick.AddListener(OnSinglePlayerClicked);
@@ -228,36 +316,6 @@ public class ConnectionCanvas : BaseCanvas
 
         confirmPlayerInfoButton.onClick.AddListener(OnConfirmPlayerInfo);
         cancelPlayerInfoButton.onClick.AddListener(OnCancelPlayerInfo);
-    }
-
-    private void InitializeAvatarSelection()
-    {
-        if (avatarSelectionContainer == null || avatarItemPrefab == null)
-        {
-            Debug.LogError("Avatar components not assigned!");
-            return;
-        }
-
-        if (availableAvatars == null || availableAvatars.Length == 0)
-        {
-            Debug.LogWarning("No available avatars assigned.");
-            return;
-        }
-
-        ClearContainer(avatarSelectionContainer);
-
-        for (int i = 0; i < availableAvatars.Length; i++)
-        {
-            var avatarItemObj = Instantiate(avatarItemPrefab, avatarSelectionContainer);
-            if (avatarItemObj == null) continue;
-
-            var avatarItem = avatarItemObj.GetComponent<AvatarItem>();
-            if (avatarItem == null) continue;
-
-            avatarItem.Initialize(i, availableAvatars[i], SelectAvatar);
-        }
-
-        SelectAvatar(Mathf.Clamp(selectedAvatarIndex, 0, availableAvatars.Length - 1));
     }
 
     private void InitializeInputValidation()
@@ -290,60 +348,6 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-    private void SelectAvatar(int index)
-    {
-        selectedAvatarIndex = index;
-        for (int i = 0; i < avatarSelectionContainer.childCount; i++)
-        {
-            var avatarItem = avatarSelectionContainer.GetChild(i).GetComponent<AvatarItem>();
-            if (avatarItem != null)
-            {
-                avatarItem.SetHighlight(i == index);
-            }
-        }
-    }
-
-    private void LoadPlayerPrefs()
-    {
-        localUserName = PlayerPrefs.GetString("PlayerName", DEFAULT_PLAYER_NAME);
-        selectedAvatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0);
-
-        string playerId = PlayerPrefs.GetString("PlayerId", "");
-        if (string.IsNullOrEmpty(playerId))
-        {
-            playerId = System.Guid.NewGuid().ToString();
-            PlayerPrefs.SetString("PlayerId", playerId);
-            PlayerPrefs.Save();
-            Debug.Log($"Generated new PlayerId: {playerId}");
-        }
-        else
-        {
-            Debug.Log($"Loaded existing PlayerId: {playerId}");
-        }
-
-        SelectAvatar(selectedAvatarIndex);
-    }
-
-    private void InitializeNetworkCallbacks()
-    {
-        if (networkManager != null)
-        {
-            networkManager.OnClientConnectedCallback += OnClientConnected;
-            networkManager.OnClientDisconnectCallback += OnClientDisconnected;
-            networkManager.OnServerStarted += OnServerStarted;
-        }
-    }
-
-    private void SetInitialUIState()
-    {
-        modePanel.SetActive(true);
-        lobbyPanel.SetActive(false);
-        mainPanel.SetActive(false);
-        if (joinByIdPanel != null) joinByIdPanel.SetActive(false);
-        if (playerInfoPanel != null) playerInfoPanel.SetActive(false);
-        if (settingPanel != null) settingPanel.SetActive(false);
-    }
-
     private void OnSinglePlayerClicked()
     {
         isSinglePlayerMode = true;
@@ -363,14 +367,11 @@ public class ConnectionCanvas : BaseCanvas
     private IEnumerator StartSinglePlayerGame()
     {
         yield return null;
-
         GameManager.Instance.StartGame();
         GameManager.Instance.StartPowerupSpawning();
 
         if (gameplayCanvas != null)
-        {
             gameplayCanvas.Init(this, "SINGLE", localUserName);
-        }
     }
 
     private async void OnOnlineClicked()
@@ -378,9 +379,7 @@ public class ConnectionCanvas : BaseCanvas
         isSinglePlayerMode = false;
         SendNotification("Checking connection...", 2);
         if (!isUnityServicesInitialized)
-        {
             await InitializeUnityServices();
-        }
 
         StartCoroutine(CheckNetworkAndShowMainPanel());
     }
@@ -393,38 +392,25 @@ public class ConnectionCanvas : BaseCanvas
         if (serverAvailable && isUnityServicesInitialized)
         {
             UIManager.Instance?.CloseNotification();
-
             modePanel.SetActive(false);
             mainPanel.SetActive(true);
         }
         else
         {
-            string message = !isUnityServicesInitialized ?
-                "Unable to connect to online services. Please check your internet connection and try again." :
-                "Connection failed. Please check your internet connection.";
+            string message = !isUnityServicesInitialized
+                ? "Unable to connect to online services. Please check your internet connection and try again."
+                : "Connection failed. Please check your internet connection.";
             SendNotification(message, 1);
         }
     }
+
     private void OnReadyClicked()
     {
         if (!canToggleReady) return;
 
         isReady = !isReady;
-
-        if (currentLobbyInfo != null)
-        {
-            string playerId = PlayerPrefs.GetString("PlayerId", "");
-            var localUser = currentLobbyInfo.users.Find(u => u.userId == playerId);
-            if (localUser != null)
-            {
-                localUser.isReady = isReady;
-                UpdatePlayerList(currentLobbyInfo);
-            }
-        }
-
         UpdateReadyButtonStatus();
         StartCoroutine(UpdateReadyStatus(isReady));
-
         StartCoroutine(ReadyCooldown());
     }
 
@@ -434,44 +420,22 @@ public class ConnectionCanvas : BaseCanvas
         yield return new WaitForSeconds(2f);
         canToggleReady = true;
     }
+
     private void UpdateReadyButtonStatus()
     {
-        if (isReady)
-        {
-            readyButton.image.sprite = unReadySprite;
-
-        }
-        else
-        {
-            readyButton.image.sprite = readySprite;
-        }
+        readyButton.image.sprite = isReady ? unReadySprite : readySprite;
     }
+
     private IEnumerator UpdateReadyStatus(bool ready)
     {
         string playerId = PlayerPrefs.GetString("PlayerId", "");
-        if (string.IsNullOrEmpty(playerId))
-        {
-            Debug.LogError("PlayerId is null or empty in UpdateReadyStatus");
+        if (string.IsNullOrEmpty(playerId) || string.IsNullOrEmpty(currentLobbyId))
             yield break;
-        }
 
-        if (string.IsNullOrEmpty(currentLobbyId))
-        {
-            Debug.LogError("currentLobbyId is null or empty in UpdateReadyStatus");
-            yield break;
-        }
-
-        var payload = new UpdateReadyRequest
-        {
-            UserId = playerId,
-            IsReady = ready
-        };
+        var payload = new UpdateReadyRequest { UserId = playerId, IsReady = ready };
         string json = JsonUtility.ToJson(payload);
 
-        string url = $"{SERVER_URL}/{currentLobbyId}/ready";
-        Debug.Log($"Updating ready status - URL: {url}, Player: {playerId}, Ready: {ready}");
-
-        using (var www = new UnityWebRequest(url, "POST"))
+        using (var www = new UnityWebRequest($"{SERVER_URL}/{currentLobbyId}/ready", "POST"))
         {
             www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
             www.downloadHandler = new DownloadHandlerBuffer();
@@ -479,16 +443,6 @@ public class ConnectionCanvas : BaseCanvas
             www.timeout = 10;
 
             yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log($"Successfully updated ready status to: {ready}");
-            }
-            else
-            {
-                Debug.LogWarning($"Failed to update ready status. Error: {www.error}, URL: {url}");
-                Debug.LogWarning($"Response: {www.downloadHandler?.text}");
-            }
         }
     }
 
@@ -540,6 +494,7 @@ public class ConnectionCanvas : BaseCanvas
         StartCoroutine(StartHostRoutineCoroutine(localUserName, "" + joinCode, joinCode, hostUserId));
         mainPanel.SetActive(false);
     }
+
     private IEnumerator StartHostRoutineCoroutine(string hostName, string lobbyName, string joinCode, string hostUserId)
     {
         var request = new RelayLobbyRegistrationRequest
@@ -551,8 +506,6 @@ public class ConnectionCanvas : BaseCanvas
             AvatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0),
             HostUserId = hostUserId
         };
-
-        Debug.Log($"Sending host registration with HostUserId: {hostUserId}");
 
         bool serverAvailable = false;
         yield return StartCoroutine(CheckServerAvailabilityCoroutine((result) => serverAvailable = result));
@@ -569,18 +522,7 @@ public class ConnectionCanvas : BaseCanvas
             mainPanel.SetActive(false);
         }
     }
-    private bool AreAllPlayersReady(RelayLobbyInfo lobby)
-    {
-        if (lobby?.users == null || lobby.users.Count == 0)
-            return false;
 
-        foreach (var user in lobby.users)
-        {
-            if (!user.isReady)
-                return false;
-        }
-        return true;
-    }
     private IEnumerator CheckServerAvailabilityCoroutine(System.Action<bool> callback)
     {
         using (var www = UnityWebRequest.Get($"{SERVER_URL}/ping"))
@@ -655,9 +597,7 @@ public class ConnectionCanvas : BaseCanvas
         }
 
         CloseJoinByIdPanel();
-
-        var tmp = new RelayLobbyInfo { lobbyId = lobbyId };
-        StartCoroutine(JoinLobbyRoutine(tmp.lobbyId, localUserName));
+        StartCoroutine(JoinLobbyRoutine(lobbyId, localUserName));
     }
 
     public void JoinLobbyDirect(RelayLobbyInfo lobby)
@@ -706,7 +646,7 @@ public class ConnectionCanvas : BaseCanvas
             return;
         }
         SendNotification("Profile updated successfully", 4);
-        
+
         localUserName = newName;
         SavePlayerPrefs(localUserName);
         HidePlayerInfoPanel();
@@ -813,7 +753,6 @@ public class ConnectionCanvas : BaseCanvas
         {
             StopCoroutine(clientHeartbeatRoutine);
             clientHeartbeatRoutine = null;
-            Debug.Log("Client heartbeat stopped");
         }
 
         if (networkManager == null) return;
@@ -860,6 +799,7 @@ public class ConnectionCanvas : BaseCanvas
 
         isIntentionalDisconnect = false;
     }
+
     private void ResetState()
     {
         currentLobbyId = string.Empty;
@@ -886,17 +826,14 @@ public class ConnectionCanvas : BaseCanvas
         lobbyId.text = $"Lobby ID: {lobby.lobbyId}";
         UpdatePlayerList(lobby);
         UpdateReadyButtonStatus();
+
         if (networkManager.IsHost)
         {
             startGameButton.gameObject.SetActive(true);
             readyButton.gameObject.SetActive(false);
             settingButton.gameObject.SetActive(true);
-
             isReady = true;
-
             StartCoroutine(DelayedHostReady());
-
-            Debug.Log($"Host lobby UI shown - Ready: {isReady}");
         }
         else
         {
@@ -916,76 +853,24 @@ public class ConnectionCanvas : BaseCanvas
     private IEnumerator DelayedHostReady()
     {
         yield return new WaitForSeconds(0.3f);
-
-        if (currentLobbyInfo?.users != null)
-        {
-            string playerId = PlayerPrefs.GetString("PlayerId", "");
-            var hostUser = currentLobbyInfo.users.Find(u => u.userId == playerId);
-            if (hostUser != null)
-            {
-                Debug.Log($"Host found in lobby, setting ready. UserId: {playerId}");
-                StartCoroutine(UpdateReadyStatus(true));
-            }
-            else
-            {
-                Debug.LogWarning($"Host not found in lobby yet, retrying... UserId: {playerId}");
-                yield return new WaitForSeconds(1f);
-                StartCoroutine(UpdateReadyStatus(true));
-            }
-        }
-        else
-        {
-            Debug.LogWarning("Lobby users is null, setting ready anyway");
-            StartCoroutine(UpdateReadyStatus(true));
-        }
+        StartCoroutine(UpdateReadyStatus(true));
     }
 
-    private void UpdatePlayerList(RelayLobbyInfo lobby)
+    private void LoadPlayerPrefs()
     {
-        ClearContainer(playerListContainer);
+        localUserName = PlayerPrefs.GetString("PlayerName", DEFAULT_PLAYER_NAME);
+        selectedAvatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0);
 
-        if (lobby?.users == null) return;
-
-        foreach (var user in lobby.users)
+        string playerId = PlayerPrefs.GetString("PlayerId", "");
+        if (string.IsNullOrEmpty(playerId))
         {
-            var item = Instantiate(playerItemPrefab, playerListContainer);
-            var comp = item.GetComponent<PlayerItem>();
-            if (comp != null)
-            {
-                bool canKick = networkManager.IsHost && user.userId != PlayerPrefs.GetString("PlayerId", "");
-                Sprite avatar = null;
-                if (user.avatarIndex >= 0 && user.avatarIndex < availableAvatars.Length)
-                    avatar = availableAvatars[user.avatarIndex];
-
-                comp.Setup(user.userName, user.userId, user.clientId, this, canKick, avatar, user.isReady);
-            }
+            playerId = System.Guid.NewGuid().ToString();
+            PlayerPrefs.SetString("PlayerId", playerId);
+            PlayerPrefs.Save();
         }
 
-        if (networkManager.IsHost)
-        {
-            bool allReady = AreAllPlayersReady(lobby);
-            bool hasEnoughPlayers = lobby.users.Count >= 2;
-
-            startGameButton.interactable = allReady && hasEnoughPlayers;
-
-            if (!allReady)
-            {
-            }
-            else if (!hasEnoughPlayers)
-            {
-            }
-        }
-        else
-        {
-            startGameButton.interactable = false;
-        }
-
-        if (gameplayCanvas != null)
-        {
-            gameplayCanvas.UpdateExitButtonState(lobby);
-        }
+        SelectAvatar(selectedAvatarIndex);
     }
-
 
     private void SavePlayerPrefs(string playerName)
     {
@@ -994,14 +879,11 @@ public class ConnectionCanvas : BaseCanvas
         {
             playerId = System.Guid.NewGuid().ToString();
             PlayerPrefs.SetString("PlayerId", playerId);
-            Debug.Log($"Generated new PlayerId in SavePlayerPrefs: {playerId}");
         }
 
         PlayerPrefs.SetString("PlayerName", playerName);
         PlayerPrefs.SetInt("PlayerAvatar", selectedAvatarIndex);
         PlayerPrefs.Save();
-
-        Debug.Log($"Saved PlayerPrefs - Name: {playerName}, ID: {playerId}, Avatar: {selectedAvatarIndex}");
     }
 
     private IEnumerator JoinLobbyRoutine(string lobbyId, string playerName)
@@ -1018,15 +900,9 @@ public class ConnectionCanvas : BaseCanvas
             }
 
             RelayLobbyInfo lobbyCheck = JsonUtility.FromJson<RelayLobbyInfo>(checkWww.downloadHandler.text);
-            if (lobbyCheck == null)
+            if (lobbyCheck == null || lobbyCheck.isGameStarted)
             {
-                SendNotification("Lobby not found. Please check the Lobby ID and try again.", 1);
-                yield break;
-            }
-
-            if (lobbyCheck.isGameStarted)
-            {
-                SendNotification("The game in this lobby has already started. You cannot join now.", 1);
+                SendNotification("Lobby not found or game already started.", 1);
                 yield break;
             }
         }
@@ -1067,7 +943,6 @@ public class ConnectionCanvas : BaseCanvas
                 {
                     if (clientHeartbeatRoutine != null) StopCoroutine(clientHeartbeatRoutine);
                     clientHeartbeatRoutine = StartCoroutine(SendClientHeartbeatRoutine());
-                    Debug.Log("Client heartbeat started");
                 }
                 ShowLobbyUI(lobby);
                 RefreshLobbyList();
@@ -1127,40 +1002,46 @@ public class ConnectionCanvas : BaseCanvas
     {
         var task = asyncMethod();
         yield return new WaitUntil(() => task.IsCompleted);
+    }
 
-        if (task.Exception != null)
+    private async Task<string> CreateRelayAllocation(int maxConnections = 5)
+    {
+        if (!isUnityServicesInitialized) return null;
+
+        try
         {
-            Debug.LogError($"Async task failed: {task.Exception}");
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxConnections);
+            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+            RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
+            transport.SetRelayServerData(relayServerData);
+            currentRelayJoinCode = joinCode;
+
+            UIManager.Instance?.CloseNotification();
+            return joinCode;
+        }
+        catch (RelayServiceException e)
+        {
+            Debug.LogError($"Failed to create relay allocation: {e.Message}");
+            return null;
         }
     }
 
-    public void RefreshLobbyList()
+    private async Task<bool> JoinRelayAllocation(string joinCode)
     {
-        if (this != null)
-            StartCoroutine(RefreshLobbyListRoutine());
-    }
+        if (!isUnityServicesInitialized) return false;
 
-    private IEnumerator RefreshLobbyListRoutine()
-    {
-        using (var www = UnityWebRequest.Get($"{SERVER_URL}/list"))
+        try
         {
-            www.timeout = 10;
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                string json = www.downloadHandler.text;
-                RelayLobbyInfo[] lobbies = JsonHelper.FromJson<RelayLobbyInfo>(json);
-                ClearContainer(lobbyListContainer);
-
-                foreach (var lobby in lobbies)
-                {
-                    var item = Instantiate(lobbyItemPrefab, lobbyListContainer);
-                    var comp = item.GetComponent<LobbyItem>();
-                    if (comp != null)
-                        comp.Setup(lobby, this);
-                }
-            }
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
+            RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
+            transport.SetRelayServerData(relayServerData);
+            return true;
+        }
+        catch (RelayServiceException e)
+        {
+            Debug.LogError($"Failed to join relay: {e.Message}");
+            return false;
         }
     }
 
@@ -1179,6 +1060,26 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
+    private void InitializeNetworkCallbacks()
+    {
+        if (networkManager != null)
+        {
+            networkManager.OnClientConnectedCallback += OnClientConnected;
+            networkManager.OnClientDisconnectCallback += OnClientDisconnected;
+            networkManager.OnServerStarted += OnServerStarted;
+        }
+    }
+
+    private void SetInitialUIState()
+    {
+        modePanel.SetActive(true);
+        lobbyPanel.SetActive(false);
+        mainPanel.SetActive(false);
+        if (joinByIdPanel != null) joinByIdPanel.SetActive(false);
+        if (playerInfoPanel != null) playerInfoPanel.SetActive(false);
+        if (settingPanel != null) settingPanel.SetActive(false);
+    }
+
     private void OnServerStarted()
     {
         Debug.Log("Server started successfully");
@@ -1189,7 +1090,6 @@ public class ConnectionCanvas : BaseCanvas
         Debug.Log($"Client {clientId} connected");
         if (pollLobbyRoutine != null) StopCoroutine(pollLobbyRoutine);
         pollLobbyRoutine = StartCoroutine(PollLobbyInfo());
-
     }
 
     private void OnClientDisconnected(ulong clientId)
@@ -1203,7 +1103,6 @@ public class ConnectionCanvas : BaseCanvas
         {
             if (gameplayCanvas != null)
             {
-                Debug.Log("Host disconnected - calling OnExitGame for client cleanup");
                 gameplayCanvas.OnExitGame(true);
             }
             else
@@ -1230,7 +1129,6 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-
     private void CleanupPlayerObjects(ulong clientId)
     {
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
@@ -1240,7 +1138,7 @@ public class ConnectionCanvas : BaseCanvas
         {
             if (netObj != null && netObj.OwnerClientId == clientId)
             {
-                netObj.Despawn();  
+                netObj.Despawn();
             }
         }
     }
@@ -1445,6 +1343,80 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
+    private IEnumerator SendClientHeartbeatRoutine()
+    {
+        while (networkManager != null && networkManager.IsClient && !networkManager.ShutdownInProgress)
+        {
+            if (!string.IsNullOrEmpty(currentLobbyId))
+            {
+                string playerId = PlayerPrefs.GetString("PlayerId", "");
+                if (!string.IsNullOrEmpty(playerId))
+                {
+                    var payload = new ClientHeartbeatRequest { UserId = playerId };
+                    string json = JsonUtility.ToJson(payload);
+
+                    using (var www = new UnityWebRequest($"{SERVER_URL}/{currentLobbyId}/client-heartbeat", "POST"))
+                    {
+                        www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+                        www.downloadHandler = new DownloadHandlerBuffer();
+                        www.SetRequestHeader("Content-Type", "application/json");
+                        www.timeout = 10;
+
+                        yield return www.SendWebRequest();
+                    }
+                }
+            }
+            yield return new WaitForSeconds(5f);
+        }
+    }
+
+    private IEnumerator AutoRefreshLobbyList()
+    {
+        while (true)
+        {
+            if (mainPanel.activeInHierarchy)
+            {
+                RefreshLobbyList();
+            }
+            yield return new WaitForSeconds(3f);
+        }
+    }
+
+    private void SendNotification(string message, int type)
+    {
+        UIManager.Instance?.SendNotification(message, type);
+        UIManager.Instance?.OpenNotification();
+    }
+
+    private void ResetNetworkManager()
+    {
+        if (networkManager == null) return;
+
+        if (networkManager.IsListening)
+        {
+            networkManager.Shutdown();
+        }
+
+        if (transport != null)
+        {
+            transport.SetConnectionData("127.0.0.1", 7777);
+        }
+
+        StartCoroutine(ResetNetworkManagerCoroutine());
+    }
+
+    private IEnumerator ResetNetworkManagerCoroutine()
+    {
+        yield return null;
+
+        if (networkManager != null)
+        {
+            networkManager.gameObject.SetActive(false);
+            yield return null;
+            networkManager.gameObject.SetActive(true);
+        }
+    }
+
     private void OnDestroy()
     {
         StopAllCoroutines();
@@ -1552,79 +1524,6 @@ public class ConnectionCanvas : BaseCanvas
             Debug.LogWarning($"Leave lobby failed: {e.Message}");
         }
     }
-
-    private void ResetNetworkManager()
-    {
-        if (networkManager == null) return;
-
-        if (networkManager.IsListening)
-        {
-            networkManager.Shutdown();
-        }
-
-        if (transport != null)
-        {
-            transport.SetConnectionData("127.0.0.1", 7777);
-        }
-
-        StartCoroutine(ResetNetworkManagerCoroutine());
-    }
-
-    private IEnumerator ResetNetworkManagerCoroutine()
-    {
-        yield return null;
-
-        if (networkManager != null)
-        {
-            networkManager.gameObject.SetActive(false);
-            yield return null;
-            networkManager.gameObject.SetActive(true);
-        }
-
-        Debug.Log("NetworkManager reset completed");
-    }
-
-    private void SendNotification(string message, int type)
-    {
-        UIManager.Instance?.SendNotification(message, type);
-        UIManager.Instance?.OpenNotification();
-    }
-
-    private IEnumerator SendClientHeartbeatRoutine()
-    {
-        while (networkManager != null && networkManager.IsClient && !networkManager.ShutdownInProgress)
-        {
-            if (!string.IsNullOrEmpty(currentLobbyId))
-            {
-                string playerId = PlayerPrefs.GetString("PlayerId", "");
-                if (!string.IsNullOrEmpty(playerId))
-                {
-                    var payload = new ClientHeartbeatRequest
-                    {
-                        UserId = playerId
-                    };
-                    string json = JsonUtility.ToJson(payload);
-
-                    using (var www = new UnityWebRequest($"{SERVER_URL}/{currentLobbyId}/client-heartbeat", "POST"))
-                    {
-                        www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
-                        www.downloadHandler = new DownloadHandlerBuffer();
-                        www.SetRequestHeader("Content-Type", "application/json");
-                        www.timeout = 10;
-
-                        yield return www.SendWebRequest();
-
-                        if (www.result != UnityWebRequest.Result.Success)
-                        {
-                            Debug.LogWarning($"Client heartbeat failed: {www.error}");
-                        }
-                    }
-                }
-            }
-            yield return new WaitForSeconds(5f);
-        }
-    }
-
 }
 
 [Serializable]

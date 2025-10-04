@@ -9,19 +9,22 @@ public class PlayerAttackRange : NetworkBehaviour
     [SerializeField] private CharacterBase character;
 
     [Header("Settings")]
-    [SerializeField] private int circleResolution = 50; 
+    [SerializeField] private int circleResolution = 50;
     [SerializeField] private float lineWidth = 0.05f;
 
-    private float lastAttackRange = -1f; 
-    private Vector3[] unitCirclePoints;   
+    private float lastAttackRange = -1f;
+    private Vector3[] unitCirclePoints;
+    private Vector3[] cachedCirclePositions;
+    private readonly Vector3 offset = new Vector3(0, 0.05f, 0);
 
     private void Awake()
     {
-        if (line == null) line = GetComponent<LineRenderer>();
         PrecomputeUnitCircle();
+        cachedCirclePositions = new Vector3[circleResolution];
+
         line.loop = true;
         line.widthMultiplier = lineWidth;
-        line.enabled = false; 
+        line.enabled = false;
     }
 
     private void Update()
@@ -32,9 +35,17 @@ public class PlayerAttackRange : NetworkBehaviour
             return;
         }
 
-        if (!line.enabled) line.enabled = true;
-
         float currentRange = character.currentAttackRange;
+
+        if (currentRange <= 0f)
+        {
+            if (line.enabled) line.enabled = false;
+            return;
+        }
+        else if (!line.enabled)
+        {
+            line.enabled = true;
+        }
 
         if (!Mathf.Approximately(currentRange, lastAttackRange))
         {
@@ -42,10 +53,10 @@ public class PlayerAttackRange : NetworkBehaviour
             UpdateCircle(currentRange);
         }
 
-        Vector3 offset = new Vector3(0, 0.05f, 0);
-        for (int i = 0; i < unitCirclePoints.Length; i++)
+        Vector3 pos = transform.position + offset;
+        for (int i = 0; i < cachedCirclePositions.Length; i++)
         {
-            line.SetPosition(i, transform.position + offset + unitCirclePoints[i] * currentRange);
+            line.SetPosition(i, pos + cachedCirclePositions[i]);
         }
     }
 
@@ -62,10 +73,9 @@ public class PlayerAttackRange : NetworkBehaviour
 
     private void UpdateCircle(float radius)
     {
-        Vector3 offset = new Vector3(0, 0.05f, 0);
         for (int i = 0; i < unitCirclePoints.Length; i++)
         {
-            line.SetPosition(i, transform.position + offset + unitCirclePoints[i] * radius);
+            cachedCirclePositions[i] = unitCirclePoints[i] * radius;
         }
     }
 }

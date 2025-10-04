@@ -155,7 +155,7 @@ public class AIController : CharacterBase
 
     private void DecideNearTarget()
     {
-        if(agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
             return;
         float approachChance = aggressionLevel * (1f - fearLevel);
 
@@ -199,7 +199,7 @@ public class AIController : CharacterBase
 
     private void ObserveTarget()
     {
-        if(agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
             return;
         agent.isStopped = true;
         ChangeState(CharacterState.Idle);
@@ -290,4 +290,10 @@ public class AIController : CharacterBase
             Gizmos.DrawWireSphere(lastInterestPoint, 1f);
         }
     }
+
+    private void OnEnable()
+    {
+       GameManager.Instance.RegisterKillScore(this.networkObject, scoreDisplay);
+    }
+
 }

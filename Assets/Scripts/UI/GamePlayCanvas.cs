@@ -20,15 +20,13 @@ public class GamePlayCanvas : BaseCanvas
     [SerializeField] private Button previousButton;
     [SerializeField] private Button nextButton;
     [SerializeField] private TextMeshProUGUI countDown;
+    [SerializeField] private TextMeshProUGUI totalCoinText;
     private ConnectionCanvas connectionCanvas;
     private string lobbyId;
     private string playerName;
     private float winExitTimer = -1f;
     private float winExitDelay = 5f;
-
-    //Winner
-    [SerializeField] private TextMeshProUGUI totalCoinText;
-    
+   
     public void Init(ConnectionCanvas connection, string lobbyId, string playerName)
     {
         this.connectionCanvas = connection;
@@ -181,6 +179,9 @@ public class GamePlayCanvas : BaseCanvas
         viewUI.SetActive(true);
         gameOverUI.SetActive(false);
         menuButton.gameObject.SetActive(true);
+        CoinManager.Instance.ShowCoinText();
+        UIManager.Instance.ShowCountText();
+        totalCoinText.gameObject.SetActive(false);
     }
 
     private void OnMenuOpen()
@@ -202,6 +203,7 @@ public class GamePlayCanvas : BaseCanvas
 
         Debug.Log("[GamePlayCanvas] OnGameOver -> Commit coin");
         CoinManager.Instance.CommitSessionCoins();
+        CoinManager.Instance.HideCoinText();
 
         int totalCoins = CoinManager.Instance.GetTotalCoins();
         totalCoinText.gameObject.SetActive(true);
@@ -215,6 +217,7 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
         countDown.gameObject.SetActive(true);
+        CoinManager.Instance.HideCoinText();
         Debug.Log("[GamePlayCanvas] OnGameWin -> Commit coin");
         CoinManager.Instance.CommitSessionCoins();
     }
@@ -227,7 +230,8 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
         countDown.gameObject.SetActive(true);
-        
+        CoinManager.Instance.HideCoinText();
+
         int totalCoins = CoinManager.Instance.GetTotalCoins();
         
         totalCoinText.gameObject.SetActive(true);

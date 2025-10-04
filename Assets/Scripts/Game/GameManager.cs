@@ -30,12 +30,16 @@ public class GameManager : NetworkBehaviour
     [Header("UI / Preview")]
     [SerializeField] private GameObject playerPreview;
 
+    [Header("Cache")]
+    [SerializeField] private List<NetworkObject> activeAINetworkObjects = new List<NetworkObject>();
+    [SerializeField] private List<NetworkObject> activePlayerNetworkObjects = new List<NetworkObject>();
+    [SerializeField] private List<NetworkObject> activeEntities = new List<NetworkObject>();
+    private Dictionary<NetworkObject, KillScoreDisplay> killScoreMap = new Dictionary<NetworkObject, KillScoreDisplay>();
+
     private Coroutine powerupRoutine;
     public FloatingJoystick mainJoystick;
 
-    private List<NetworkObject> activeAINetworkObjects = new List<NetworkObject>();
-    private List<NetworkObject> activePlayerNetworkObjects = new List<NetworkObject>();
-    private List<NetworkObject> activeEntities = new List<NetworkObject>();
+  
     private int spectatorIndex = 0;
 
     public NetworkVariable<int> ActiveAICount = new NetworkVariable<int>(
@@ -48,13 +52,13 @@ public class GameManager : NetworkBehaviour
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private int totalSpawned = 0;
-    private int totalKilled = 0;
+    //private int totalKilled = 0;
     private bool isGameStarted = false;
 
     public bool IsGameStarted => isGameStarted;
 
     protected void Awake()
-    { 
+    {
         //PlayerPrefs.DeleteAll();
         //PlayerPrefs.Save();
         Instance = this;
@@ -80,7 +84,7 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    private void OnDestroy()
+    private new void OnDestroy()
     {
         if (IsClient)
         {
@@ -102,7 +106,7 @@ public class GameManager : NetworkBehaviour
     }
     private void UpdateEnemyCount()
     {
-        int enemyLeft = RemainingAIQuota.Value + ActivePlayerCount.Value - 1;
+        int enemyLeft = RemainingAIQuota.Value + ActivePlayerCount.Value;
         if (enemyLeft < 0) enemyLeft = 0;
 
         EnemyCount.Value = enemyLeft;
@@ -127,7 +131,7 @@ public class GameManager : NetworkBehaviour
     }
     public void CaculateTotalQuota()
     {
-        totalAIQuota = totalAIQuota - ActivePlayerCount.Value + 1;
+        totalAIQuota = totalAIQuota - ActivePlayerCount.Value;
     }
 
     public void UnregisterAI(NetworkObject aiNetworkObject)
@@ -140,10 +144,11 @@ public class GameManager : NetworkBehaviour
             ActiveAICount.Value = activeAINetworkObjects.Count;
             RemainingAIQuota.Value = currentAIQuota;
             activeEntities.Remove(aiNetworkObject);
+            UnregisterKillScore(aiNetworkObject);
             UpdateEnemyCount();
         }
 
-        CheckLastSurvivor();
+        Invoke(nameof(CheckLastSurvivor), 1.5f);
     }
 
     public void RegisterPlayerInGame(NetworkObject playerNetworkObject)
@@ -169,7 +174,24 @@ public class GameManager : NetworkBehaviour
             ActivePlayerCount.Value = activePlayerNetworkObjects.Count;
             activeEntities.Remove(playerNetworkObject);
             UpdateEnemyCount();
-            CheckLastSurvivor();
+            UnregisterKillScore(playerNetworkObject);
+            Invoke(nameof(CheckLastSurvivor), 1.5f);
+        }
+    }
+
+    public void RegisterKillScore(NetworkObject netObj, KillScoreDisplay killScore)
+    {
+        if (netObj != null && killScore != null && !killScoreMap.ContainsKey(netObj))
+        {
+            killScoreMap[netObj] = killScore;
+        }
+    }
+
+    public void UnregisterKillScore(NetworkObject netObj)
+    {
+        if (netObj != null)
+        {
+            killScoreMap.Remove(netObj);
         }
     }
 
@@ -178,7 +200,7 @@ public class GameManager : NetworkBehaviour
         if (!IsServer) return;
         if (!isGameStarted) return;
 
-        if (EnemyCount.Value > 0) return;
+        if (EnemyCount.Value > 1) return;
 
         if (totalSpawned < 2) return;
 
@@ -202,7 +224,7 @@ public class GameManager : NetworkBehaviour
                 }
                 else
                 {
-                    GameWinClientRpc();   
+                    GameWinClientRpc();
                 }
             }
         }
@@ -241,7 +263,7 @@ public class GameManager : NetworkBehaviour
         CaculateTotalQuota();
         currentAIQuota = totalAIQuota;
         totalSpawned = 0;
-        totalKilled = 0;
+        //totalKilled = 0;
 
         foreach (var aiNetObj in activeAINetworkObjects)
         {
@@ -374,35 +396,17 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    public List<Transform> GetAliveSpectatorTargets()
+    private List<NetworkObject> GetAliveSpectatorTargets()
     {
-        List<Transform> targets = new List<Transform>();
-
-        foreach (var playerNetObj in activePlayerNetworkObjects)
+        var result = new List<NetworkObject>();
+        foreach (var entity in activeEntities)
         {
-            if (playerNetObj != null)
-            {
-                var health = playerNetObj.GetComponent<Health>();
-                if (health != null && !health.IsDead)
-                    targets.Add(playerNetObj.transform);
-            }
+            if (entity != null && entity.IsSpawned)
+                result.Add(entity);
         }
-
-        if (targets.Count == 0)
-        {
-            foreach (var aiNetObj in activeAINetworkObjects)
-            {
-                if (aiNetObj != null)
-                {
-                    var health = aiNetObj.GetComponent<Health>();
-                    if (health != null && !health.IsDead)
-                        targets.Add(aiNetObj.transform);
-                }
-            }
-        }
-
-        return targets;
+        return result;
     }
+
 
     public void EnableSpectatorMode()
     {
@@ -453,20 +457,21 @@ public class GameManager : NetworkBehaviour
         FocusCameraOnTarget(alive[index]);
     }
 
-    private void FocusCameraOnTarget(Transform target)
+    private void FocusCameraOnTarget(NetworkObject netObj)
     {
-        if (mainCamera != null && target != null)
+        if (mainCamera != null && netObj != null)
         {
-            mainCamera.Follow = target;
-            mainCamera.LookAt = target;
+            mainCamera.Follow = netObj.transform;
+            mainCamera.LookAt = netObj.transform;
 
-            var killScore = target.GetComponent<KillScoreDisplay>();
-            if (killScore != null)
+            if (killScoreMap.TryGetValue(netObj, out var killScore))
             {
                 zoomController.SetUp(killScore);
             }
         }
     }
+
+
 
 
     private void SpawnPowerup()
@@ -502,12 +507,11 @@ public class GameManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void RequestNextSpectatorTargetServerRpc(ServerRpcParams rpcParams = default)
     {
-        var alive = GetAliveSpectatorTargets();
-        if (alive.Count == 1) return;
+        if (activeEntities.Count <= 1) return;
 
-        spectatorIndex = (spectatorIndex + 1) % alive.Count;
+        spectatorIndex = (spectatorIndex + 1) % activeEntities.Count;
 
-        var netObj = alive[spectatorIndex].GetComponent<NetworkObject>();
+        var netObj = activeEntities[spectatorIndex];
         if (netObj != null)
         {
             var senderId = rpcParams.Receive.SenderClientId;
@@ -522,13 +526,12 @@ public class GameManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void RequestPreviousSpectatorTargetServerRpc(ServerRpcParams rpcParams = default)
     {
-        var alive = GetAliveSpectatorTargets();
-        if (alive.Count == 0) return;
+        if (activeEntities.Count == 0) return;
 
         spectatorIndex--;
-        if (spectatorIndex < 0) spectatorIndex = alive.Count - 1;
+        if (spectatorIndex < 0) spectatorIndex = activeEntities.Count - 1;
 
-        var netObj = alive[spectatorIndex].GetComponent<NetworkObject>();
+        var netObj = activeEntities[spectatorIndex];
         if (netObj != null)
         {
             var senderId = rpcParams.Receive.SenderClientId;
@@ -539,6 +542,7 @@ public class GameManager : NetworkBehaviour
             FocusCameraOnTargetClientRpc(netObj, clientRpcParams);
         }
     }
+
 
     [ClientRpc]
     private void FocusCameraOnTargetClientRpc(NetworkObjectReference targetRef, ClientRpcParams rpcParams = default)
@@ -551,14 +555,15 @@ public class GameManager : NetworkBehaviour
                 mainCamera.Follow = t;
                 mainCamera.LookAt = t;
 
-                var killScore = t.GetComponent<KillScoreDisplay>();
-                if (killScore != null)
+                if (killScoreMap.TryGetValue(netObj, out var killScore))
                 {
                     zoomController.SetUp(killScore);
                 }
             }
         }
     }
+
+
 
     [ClientRpc]
     private void WinnerClientRpc(ClientRpcParams clientRpcParams = default)

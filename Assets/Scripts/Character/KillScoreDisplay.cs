@@ -82,27 +82,23 @@ public class KillScoreDisplay : MonoBehaviour
     {
         if (textMesh == null) return;
 
-        bool needsUpdate = false;
 
         if (score != lastScore)
         {
             textMesh.text = score.ToString();
             lastScore = score;
-            needsUpdate = true;
         }
 
         if (textColor != lastTextColor)
         {
             textMesh.color = textColor;
             lastTextColor = textColor;
-            needsUpdate = true;
         }
 
         if (fontSize != lastFontSize)
         {
             textMesh.fontSize = fontSize;
             lastFontSize = fontSize;
-            needsUpdate = true;
         }
     }
 

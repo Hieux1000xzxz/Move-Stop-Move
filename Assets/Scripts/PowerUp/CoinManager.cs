@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEditor.Search;
 
 public class CoinManager : Singleton<CoinManager>
 {
@@ -15,7 +16,7 @@ public class CoinManager : Singleton<CoinManager>
     public int GetSessionCoins() => sessionCoins;
     public int GetTotalCoins() => shopCoins + sessionCoins;
 
-    private void Awake()
+    private new void Awake()
     {
         if (Instance != null && Instance != this)
         {
@@ -79,5 +80,15 @@ public class CoinManager : Singleton<CoinManager>
     {
         if (coinText != null)
             coinText.text = $"Coins: {sessionCoins}";
+    }
+
+    public void HideCoinText()
+    {
+        coinText.gameObject.SetActive(false);
+    }
+
+    public void ShowCoinText()
+    {
+        coinText.gameObject.SetActive(true);
     }
 }

@@ -2157,7 +2157,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 395, y: 320}
+  m_AnchoredPosition: {x: 395, y: 200}
   m_SizeDelta: {x: 150, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &158698597
@@ -8870,7 +8870,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyCountText: {fileID: 755656860}
-  displayFormat: 'Enemies Left: {0}'
+  displayFormat: 'Alive Players: {0}'
   mainMenuCanvas: {fileID: 2076837707}
   shopCanvas: {fileID: 1890431161}
   connectionCanvas: {fileID: 818691379}
@@ -9190,10 +9190,10 @@ MonoBehaviour:
   joinByIdButton: {fileID: 1896899660}
   editProfileButton: {fileID: 481264789}
   lobbyListContainer: {fileID: 1499184038}
-  lobbyItemPrefab: {fileID: 1322134928680955264, guid: c43dd758829e47c4db6f43f37384826f, type: 3}
+  lobbyItemPrefab: {fileID: 6465729975823214760, guid: c43dd758829e47c4db6f43f37384826f, type: 3}
   playerListContainer: {fileID: 165243570}
   lobbyId: {fileID: 445279851}
-  playerItemPrefab: {fileID: 1322134928680955264, guid: e19873896f675f54ba2e119060fb0469, type: 3}
+  playerItemPrefab: {fileID: -5300089561929930479, guid: e19873896f675f54ba2e119060fb0469, type: 3}
   startGameButton: {fileID: 932985443}
   settingButton: {fileID: 864593531}
   exitButton: {fileID: 1901760717}
@@ -9207,7 +9207,7 @@ MonoBehaviour:
   cancelJoinButton: {fileID: 1645761249}
   playerNameInputField: {fileID: 2011011086}
   avatarSelectionContainer: {fileID: 91584148}
-  avatarItemPrefab: {fileID: 6784370076822011926, guid: 9213b383f8928e84a98b37c774edfdcb, type: 3}
+  avatarItemPrefab: {fileID: -2627920825190806792, guid: 9213b383f8928e84a98b37c774edfdcb, type: 3}
   confirmPlayerInfoButton: {fileID: 852850}
   cancelPlayerInfoButton: {fileID: 18018006}
   playerInfoTitle: {fileID: 0}
@@ -9224,6 +9224,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: e85cba3f51c80e54da99817bf7b6d309, type: 3}
   - {fileID: 21300000, guid: 9703e7b7598a3d04b9952f6a7b6bd6f4, type: 3}
   - {fileID: 21300000, guid: 5b0910b390752e643bda1ac0ed661d3a, type: 3}
+  cachedAvatarItems: []
+  cachedPlayerItems: []
+  cachedLobbyItems: []
   isSinglePlayerMode: 0
 --- !u!1 &832575517
 GameObject:
@@ -10442,6 +10445,9 @@ MonoBehaviour:
   weaponGrowPrefab: {fileID: 7797295479864358708, guid: 73f30cb686b247f45bee3ef5ee46fedb, type: 3}
   spawnPoints: []
   playerPreview: {fileID: 1118466717}
+  activeAINetworkObjects: []
+  activePlayerNetworkObjects: []
+  activeEntities: []
   mainJoystick: {fileID: 2133176642}
   ActiveAICount:
     m_InternalValue: 0
@@ -22547,6 +22553,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1607504911}
+  - component: {fileID: 1607504912}
   - component: {fileID: 1607504910}
   m_Layer: 0
   m_Name: SpawnPoinPlayerManager
@@ -22567,6 +22574,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02195f96edea1194a88c2df3bc9a602b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   spawnPoints:
   - {fileID: 313894830}
   - {fileID: 1118631206}
@@ -22574,6 +22582,7 @@ MonoBehaviour:
   - {fileID: 304352614}
   - {fileID: 1800889295}
   - {fileID: 708264808}
+  playerPrefab: {fileID: 0}
 --- !u!4 &1607504911
 Transform:
   m_ObjectHideFlags: 0
@@ -22595,6 +22604,31 @@ Transform:
   - {fileID: 708264808}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1607504912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1607504909}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 1738793511
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &1611404696
 GameObject:
   m_ObjectHideFlags: 0

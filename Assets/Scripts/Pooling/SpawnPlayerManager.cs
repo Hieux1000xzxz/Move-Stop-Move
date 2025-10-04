@@ -22,7 +22,7 @@ public class SpawnPlayerManager : NetworkBehaviour
         }
     }
 
-    private void OnDestroy()
+    private new void OnDestroy()
     {
         if (NetworkManager.Singleton != null)
             NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;

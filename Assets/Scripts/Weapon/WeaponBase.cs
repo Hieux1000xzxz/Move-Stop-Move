@@ -17,7 +17,7 @@ public class WeaponBase : NetworkBehaviour
     [SerializeField] protected RotateMode rotateMode = RotateMode.FastBeyond360;
 
     [SerializeField] protected Rigidbody rb;
-    [SerializeField] protected Collider collider;
+    [SerializeField] protected Collider col;
     protected CharacterBase owner;
     protected Transform spawnPoint;
     protected Vector3 launchPos;
@@ -32,7 +32,7 @@ public class WeaponBase : NetworkBehaviour
     public Vector3 BaseScale => baseScale;
     private bool isFollowing = false;
     
-    private bool hasHit = false;
+    //private bool hasHit = false;
     
     public float BuffScaleMultiplier { get; set; } = 1f;
     
@@ -119,7 +119,7 @@ public class WeaponBase : NetworkBehaviour
     }
     private void ResetState()
     {
-        hasHit = false;
+        //hasHit = false;
         isFlying = false;
         isFollowing = true;
         StopRotation();
@@ -127,7 +127,7 @@ public class WeaponBase : NetworkBehaviour
     private void ResetPhysics()
     {
         if (rb != null) rb.isKinematic = true;
-        if (rb != null && collider != null) collider.enabled = true;
+        if (rb != null && GetComponent<Collider>() != null) GetComponent<Collider>().enabled = true;
     }
     private void EnsureSpawnPoint()
     {
@@ -194,7 +194,7 @@ public class WeaponBase : NetworkBehaviour
     }
     private void HandleTemporaryColliderDisable()
     {
-        if (collider != null)
+        if (GetComponent<Collider>() != null)
             StartCoroutine(ReenableColliderNextFrame());
     }
     private bool IsWall(Collider other)
@@ -208,7 +208,7 @@ public class WeaponBase : NetworkBehaviour
     }
     private void HandleVictimHit(CharacterBase victim)
     {
-        hasHit = true;
+        //hasHit = true;
 
         if (IsServer)
         {
@@ -238,10 +238,10 @@ public class WeaponBase : NetworkBehaviour
     }
     private IEnumerator ReenableColliderNextFrame()
     {
-        collider.enabled = false;
+        GetComponent<Collider>().enabled = false;
         yield return null; 
         if (isFlying) 
-            collider.enabled = true;
+            GetComponent<Collider>().enabled = true;
     }
     private void HandleHit(CharacterBase victim)
     {
@@ -325,7 +325,7 @@ public class WeaponBase : NetworkBehaviour
         gameObject.SetActive(false);
     }
 
-    private void OnDestroy()
+    private new void OnDestroy()
     {
         StopRotation();
     }

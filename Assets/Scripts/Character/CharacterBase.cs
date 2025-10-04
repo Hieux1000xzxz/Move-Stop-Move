@@ -39,7 +39,7 @@ public abstract class CharacterBase : NetworkBehaviour
     [SerializeField] private float maxScale = 3f;
 
     [Header("Default Weapon")]
-    [SerializeField] private WeaponType defaultWeapon = WeaponType.Knife;
+    [SerializeField] private WeaponType defaultWeapon;
 
     [Header("Character Owner")]
     [SerializeField] public OwnerType ownerType = OwnerType.Player;
@@ -56,8 +56,7 @@ public abstract class CharacterBase : NetworkBehaviour
     protected bool isDead = false;
     private Vector3 lastPosition;
     private Coroutine attackRoutine;
-    private bool hasSpawnedBefore = false;
-    private bool queuedMove = false;
+    //private bool hasSpawnedBefore = false;
 
     // Powerup state
     private Coroutine speedBoostRoutine;
@@ -170,6 +169,7 @@ public abstract class CharacterBase : NetworkBehaviour
         attackTarget = null;
         detectedTarget = null;
     }
+
     protected virtual void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
@@ -684,7 +684,7 @@ public abstract class CharacterBase : NetworkBehaviour
         ResetAnimator();
         ResetAgent();
         
-        hasSpawnedBefore = true;
+        //hasSpawnedBefore = true;
         hasDied = false;
     }
     private void ResetCoreState()
@@ -735,6 +735,7 @@ public abstract class CharacterBase : NetworkBehaviour
         if (agent != null && agent.isActiveAndEnabled)
         {
             agent.ResetPath();
+            agent.enabled = true; 
             agent.velocity = Vector3.zero;
         }
     }
@@ -849,9 +850,9 @@ public abstract class CharacterBase : NetworkBehaviour
 
         if (agent != null && agent.isActiveAndEnabled)
         {
-            agent.isStopped = true;
+            agent.enabled = false;
             agent.velocity = Vector3.zero;
-            agent.ResetPath();
+            //agent.ResetPath();
         }
     }
 
