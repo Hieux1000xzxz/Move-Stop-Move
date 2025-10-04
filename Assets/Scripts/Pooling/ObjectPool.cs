@@ -146,8 +146,6 @@ public class ObjectPool : Singleton<ObjectPool>
         }
 
         if (obj == null) return null;
-
-        obj.SetActive(true);
     
         if (parent != null)
         {
@@ -155,6 +153,8 @@ public class ObjectPool : Singleton<ObjectPool>
             obj.transform.rotation = parent.rotation;
         }
 
+        obj.SetActive(true);
+        
         return obj;
     }
 

@@ -330,23 +330,21 @@ public abstract class CharacterBase : NetworkBehaviour
 
     protected Transform FindNearestTarget()
     {
-        Collider[] targets = Physics.OverlapSphere(transform.position, attackRange);
+        Collider[] targets = GetTargetsInRange();
 
         Transform nearest = null;
         float minDistance = Mathf.Infinity;
 
-        foreach (var target in targets)
+        foreach (Collider target in targets)
         {
-
-            if (target.transform == transform || !target.gameObject.activeInHierarchy)
+            if (!IsValidTarget(target)) 
                 continue;
 
-            if (!target.CompareTag("Player")) continue;
+            CharacterBase otherChar = GetCharacterBase(target);
+            if (otherChar == null || otherChar == this) 
+                continue;
 
-            CharacterBase otherChar = target.GetComponent<CharacterBase>();
-            if (otherChar == null || otherChar == this) continue;
-
-            float distance = Vector3.Distance(transform.position, otherChar.transform.position);
+            float distance = GetDistanceToTarget(otherChar);
             if (distance < minDistance)
             {
                 minDistance = distance;
@@ -356,22 +354,43 @@ public abstract class CharacterBase : NetworkBehaviour
 
         return nearest;
     }
+
+    private Collider[] GetTargetsInRange()
+    {
+        return Physics.OverlapSphere(transform.position, attackRange);
+    }
+
+    private bool IsValidTarget(Collider target)
+    {
+        if (target == null) return false;
+        if (target.transform == transform) return false;
+        if (!target.gameObject.activeInHierarchy) return false;
+        if (!target.CompareTag("Player")) return false;
+        return true;
+    }
+
+    private CharacterBase GetCharacterBase(Collider target)
+    {
+        return target.GetComponent<CharacterBase>();
+    }
+
+    private float GetDistanceToTarget(CharacterBase otherChar)
+    {
+        return Vector3.Distance(transform.position, otherChar.transform.position);
+    }
+
     #endregion
     
     #region State Handling
     protected void ChangeState(CharacterState newState)
     {
         if (currentState == newState) return;
-
-        // luôn để state theo server
         currentState = newState;
-
         if (IsServer)
         {
-            NetState.Value = newState; // server sync xuống client
+            NetState.Value = newState; 
         }
 
-        // chỉ server mới chỉnh agent
         if (IsServer && newState == CharacterState.Attack)
         {
             if (agent != null && agent.isActiveAndEnabled)
@@ -383,8 +402,7 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-
-    protected virtual void HandleIdle()
+    protected  void HandleIdle()
     {
         Vector3 input = GetMovementInput();
         if (input.magnitude > 0.01f)
@@ -395,7 +413,7 @@ public abstract class CharacterBase : NetworkBehaviour
             CheckForAttack();
     }
 
-    protected virtual void HandleMove()
+    protected void HandleMove()
     {
         Vector3 input = GetMovementInput();
         if (input.magnitude > 0.01f)
@@ -408,7 +426,7 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-    protected virtual void HandleAttack()
+    protected void HandleAttack()
     {
         if (attackTarget == null || Vector3.Distance(transform.position, attackTarget.position) > attackRange)
         {
@@ -419,14 +437,11 @@ public abstract class CharacterBase : NetworkBehaviour
             }
             return;
         }
-
-
+        
         FaceTarget(attackTarget.position);
-
+        
         if (!isAttacking)
-        {
             PerformAttack();
-        }
 
         if (agent != null && agent.isActiveAndEnabled)
         {
@@ -440,27 +455,47 @@ public abstract class CharacterBase : NetworkBehaviour
     #region Attack
     protected virtual void CheckForAttack()
     {
-        if (IsMovingNow()) return;
-        if (currentState == CharacterState.Move) return;
+        if (ShouldSkipAttackCheck()) return;
 
-        if (this is Player player && player.isMovingInput)
+        HandleCurrentAttackTarget();
+        HandleNewDetectedTarget();
+    }
+
+    private bool ShouldSkipAttackCheck()
+    {
+        if (IsMovingNow()) return true;
+        if (currentState == CharacterState.Move) return true;
+
+        if (this is Player player)
         {
-            if (player.NetIsMoving.Value)
-                return;
+            if (player.isMovingInput && player.NetIsMoving.Value)
+                return true;
         }
 
-        if (attackTarget != null && attackTarget != detectedTarget)
-        {
-            float distanceToAttackTarget = Vector3.Distance(transform.position, attackTarget.position);
-            if (distanceToAttackTarget > attackRange || !attackTarget.gameObject.activeInHierarchy)
-            {
-                attackTarget = null;
-                EndAttack(true);
-                ChangeState(CharacterState.Idle);
-            }
-        }
+        return false;
+    }
 
-        if (detectedTarget != null && Vector3.Distance(transform.position, detectedTarget.position) <= attackRange)
+    private void HandleCurrentAttackTarget()
+    {
+        if (attackTarget == null || attackTarget == detectedTarget) 
+            return;
+
+        float distance = Vector3.Distance(transform.position, attackTarget.position);
+        if (distance > attackRange || !attackTarget.gameObject.activeInHierarchy)
+        {
+            attackTarget = null;
+            EndAttack(true);
+            ChangeState(CharacterState.Idle);
+        }
+    }
+
+    private void HandleNewDetectedTarget()
+    {
+        if (detectedTarget == null) 
+            return;
+
+        float distance = Vector3.Distance(transform.position, detectedTarget.position);
+        if (distance <= attackRange)
         {
             if (currentState != CharacterState.Attack || attackTarget != detectedTarget)
             {
@@ -470,7 +505,7 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-    protected virtual void FaceTarget(Vector3 targetPosition)
+    protected void FaceTarget(Vector3 targetPosition)
     {
         Vector3 direction = (targetPosition - transform.position).normalized;
         direction.y = 0;
@@ -481,74 +516,58 @@ public abstract class CharacterBase : NetworkBehaviour
         }
     }
 
-    protected virtual void PerformAttack()
+    protected void PerformAttack()
+    {
+        if (!CanStartAttack())
+            return;
+
+        BeginAttack();
+    }
+
+    private bool CanStartAttack()
     {
         if (currentState != CharacterState.Idle && currentState != CharacterState.Attack)
-        {
-            return;
-        }
+            return false;
 
         if (agent != null && agent.isActiveAndEnabled && agent.velocity.magnitude > 0.01f)
-        {
-            return;
-        }
+            return false;
 
         if (currentWeapon == null)
         {
             StartCoroutine(WaitWeaponAndAttack());
-            Debug.Log("Current weapon is null, equipping default weapon.");
-            return;
-        }
-        if (!hasWeapon)
-        {
-            return;
-        }
-        if (currentWeapon.IsFlying)
-        {
-            return;
-        }
-        if (Time.time < nextAttackTime)
-        {
-            return;
+            return false;
         }
 
+        if (!hasWeapon) return false;
+        if (currentWeapon.IsFlying) return false;
+        if (Time.time < nextAttackTime) return false;
+
+        return true;
+    }
+
+    private void BeginAttack()
+    {
         isAttacking = true;
-        if (IsServer) NetIsAttacking.Value = true;
-        
+        if (IsServer) 
+            NetIsAttacking.Value = true;
+
         hasWeapon = false;
         nextAttackTime = Time.time + attackDelay;
 
-        if (animator != null)
-        {
-            animator.SetBool("IsAttacking", true);
-        }
+        animator?.SetBool("IsAttacking", true);
 
         if (attackRoutine != null)
-        {
             StopCoroutine(attackRoutine);
-        }
+
         attackRoutine = StartCoroutine(AttackRoutine());
     }
+
     private IEnumerator WaitWeaponAndAttack()
     {
         yield return new WaitUntil(() => currentWeapon != null);
-        DoAttack();
+        BeginAttack(); 
     }
-    private void DoAttack()
-    {
-        isAttacking = true;
-        if (IsServer) NetIsAttacking.Value = true;
-        hasWeapon = false;
-        nextAttackTime = Time.time + attackDelay;
-
-        if (animator != null)
-            animator.SetBool("IsAttacking", true);
-
-        if (attackRoutine != null)
-            StopCoroutine(attackRoutine);
-
-        attackRoutine = StartCoroutine(AttackRoutine());
-    }
+  
     private IEnumerator AttackRoutine()
     {
         yield return new WaitForSeconds(attackDelay);
@@ -576,15 +595,12 @@ public abstract class CharacterBase : NetworkBehaviour
         EndAttack();
     }
 
-
-    public virtual void OnWeaponReturned()
+    public void OnWeaponReturned()
     {
         isAttacking = false;
         hasWeapon = true;
     }
-
     
-
     protected virtual void EndAttack(bool cancelByMove = false)
     {
         isAttacking = false;
@@ -601,7 +617,6 @@ public abstract class CharacterBase : NetworkBehaviour
             NetIsAttacking.Value = false;
             nextAttackTime = Time.time;
             
-            
             if (IsMovingNow())
                 ChangeState(CharacterState.Move);
             else
@@ -616,26 +631,27 @@ public abstract class CharacterBase : NetworkBehaviour
     #region  Score & Stats
     private void OnScoreChanged(int oldValue, int newValue)
     {
-        Debug.Log($"[CLIENT] {gameObject.name} Score synced {oldValue} -> {newValue}");
         if (scoreDisplay != null)
         {
             scoreDisplay.SetScore(newValue);
             UpdateCharacterStats();
         }
     }
-
     public void AddScore(int value)
     {
         if (!IsServer) return;
         Score.Value += value;
-        
-        Debug.Log($"[SERVER] {gameObject.name} Score = {Score.Value}");
     }
-
     private void UpdateCharacterStats()
     {
         if (scoreDisplay == null) return;
 
+        UpdateScale();
+        UpdateAttackRange();
+        UpdateMoveSpeed();
+    }
+    private void UpdateScale()
+    {
         float newScale = Mathf.Min(1f + scoreDisplay.CurrentScore * sizePerScore, maxScale);
         transform.localScale = Vector3.one * newScale;
 
@@ -644,8 +660,13 @@ public abstract class CharacterBase : NetworkBehaviour
             float buffMultiplier = currentWeapon.BuffScaleMultiplier;
             currentWeapon.ApplyScale(newScale); // newScale from score
         }
-
+    }
+    private void UpdateAttackRange()
+    {
         attackRange += scoreDisplay.CurrentScore * rangePerScore;
+    }
+    private void UpdateMoveSpeed()
+    {
         moveSpeed += moveSpeedPerScore;
 
         if (agent != null && agent.isActiveAndEnabled)
@@ -653,31 +674,50 @@ public abstract class CharacterBase : NetworkBehaviour
             agent.speed = moveSpeed;
         }
     }
-
-    public virtual void ResetState()
+    
+    public void ResetState()
     {
-
+        ResetCoreState();
+        ResetHealth();
+        ResetUIAndCollider();
+        ResetWeapon();
+        ResetAnimator();
+        ResetAgent();
+        
+        hasSpawnedBefore = true;
+        hasDied = false;
+    }
+    private void ResetCoreState()
+    {
         currentState = CharacterState.Idle;
         attackTarget = null;
         detectedTarget = null;
         isAttacking = false;
         isDead = false;
         hasWeapon = true;
-
+    }
+    private void ResetHealth()
+    {
         if (IsServer && health != null)
         {
             health.CurrentHealth.Value = health.maxHealth;
         }
-
+    }
+    private void ResetUIAndCollider()
+    {
         scoreDisplay.gameObject.SetActive(true);
         this.gameObject.layer = LayerMask.NameToLayer("Player");
         characterCollider.enabled = true;
-
+    }
+    private void ResetWeapon()
+    {
         if (IsServer)
         {
             ChangeWeapon(weaponType);
         }
-
+    }
+    private void ResetAnimator()
+    {
         if (animator != null)
         {
             animator.SetBool("IsMoving", false);
@@ -689,17 +729,15 @@ public abstract class CharacterBase : NetworkBehaviour
             StopCoroutine(attackRoutine);
             attackRoutine = null;
         }
-
+    }
+    private void ResetAgent()
+    {
         if (agent != null && agent.isActiveAndEnabled)
         {
             agent.ResetPath();
             agent.velocity = Vector3.zero;
         }
-
-        hasSpawnedBefore = true;
-        hasDied = false;
     }
-
     #endregion
 
     #region Weapons Handling
@@ -707,42 +745,52 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        if (currentWeapon != null)
-        {
-            ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
-            currentWeapon.ClearOwner();
-            currentWeapon = null;
-        }
+        ReleaseCurrentWeapon();
 
-        GameObject go = null;
-
-        if (ownerType == OwnerType.Player)
-        {
-            go = ObjectPool.Instance.SpawnPlayerWeaponByType(newWeaponType, weaponSpawnPoint, true);
-        }
-        else if (ownerType == OwnerType.AI)
-        {
-            go = ObjectPool.Instance.SpawnAIWeaponByType(newWeaponType, weaponSpawnPoint, true);
-        }
-
+        GameObject go = SpawnWeaponByOwner(newWeaponType);
         if (go == null) return;
 
-        currentWeapon = go.GetComponent<WeaponBase>();
+        WeaponBase weapon = go.GetComponent<WeaponBase>();
+        NetworkObject netObj = go.GetComponent<NetworkObject>();
+
+        SetupNewWeapon(weapon, netObj);
+    }
+
+    private void ReleaseCurrentWeapon()
+    {
+        if (currentWeapon == null) return;
+
+        ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
+        currentWeapon.ClearOwner();
+        currentWeapon = null;
+    }
+
+    private GameObject SpawnWeaponByOwner(WeaponType type)
+    {
+        return ownerType switch
+        {
+            OwnerType.Player => ObjectPool.Instance.SpawnPlayerWeaponByType(type, weaponSpawnPoint, true),
+            OwnerType.AI => ObjectPool.Instance.SpawnAIWeaponByType(type, weaponSpawnPoint, true),
+            _ => null
+        };
+    }
+
+    private void SetupNewWeapon(WeaponBase weapon, NetworkObject netObj)
+    {
+        if (weapon == null || netObj == null) return;
+
+        currentWeapon = weapon;
         currentWeapon.Init(this, weaponSpawnPoint);
         currentWeapon.SetOwner(this);
 
-        var netObj = currentWeapon.GetComponent<NetworkObject>();
-        if (netObj != null && !netObj.IsSpawned)
-        {
+        if (!netObj.IsSpawned)
             netObj.Spawn(true);
-        }
 
         NetCurrentWeapon.Value = netObj;
         AssignWeapon(currentWeapon);
         SetWeaponClientRpc(netObj, this.networkObject);
-
     }
-    
+
     private void HideOrReleaseWeapon()
     {
         if (currentWeapon == null) return;
@@ -761,95 +809,101 @@ public abstract class CharacterBase : NetworkBehaviour
 
         currentWeapon = null;
     }
-    
+
     public void AssignWeapon(WeaponBase weapon)
     {
         currentWeapon = weapon;
         currentWeapon.Init(this, weaponSpawnPoint);
     }
+
     #endregion
 
     #region Death
-    protected virtual void CheckForDead()
+    protected void CheckForDead()
     {
-        if (health.IsDead == true && !hasDied)
+        if (health.IsDead && !hasDied)
         {
             hasDied = true;
             isDead = true;
 
             if (IsServer)
-            {
                 GameManager.Instance.UnregisterAI(this.networkObject);
-            }
 
-            StopAllCoroutines();
-            scoreDisplay.gameObject.SetActive(false);
-            characterCollider.enabled = true;
-            if (agent != null && agent.isActiveAndEnabled)
-            {
-                agent.isStopped = true;
-                agent.velocity = Vector3.zero;
-                agent.ResetPath();
-            }
-
-            if (animator != null)
-            {
-                animator.SetBool("IsMoving", false);
-                animator.SetBool("IsAttacking", false);
-            }
+            HandleDeathCleanup();
+            HandleDeathAnimation();
 
             if (IsServer)
-            {
-                DisableColliderClientRpc();
-                PlayDeathAnimationClientRpc();
-                
-                SpawnCoinUniversal();
-            }
+                SpawnCoinUniversal();  
 
-            if (IsServer)
-            {
-                PlayDeathAnimationClientRpc();
-            }
+            ReleaseWeaponOnDeath();
 
-            if (currentWeapon != null)
-            {
-                if (IsServer)
-                {
-                    ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
-                }
-                else
-                {
-                    currentWeapon.gameObject.SetActive(false);
-                }
-                currentWeapon = null;
-            }
-
-            HideOrReleaseWeapon();
-
-            Debug.Log("Check FOr dead");
             StartCoroutine(DelayedDisable(0f));
         }
     }
-    
+
+    private void HandleDeathCleanup()
+    {
+        StopAllCoroutines();
+        scoreDisplay.gameObject.SetActive(false);
+        characterCollider.enabled = true;
+
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+            agent.ResetPath();
+        }
+    }
+
+    private void HandleDeathAnimationLocal()
+    {
+        if (animator != null)
+        {
+            animator.SetFloat("Speed", 0f);
+            animator.SetBool("IsAttacking", false);
+            animator.CrossFade("Death", 0.1f);
+        }
+    }
+
+    private void HandleDeathAnimation()
+    {
+        HandleDeathAnimationLocal(); 
+        if (IsServer)
+        {
+            DisableColliderClientRpc();
+            PlayDeathAnimationClientRpc();
+        }
+    }
+
+    private void ReleaseWeaponOnDeath()
+    {
+        if (currentWeapon == null) return;
+
+        if (IsServer)
+            ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
+        else
+            currentWeapon.gameObject.SetActive(false);
+
+        currentWeapon = null;
+
+        HideOrReleaseWeapon();
+    }
+
     private IEnumerator DelayedDisable(float delay)
     {
-        SpawnCoinUniversal();
-        
         yield return new WaitForSeconds(delay);
-
         gameObject.SetActive(false);
     }
-    
+
     private void SpawnCoinUniversal()
     {
-        GameObject coin = ObjectPool.Instance.SpawnCoin(transform.position + Vector3.up * 1f, Quaternion.identity);
-
-        coin.SetActive(true); 
+        GameObject coin = ObjectPool.Instance.SpawnCoin(transform.position + Vector3.up, Quaternion.identity);
+        coin.SetActive(true);
     }
+
 
     #endregion
     
-
     #region Network Methods
 
     [ClientRpc]
@@ -1014,21 +1068,6 @@ public abstract class CharacterBase : NetworkBehaviour
     }
     //Anim Attack
 
-    private IEnumerator StopAttackAnimDelayed(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        StopAttackAnimationClientRpc();
-    }
-
-    [ClientRpc]
-    public void PlayAttackAnimationClientRpc()
-    {
-        if (animator != null)
-        {
-            animator.SetBool("IsAttacking", true);
-        }
-    }
-
     [ServerRpc]
     public void RequestSetWeaponServerRpc(WeaponType selectedWeapon)
     {
@@ -1049,21 +1088,6 @@ public abstract class CharacterBase : NetworkBehaviour
                 ownerChar.AssignWeapon(weapon);
                 weapon.SetOwner(ownerChar);
             }
-        }
-    }
-
-    [ServerRpc]
-    private void RequestStopAttackAnimationServerRpc()
-    {
-        StopAttackAnimationClientRpc();
-    }
-    [ClientRpc]
-    private void LaunchWeaponClientRPC(Vector3 dir)
-    {
-        if (IsServer) return;
-        if (currentWeapon != null)
-        {
-            currentWeapon.Launch(dir, this.gameObject);
         }
     }
 
@@ -1191,6 +1215,7 @@ public abstract class CharacterBase : NetworkBehaviour
     }
 
     #endregion
+    
     #region Attack Animation Event
     [ServerRpc]
     private void RequestLaunchServerRpc(ServerRpcParams rpcParams = default)
@@ -1230,15 +1255,12 @@ public abstract class CharacterBase : NetworkBehaviour
     [ClientRpc]
     private void PlayDeathAnimationClientRpc()
     {
-        if (animator != null)
-        {
-            animator.SetBool("IsMoving", false);
-            animator.SetBool("IsAttacking", false);
-        }
+        HandleDeathAnimationLocal();
     }
 
     #endregion
 
+    #region Coin
     [ClientRpc]
     private void AddCoinClientRpc(int amount, ClientRpcParams rpcParams = default)
     {
@@ -1255,4 +1277,5 @@ public abstract class CharacterBase : NetworkBehaviour
         });
     }
 
+    #endregion
 }
