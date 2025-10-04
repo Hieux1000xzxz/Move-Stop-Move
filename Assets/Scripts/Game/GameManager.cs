@@ -202,7 +202,7 @@ public class GameManager : NetworkBehaviour
                 }
                 else
                 {
-                    GameWinClientRpc();
+                    GameWinClientRpc();   
                 }
             }
         }
