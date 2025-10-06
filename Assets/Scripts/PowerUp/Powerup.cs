@@ -12,6 +12,10 @@ public class Powerup : NetworkBehaviour
     [SerializeField] public NetworkObject netObject;
 
     public System.Action OnReleased;
+    private void Awake()
+    {
+        ObjectPool.Instance?.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
+    }
 
     private void OnTriggerEnter(Collider other)
     {

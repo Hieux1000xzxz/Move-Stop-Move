@@ -1,6 +1,5 @@
 using UnityEngine;
 using TMPro;
-using UnityEditor.Search;
 
 public class CoinManager : Singleton<CoinManager>
 {
@@ -13,7 +12,6 @@ public class CoinManager : Singleton<CoinManager>
     private int shopCoins = 0;    
     
     public int GetShopCoins() => shopCoins;
-    public int GetSessionCoins() => sessionCoins;
     public int GetTotalCoins() => shopCoins + sessionCoins;
 
     private new void Awake()
@@ -68,12 +66,6 @@ public class CoinManager : Singleton<CoinManager>
         PlayerPrefs.SetInt(COIN_KEY, shopCoins);
         PlayerPrefs.Save();
 
-    }
-
-    public static int LoadCoinsFromPrefs()
-    {
-        int coins = PlayerPrefs.GetInt(COIN_KEY, 0);
-        return coins;
     }
 
     private void UpdateCoinUI()

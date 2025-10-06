@@ -577,6 +577,7 @@ MonoBehaviour:
   defaultWeapon: 5
   ownerType: 0
   detectAttackDelay: 0
+  isDead: 0
   Score:
     m_InternalValue: 0
   NetIsMoving:
@@ -639,6 +640,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 1840719375837626499}
+  playerRef: {fileID: 3008413264066109357}
   maxHealth: 10
   deadLayerName: Death
   CurrentHealth:

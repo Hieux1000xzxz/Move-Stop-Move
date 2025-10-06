@@ -6,6 +6,10 @@ public class Coin : NetworkBehaviour
     [SerializeField] private int value = 100;
     private bool isCollected;
     [SerializeField] private Collider col;
+    private void Awake()
+    {
+        ObjectPool.Instance?.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
+    }
 
     private void OnEnable()
     {

@@ -32,6 +32,7 @@ public class Player : CharacterBase
     protected override void Update()
     {
         base.Update();
+        //only the player is controlled
         if (!IsOwner) return;
 
         Vector3 input = GetMovementInput();

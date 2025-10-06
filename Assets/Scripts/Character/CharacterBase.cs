@@ -53,7 +53,7 @@ public abstract class CharacterBase : NetworkBehaviour
     protected bool isAttacking = false;
     protected bool hasWeapon = true;
     protected float nextAttackTime = 0f;
-    protected bool isDead = false;
+    public bool isDead = false;
     private Vector3 lastPosition;
     private Coroutine attackRoutine;
     //private bool hasSpawnedBefore = false;
@@ -101,6 +101,11 @@ public abstract class CharacterBase : NetworkBehaviour
 
 
     #region Unity Lifecycle
+    protected virtual void Awake()
+    {
+        ObjectPool.Instance?.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
+        ObjectPool.Instance?.RegisterCharacter(gameObject, this);
+    }
 
     protected virtual void Start()
     {
@@ -637,6 +642,8 @@ public abstract class CharacterBase : NetworkBehaviour
             UpdateCharacterStats();
         }
     }
+    
+    //sync Score
     public void AddScore(int value)
     {
         if (!IsServer) return;
@@ -657,7 +664,6 @@ public abstract class CharacterBase : NetworkBehaviour
 
         if (currentWeapon != null)
         {
-            float buffMultiplier = currentWeapon.BuffScaleMultiplier;
             currentWeapon.ApplyScale(newScale); // newScale from score
         }
     }
@@ -748,12 +754,10 @@ public abstract class CharacterBase : NetworkBehaviour
 
         ReleaseCurrentWeapon();
 
-        GameObject go = SpawnWeaponByOwner(newWeaponType);
-        if (go == null) return;
+        WeaponBase weapon = ObjectPool.Instance.SpawnWeaponByOwner(this, newWeaponType);
+        if (weapon == null) return;
 
-        WeaponBase weapon = go.GetComponent<WeaponBase>();
-        NetworkObject netObj = go.GetComponent<NetworkObject>();
-
+        NetworkObject netObj = weapon.NetworkObj;
         SetupNewWeapon(weapon, netObj);
     }
 
@@ -764,16 +768,6 @@ public abstract class CharacterBase : NetworkBehaviour
         ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
         currentWeapon.ClearOwner();
         currentWeapon = null;
-    }
-
-    private GameObject SpawnWeaponByOwner(WeaponType type)
-    {
-        return ownerType switch
-        {
-            OwnerType.Player => ObjectPool.Instance.SpawnPlayerWeaponByType(type, weaponSpawnPoint, true),
-            OwnerType.AI => ObjectPool.Instance.SpawnAIWeaponByType(type, weaponSpawnPoint, true),
-            _ => null
-        };
     }
 
     private void SetupNewWeapon(WeaponBase weapon, NetworkObject netObj)
@@ -902,7 +896,6 @@ public abstract class CharacterBase : NetworkBehaviour
         coin.SetActive(true);
     }
 
-
     #endregion
     
     #region Network Methods
@@ -942,7 +935,7 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             if (newVal.TryGet(out NetworkObject obj))
             {
-                currentWeapon = obj.GetComponent<WeaponBase>();
+                currentWeapon = WeaponBase.GetByNetworkObject(obj);
                 currentWeapon.SetOwner(this);
             }
             else
@@ -958,7 +951,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         if (NetCurrentWeapon.Value.TryGet(out NetworkObject objNow))
         {
-            currentWeapon = objNow.GetComponent<WeaponBase>();
+            currentWeapon = WeaponBase.GetByNetworkObject(objNow);
             currentWeapon.SetOwner(this);
         }
 
@@ -1019,7 +1012,7 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             if (NetCurrentWeapon.Value.TryGet(out NetworkObject obj) && obj != null)
             {
-                var weap = obj.GetComponent<WeaponBase>();
+                var weap = WeaponBase.GetByNetworkObject(obj);
                 if (weap != null)
                 {
                     currentWeapon = weap;
@@ -1041,6 +1034,7 @@ public abstract class CharacterBase : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
+        
         Score.OnValueChanged -= OnScoreChanged;
         
         if (IsServer && currentWeapon != null)
@@ -1081,8 +1075,8 @@ public abstract class CharacterBase : NetworkBehaviour
         if (weaponRef.TryGet(out NetworkObject weaponObj) &&
             ownerRef.TryGet(out NetworkObject ownerObj))
         {
-            var weapon = weaponObj.GetComponent<WeaponBase>();
-            var ownerChar = ownerObj.GetComponent<CharacterBase>();
+            var weapon = WeaponBase.GetByNetworkObject(weaponObj);
+            var ownerChar = ownerObj.TryGetComponent(out CharacterBase ch) ? ch : null;
 
             if (weapon != null && ownerChar != null)
             {
@@ -1199,8 +1193,7 @@ public abstract class CharacterBase : NetworkBehaviour
         isWeaponGrowActive = false;
         weaponGrowRoutine = null;
     }
-
-    
+   
     public void ApplyPowerupLocal(PowerupType type, float duration)
     {
         switch (type)
@@ -1245,6 +1238,8 @@ public abstract class CharacterBase : NetworkBehaviour
     private IEnumerator WaitUntilWeaponReady(Vector3 dir, Quaternion rot)
     {
         currentWeapon.transform.rotation = rot;
+        
+        //shoot real weapon
         currentWeapon.Launch(dir, this.gameObject);
         yield return new WaitUntil(() => currentWeapon != null);
     }

@@ -10,6 +10,7 @@ public class AIController : CharacterBase
     [SerializeField] private float observeMaxTime = 5f;
 
     [Header("Natural Behavior")]
+
     [SerializeField] private float aggressionLevel = 0.5f;
     [SerializeField] private float curiosityLevel = 0.7f;
     [SerializeField] private float fearLevel = 0.3f;

@@ -273,8 +273,8 @@ MonoBehaviour:
   rotateSpeed: 1080
   rotateMode: 3
   rb: {fileID: 3562958303719707135}
-  collider: {fileID: 2939150663891954781}
-  isFlying: 0
+  col: {fileID: 2939150663891954781}
+  netObj: {fileID: 7127309102368046219}
 --- !u!114 &5973456559534547323
 MonoBehaviour:
   m_ObjectHideFlags: 0

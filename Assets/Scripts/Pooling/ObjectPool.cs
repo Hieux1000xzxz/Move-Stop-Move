@@ -45,9 +45,10 @@ public enum WeaponType
 public class ObjectPool : Singleton<ObjectPool>
 {
     public List<Preallocation> preAllocations;
+    [SerializeField] private List<GameObject> pooledGobjects;
 
-    [SerializeField]
-    private List<GameObject> pooledGobjects;
+    private readonly Dictionary<GameObject, NetworkObject> netCache = new();
+    private readonly Dictionary<GameObject, CharacterBase> charCache = new();
 
     protected override void Awake()
     {
@@ -59,38 +60,30 @@ public class ObjectPool : Singleton<ObjectPool>
             for (int i = 0; i < item.count; ++i)
             {
                 GameObject obj = CreateGobject(item.gameObject);
-
                 obj.SetActive(false);
                 pooledGobjects.Add(obj);
             }
         }
     }
 
-
-    // ================== REGION: ENEMY ==================
     #region ENEMY
     public GameObject SpawnRandomEnemy(Vector3 pos = default, Quaternion rot = default)
     {
         GameObject enemy = null;
-        
         List<GameObject> availableEnemies = new List<GameObject>();
+
         foreach (var obj in pooledGobjects)
         {
-            if (obj == null) continue; 
-
-            if (!obj.activeSelf)
+            if (obj == null || obj.activeSelf) continue;
+            foreach (var pre in preAllocations)
             {
-                foreach (var pre in preAllocations)
+                if (pre.type == ObjectType.Enemy && obj.name.Contains(pre.gameObject.name))
                 {
-                    if (pre.type == ObjectType.Enemy && obj.name.Contains(pre.gameObject.name))
-                    {
-                        availableEnemies.Add(obj);
-                        break;
-                    }
+                    availableEnemies.Add(obj);
+                    break;
                 }
             }
         }
-
 
         if (availableEnemies.Count > 0)
         {
@@ -109,44 +102,28 @@ public class ObjectPool : Singleton<ObjectPool>
             }
         }
 
-        if (enemy == null)
-        {
-            return null;
-        }
+        if (enemy == null) return null;
 
-        // setup transform
         enemy.transform.position = pos;
         enemy.transform.rotation = rot;
-        //enemy.SetActive(true);
 
         return enemy;
     }
     #endregion
 
-    // ================== REGION: WEAPON ==================
     #region WEAPON
 
     public GameObject SpawnPlayerWeaponByType(WeaponType type, Transform parent = null, bool attachToParent = true)
-    {
-        return SpawnWeaponInternal(type, ObjectType.Weapon, parent, attachToParent);
-    }
+        => SpawnWeaponInternal(type, ObjectType.Weapon, parent, attachToParent);
 
     public GameObject SpawnAIWeaponByType(WeaponType type, Transform parent = null, bool attachToParent = true)
-    {
-        return SpawnWeaponInternal(type, ObjectType.Weapon1, parent, attachToParent);
-    }
+        => SpawnWeaponInternal(type, ObjectType.Weapon1, parent, attachToParent);
 
     private GameObject SpawnWeaponInternal(WeaponType type, ObjectType objType, Transform parent, bool attachToParent)
     {
-        GameObject obj = GetInactiveWeapon(type, objType);
-
-        if (obj == null)
-        {
-            obj = ExpandWeapon(type, objType);
-        }
-
+        GameObject obj = GetInactiveWeapon(type, objType) ?? ExpandWeapon(type, objType);
         if (obj == null) return null;
-    
+
         if (parent != null)
         {
             obj.transform.position = parent.position;
@@ -154,10 +131,20 @@ public class ObjectPool : Singleton<ObjectPool>
         }
 
         obj.SetActive(true);
-        
         return obj;
     }
+    public WeaponBase SpawnWeaponByOwner(CharacterBase owner, WeaponType type)
+    {
+        GameObject go = owner.ownerType switch
+        {
+            CharacterBase.OwnerType.Player => SpawnPlayerWeaponByType(type, owner.weaponSpawnPoint, true),
+            CharacterBase.OwnerType.AI => SpawnAIWeaponByType(type, owner.weaponSpawnPoint, true),
+            _ => null
+        };
 
+        if (go == null) return null;
+        return go.GetComponent<WeaponBase>();
+    }
 
     private GameObject GetInactiveWeapon(WeaponType type, ObjectType objType)
     {
@@ -175,10 +162,7 @@ public class ObjectPool : Singleton<ObjectPool>
                 foreach (var pre in preAllocations)
                 {
                     if (pre.type == objType && pre.weaponType == type && obj.name.StartsWith(pre.gameObject.name))
-                    {
                         return obj;
-                    }
-
                 }
             }
         }
@@ -198,11 +182,8 @@ public class ObjectPool : Singleton<ObjectPool>
         }
         return null;
     }
-
     #endregion
 
-
-    // ================== REGION: POWERUP ==================
     #region POWERUP
     public GameObject SpawnPowerup(PowerupType type, Vector3 pos, Quaternion rot)
     {
@@ -281,36 +262,28 @@ public class ObjectPool : Singleton<ObjectPool>
         return null;
     }
     #endregion
-    
+
+    #region COIN
     public GameObject SpawnCoin(Vector3 pos, Quaternion rot)
     {
         GameObject obj = null;
 
-        // tìm coin chưa active
-        for (int i = pooledGobjects.Count - 1; i >= 0; i--)
+        foreach (var go in pooledGobjects)
         {
-            var go = pooledGobjects[i];
-            if (go == null)
-            {
-                pooledGobjects.RemoveAt(i);
-                continue;
-            }
+            if (go == null || go.activeSelf) continue;
 
-            if (!go.activeSelf)
+            foreach (var pre in preAllocations)
             {
-                foreach (var pre in preAllocations)
+                if (pre.type == ObjectType.Coin && go.name.Contains(pre.gameObject.name))
                 {
-                    if (pre.type == ObjectType.Coin && go.name.Contains(pre.gameObject.name))
-                    {
-                        obj = go;
-                        break;
-                    }
+                    obj = go;
+                    break;
                 }
             }
+
             if (obj != null) break;
         }
 
-        // nếu không có thì tạo thêm
         if (obj == null)
         {
             foreach (var pre in preAllocations)
@@ -330,53 +303,67 @@ public class ObjectPool : Singleton<ObjectPool>
         obj.transform.rotation = rot;
         obj.SetActive(true);
 
-        var netObj = obj.GetComponent<NetworkObject>();
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            if (NetworkManager.Singleton.IsServer && netObj != null && !netObj.IsSpawned)
-            {
-                netObj.Spawn(true); // spawn cho client thấy
-            }
-        }
-        else
-        {
-            // Single player mode
-            obj.SetActive(true);
+            if (NetworkManager.Singleton.IsServer && netCache.TryGetValue(obj, out var netObj) && !netObj.IsSpawned)
+                netObj.Spawn(true);
         }
 
         return obj;
     }
 
-    public void ReleaseWeapon(GameObject obj)
-    {
-        var netObj = obj.GetComponent<NetworkObject>();
-        if (netObj != null && netObj.IsSpawned && NetworkManager.Singleton.IsServer)
-        {
-            netObj.Despawn(true);
-        }
-
-        obj.SetActive(false);
-    }
     public void ReleaseCoin(GameObject obj)
     {
         if (obj == null) return;
+        if (!netCache.TryGetValue(obj, out var netObj)) return;
 
-        var netObj = obj.GetComponent<NetworkObject>();
-        if (netObj != null && netObj.IsSpawned && NetworkManager.Singleton.IsServer)
-        {
+        if (NetworkManager.Singleton.IsServer && netObj.IsSpawned)
             netObj.Despawn(false);
-        }
 
         obj.SetActive(false);
     }
+    #endregion
 
-    // ================== REGION: HELPERS ==================
+    #region WEAPON_RELEASE
+    public void ReleaseWeapon(GameObject obj)
+    {
+        if (obj == null) return;
+        if (!netCache.TryGetValue(obj, out var netObj)) return;
+
+        if (NetworkManager.Singleton.IsServer && netObj.IsSpawned)
+            netObj.Despawn(true);
+
+        obj.SetActive(false);
+    }
+    #endregion
+
     #region HELPERS
     private GameObject CreateGobject(GameObject item)
     {
         GameObject gobject = Instantiate(item);
         gobject.SetActive(false);
         return gobject;
+    }
+    
+    public bool TryGetCharacter(GameObject obj, out CharacterBase character)
+    {
+        return charCache.TryGetValue(obj, out character);
+    }
+    public bool TryGetNetworkObject(GameObject obj, out NetworkObject netObj)
+    {
+        return netCache.TryGetValue(obj, out netObj);
+    }
+    
+    public void RegisterNetworkObject(GameObject obj, NetworkObject netObj)
+    {
+        if (obj != null && netObj != null && !netCache.ContainsKey(obj))
+            netCache[obj] = netObj;
+    }
+
+    public void RegisterCharacter(GameObject obj, CharacterBase character)
+    {
+        if (obj != null && character != null && !charCache.ContainsKey(obj))
+            charCache[obj] = character;
     }
 
     #endregion

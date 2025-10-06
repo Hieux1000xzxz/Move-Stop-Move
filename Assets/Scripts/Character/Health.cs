@@ -6,7 +6,7 @@ public class Health : NetworkBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] public int maxHealth = 10;
     [SerializeField] private string deadLayerName = "Dead";
-
+    [SerializeField] private Player playerRef;
     public NetworkVariable<int> CurrentHealth = new NetworkVariable<int>(
         0,
         NetworkVariableReadPermission.Everyone,
@@ -14,7 +14,13 @@ public class Health : NetworkBehaviour
     );
 
     public bool IsDead => CurrentHealth.Value <= 0;
+    private void Awake()
+    {
+        if (playerRef == null)
+            TryGetComponent(out playerRef);
 
+        ObjectPool.Instance?.RegisterCharacter(gameObject, GetComponent<CharacterBase>());
+    }
     public override void OnNetworkSpawn()
     {
         if (IsServer)
@@ -49,12 +55,6 @@ public class Health : NetworkBehaviour
         if (IsDead) return;
 
         CurrentHealth.Value = Mathf.Max(CurrentHealth.Value - amount, 0);
-    }
-
-    [ServerRpc]
-    public void TakeDamageServerRpc(int amount)
-    {
-        ApplyDamage(amount);
     }
 
     private void HandleDeath()

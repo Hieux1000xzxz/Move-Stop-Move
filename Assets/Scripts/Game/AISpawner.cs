@@ -138,12 +138,11 @@ public class AISpawner : NetworkBehaviour
 
     private void PrepareEnemy(GameObject enemy)
     {
-        var character = enemy.GetComponent<CharacterBase>();
-        if (character != null)
-        {
-            character.ResetState();
-            character.ChangeWeapon(character.weaponType);
-        }
+        if (!ObjectPool.Instance.TryGetCharacter(enemy, out var character))
+            return;
+
+        character.ResetState();
+        character.ChangeWeapon(character.weaponType);
     }
 
     private void PositionEnemy(GameObject enemy, Vector3 position, Quaternion rotation)
@@ -155,8 +154,8 @@ public class AISpawner : NetworkBehaviour
 
     private void SyncNetworkObject(GameObject enemy, Transform spawnPoint)
     {
-        var netObj = enemy.GetComponent<NetworkObject>();
-        if (netObj == null) return;
+        if (!ObjectPool.Instance.TryGetNetworkObject(enemy, out var netObj) || netObj == null)
+            return;
 
         if (netObj.IsSpawned)
         {
