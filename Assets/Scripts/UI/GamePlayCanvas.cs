@@ -26,7 +26,9 @@ public class GamePlayCanvas : BaseCanvas
     private string playerName;
     private float winExitTimer = -1f;
     private float winExitDelay = 5f;
-   
+    
+    [SerializeField] private TMP_Text earnedCoinText;
+
     public void Init(ConnectionCanvas connection, string lobbyId, string playerName)
     {
         this.connectionCanvas = connection;
@@ -200,14 +202,9 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         UIManager.Instance.HideCountText();
         gameOverUI.SetActive(true);
-
-        Debug.Log("[GamePlayCanvas] OnGameOver -> Commit coin");
-        CoinManager.Instance.CommitSessionCoins();
         CoinManager.Instance.HideCoinText();
-
-        int totalCoins = CoinManager.Instance.GetTotalCoins();
-        totalCoinText.gameObject.SetActive(true);
-        totalCoinText.text = $"Total coins: {totalCoins}";
+        CoinManager.Instance.ShowEndMatchCoinText();
+        CoinManager.Instance.CommitSessionCoins();
     }
 
     public void OnGameWin()
@@ -218,8 +215,7 @@ public class GamePlayCanvas : BaseCanvas
         winExitTimer = winExitDelay;
         countDown.gameObject.SetActive(true);
         CoinManager.Instance.HideCoinText();
-        Debug.Log("[GamePlayCanvas] OnGameWin -> Commit coin");
-        CoinManager.Instance.CommitSessionCoins();
+        CoinManager.Instance.ShowEndMatchCoinText();
     }
 
     public void OnWinner()
@@ -232,10 +228,7 @@ public class GamePlayCanvas : BaseCanvas
         countDown.gameObject.SetActive(true);
         CoinManager.Instance.HideCoinText();
 
-        int totalCoins = CoinManager.Instance.GetTotalCoins();
-        
-        totalCoinText.gameObject.SetActive(true);
-        totalCoinText.text = $"Total coins: {totalCoins}";
+        CoinManager.Instance.ShowEndMatchCoinText();
     }
 }
 

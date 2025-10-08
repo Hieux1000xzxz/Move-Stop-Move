@@ -213,6 +213,7 @@ public class GameManager : NetworkBehaviour
 
                 if (ActivePlayerCount.Value > 0)
                 {
+                    CoinManager.Instance.CommitSessionCoins();
                     GameWinClientRpc();
 
                     var winnerId = lastNetObj.OwnerClientId;
@@ -224,6 +225,7 @@ public class GameManager : NetworkBehaviour
                 }
                 else
                 {
+                    CoinManager.Instance.CommitSessionCoins();
                     GameWinClientRpc();
                 }
             }
@@ -292,7 +294,7 @@ public class GameManager : NetworkBehaviour
 
     public void GameOver()
     {
-        //DisableGamePlaySystem();
+        CoinManager.Instance.CommitSessionCoins();
         gamePlayCanvas.OnGameOver();
     }
 
