@@ -20141,6 +20141,7 @@ MonoBehaviour:
   nextButton: {fileID: 417030138}
   countDown: {fileID: 860936048}
   totalCoinText: {fileID: 1291959028}
+  earnedCoinText: {fileID: 0}
 --- !u!114 &1406031924
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26552,6 +26553,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   coinText: {fileID: 166628381}
+  endMatchCoinText: {fileID: 1291959028}
 --- !u!4 &1972228177
 Transform:
   m_ObjectHideFlags: 0
