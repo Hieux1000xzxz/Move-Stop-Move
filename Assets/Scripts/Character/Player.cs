@@ -32,6 +32,7 @@ public class Player : CharacterBase
     protected override void Update()
     {
         base.Update();
+        //only the player is controlled
         if (!IsOwner) return;
 
         Vector3 input = GetMovementInput();
@@ -159,6 +160,7 @@ public class Player : CharacterBase
     {
         yield return null; 
         GameManager.Instance.RegisterPlayerInGame(this.networkObject);
+        GameManager.Instance.RegisterKillScore(this.networkObject, scoreDisplay);
     }
     protected override void Move(Vector3 direction)
     {
@@ -178,7 +180,7 @@ public class Player : CharacterBase
         joystick = js;
     }
     
-    private void OnDisable()
+    private new void  OnDisable()
     {
         if (IsServer)
         {

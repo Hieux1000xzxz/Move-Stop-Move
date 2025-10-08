@@ -1,65 +1,87 @@
 ﻿using DG.Tweening;
-using System;
+using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.AI;
-using System.Collections;
-public class WeaponBase : NetworkBehaviour 
+using System.Collections.Generic;
+
+public class WeaponBase : NetworkBehaviour
 {
     [Header("Weapon Settings")]
     [SerializeField] public float speed = 12f;
-    [SerializeField] protected int damage = 1;
-    [SerializeField] protected Vector3 handRotationOffset = Vector3.zero;
+    [SerializeField] private int damage = 1;
+    [SerializeField] private Vector3 handRotationOffset = Vector3.zero;
 
     [Header("Rotation Settings")]
-    [SerializeField] protected Vector3 rotateAxis = new Vector3(0, 1, 0);
-    [SerializeField] protected float rotateSpeed = 360f;
-    [SerializeField] protected RotateMode rotateMode = RotateMode.FastBeyond360;
+    [SerializeField] private Vector3 rotateAxis = new Vector3(0, 1, 0);
+    [SerializeField] private float rotateSpeed = 360f;
+    [SerializeField] private RotateMode rotateMode = RotateMode.FastBeyond360;
 
-    [SerializeField] protected Rigidbody rb;
-    [SerializeField] protected Collider collider;
-    protected CharacterBase owner;
-    protected Transform spawnPoint;
-    protected Vector3 launchPos;
-    protected Tween rotateTween;
-    
+    [Header("Cached References")]
+    [SerializeField] private Rigidbody rb;           
+    [SerializeField] private Collider col;            
+    [SerializeField] private NetworkObject netObj;    
+
+    private CharacterBase owner;
+    private Transform spawnPoint;
+    private Vector3 launchPos;
+    private Tween rotateTween;
+
     private float originalSpeed;
-    public float OriginalSpeed => originalSpeed;
-    
-    public bool isFlying;
-    public bool IsFlying => isFlying;
     private Vector3 baseScale;
+    private bool isFollowing;
+    private bool isFlying;
+    
+    private static readonly Dictionary<NetworkObject, WeaponBase> weaponCache = new();
+
+    public float OriginalSpeed => originalSpeed;
+    public bool IsFlying => isFlying;
     public Vector3 BaseScale => baseScale;
-    private bool isFollowing = false;
     
-    private bool hasHit = false;
-    
+    public NetworkObject NetworkObj => netObj;
     public float BuffScaleMultiplier { get; set; } = 1f;
-    public virtual void Init(CharacterBase character, Transform hand)
+    public bool IsBeingReleased { get; private set; } = false;
+
+    public void MarkAsReleased()
+    {
+        IsBeingReleased = true;
+    }
+
+    #region INIT
+    private void Awake()
+    {
+        ObjectPool.Instance?.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
+        
+        baseScale = transform.localScale;
+        originalSpeed = speed;
+    }
+
+    public void Init(CharacterBase character, Transform hand)
     {
         owner = character;
         spawnPoint = hand;
-        baseScale = transform.localScale;
-        transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.Euler(handRotationOffset);
 
-        originalSpeed = speed;
-        
-        var netObj = GetComponent<NetworkObject>();
-        if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
-        {
-            netObj.Spawn(true);
-        }
+        transform.position = hand.position;
+        transform.rotation = hand.rotation * Quaternion.Euler(handRotationOffset);
+
+        TrySpawnNetworkObject();
 
         isFollowing = true;
         isFlying = false;
-
         rb.isKinematic = true;
 
         StartRotation();
-
     }
 
+    private void TrySpawnNetworkObject()
+    {
+        if (netObj && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
+        {
+            netObj.Spawn(true);
+        }
+    }
+    #endregion
+
+    #region FOLLOW HAND
     private void LateUpdate()
     {
         if (isFollowing && !isFlying && spawnPoint != null)
@@ -67,32 +89,23 @@ public class WeaponBase : NetworkBehaviour
             transform.position = spawnPoint.position;
             transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
         }
-        
+
         if (baseScale == Vector3.zero)
             baseScale = Vector3.one;
-        
+
         transform.localScale = baseScale * BuffScaleMultiplier;
     }
+    #endregion
 
-    public virtual void Launch(Vector3 dir, GameObject shooter)
+    #region Launch & Return
+    public void Launch(Vector3 dir, GameObject shooter)
     {
-        bool isServer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
-        bool isClient = NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient;
-
-        if (isFlying)
-        {
-            return;
-        }
-
-        if (rb == null)
-        {
-            return;
-        }
+        if (isFlying || rb == null) return;
 
         isFlying = true;
         isFollowing = false;
-
         rb.isKinematic = false;
+
         transform.position = spawnPoint.position;
         rb.linearVelocity = dir * speed;
         launchPos = transform.position;
@@ -100,38 +113,31 @@ public class WeaponBase : NetworkBehaviour
         StartRotation();
     }
 
-    protected virtual void ReturnToHand()
+    protected void ReturnToHand()
     {
-        hasHit  = false; 
-        StopRotation();
         isFlying = false;
         isFollowing = true;
-        rb.isKinematic = true;
-        
-        if (rb != null && collider != null)
-        {
-            collider.enabled = true; 
-        }
-        
+
+        StopRotation();
+
+        if (rb) rb.isKinematic = true;
+        if (col) col.enabled = true;
+
         if (spawnPoint == null && owner != null)
-        {
             spawnPoint = owner.weaponSpawnPoint;
-        }
 
-        if (owner == null)   // fix crash
+        if (spawnPoint)
         {
-            Debug.LogWarning($"[WeaponBase] ReturnToHand called but spawnPoint is null for {gameObject.name}");
-            return;
+            transform.position = spawnPoint.position;
+            transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
         }
-
-        transform.position = spawnPoint.position;
-        transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
 
         owner?.OnWeaponReturned();
-
         StartRotation();
     }
+    #endregion
 
+    #region Collision
     protected virtual void Update()
     {
         if (isFlying && owner != null)
@@ -146,70 +152,53 @@ public class WeaponBase : NetworkBehaviour
 
     protected virtual void OnTriggerEnter(Collider other)
     {
-        if (!IsServer) return;
-        if (!isFlying || other.gameObject == owner.gameObject) return;
+        if (!IsServer || !isFlying) return;
+        if (other.gameObject == owner?.gameObject) return;
 
-        if (collider != null)
-        {
+        if (col)
             StartCoroutine(ReenableColliderNextFrame());
-        }
 
         if (other.CompareTag("Wall"))
         {
-            if (IsServer)
-            {
-                ReturnToHand(); 
-                ReturnToHandClientRpc();
-            }
+            ReturnToHand();
+            ReturnToHandClientRpc();
             return;
         }
 
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
         {
-            hasHit = true;
-
-            if (IsServer)
-            {
-                HandleHit(victim);
-                ReturnToHand(); 
-                ReturnToHandClientRpc();
-            }
-            else
-            {
-                NotifyHitServerRpc(victim.NetworkObject);
-            }
+            ApplyDamageAndScore(victim);
+            ReturnToHand();
+            ReturnToHandClientRpc();
         }
     }
+
     private IEnumerator ReenableColliderNextFrame()
     {
-        collider.enabled = false;
-        yield return null; 
-        if (isFlying) 
-            collider.enabled = true;
+        col.enabled = false;
+        yield return null;
+        if (isFlying)
+            col.enabled = true;
     }
-    private void HandleHit(CharacterBase victim)
+
+    private void ApplyDamageAndScore(CharacterBase victim)
     {
         if (victim == null || victim == owner) return;
 
-        Health h = victim.GetComponent<Health>();
-        if (h != null)
-        {
-            h.ApplyDamage(damage);
-        }
-
+        victim.health?.ApplyDamage(damage);
         owner?.AddScore(1);
 
         if (victim.characterCollider != null)
-        {
             victim.characterCollider.enabled = false;
-        }
     }
+    #endregion
 
+    #region ROTATION
     protected void StartRotation()
     {
         StopRotation();
-        if (this == null || transform == null) return;
+        if (transform == null) return;
         rotateTween = transform.DOLocalRotate(rotateAxis * rotateSpeed, 1f, rotateMode)
             .SetEase(Ease.Linear)
             .SetLoops(-1, LoopType.Incremental);
@@ -223,17 +212,9 @@ public class WeaponBase : NetworkBehaviour
             rotateTween = null;
         }
     }
+    #endregion
 
-    [ServerRpc(RequireOwnership = false)]
-    private void NotifyHitServerRpc(NetworkObjectReference victimRef)
-    {
-        if (!victimRef.TryGet(out NetworkObject victimObj)) return;
-        HandleHit(victimObj.GetComponent<CharacterBase>());
-        ReturnToHand();
-        ReturnToHandClientRpc();
-    }
-
-    
+    #region NETWORK
     [ServerRpc(RequireOwnership = false)]
     private void ReturnToHandServerRpc()
     {
@@ -245,32 +226,19 @@ public class WeaponBase : NetworkBehaviour
     private void ReturnToHandClientRpc()
     {
         if (!NetworkManager.Singleton.IsServer)
-        {
             ReturnToHand();
-        }
     }
-    
-    [ClientRpc]
-    private void DisableColliderClientRpc()
-    {
-        if (collider != null)
-        {
-            collider.enabled = false;
-        }
-    }
+    #endregion
 
-
+    #region UTILITY
     public void SetOwner(CharacterBase newOwner)
     {
         owner = newOwner;
-        if (newOwner != null)
-        {
-            spawnPoint = newOwner.weaponSpawnPoint;
-        }
+        spawnPoint = newOwner ? newOwner.weaponSpawnPoint : null;
     }
 
     public void ClearOwner()
-    {        
+    {
         StopRotation();
         gameObject.SetActive(false);
     }
@@ -279,13 +247,32 @@ public class WeaponBase : NetworkBehaviour
     {
         StopRotation();
     }
-    
+
     public void ApplyScale(float ownerScale = 1f)
     {
-        if (baseScale == Vector3.zero)
-            baseScale = Vector3.one;
-
         transform.localScale = baseScale * BuffScaleMultiplier * ownerScale;
     }
+    
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        if (netObj != null && !weaponCache.ContainsKey(netObj))
+            weaponCache.Add(netObj, this);
+    }
 
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        if (netObj != null)
+            weaponCache.Remove(netObj);
+    }
+
+    public static WeaponBase GetByNetworkObject(NetworkObject net)
+    {
+        if (net == null) return null;
+        weaponCache.TryGetValue(net, out var weapon);
+        return weapon;
+    }
+
+    #endregion
 }

@@ -566,6 +566,8 @@ MonoBehaviour:
   maxScale: 2.5
   defaultWeapon: 5
   ownerType: 1
+  detectAttackDelay: 0.5
+  isDead: 0
   Score:
     m_InternalValue: 0
   NetIsMoving:
@@ -605,6 +607,10 @@ MonoBehaviour:
         byte0027: 0
         byte0028: 0
         byte0029: 0
+  NetState:
+    m_InternalValue: 0
+  NetIsAttacking:
+    m_InternalValue: 0
   patrolRadius: 10
   observeMinTime: 1
   observeMaxTime: 3
@@ -631,6 +637,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 7106091414172362111}
+  playerRef: {fileID: 196769706720819425}
   maxHealth: 10
   deadLayerName: Death
   CurrentHealth:

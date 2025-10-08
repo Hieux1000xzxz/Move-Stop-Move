@@ -8,7 +8,7 @@ public class SoundManager : Singleton<SoundManager>
     [SerializeField] private AudioSource bgmSource;
     [SerializeField] private AudioClip bgmClip;
 
-    private void Awake()
+    private new void Awake()
     {
         base.Awake();
         if (Instance != null && Instance != this)

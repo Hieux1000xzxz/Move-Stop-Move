@@ -20,15 +20,15 @@ public class GamePlayCanvas : BaseCanvas
     [SerializeField] private Button previousButton;
     [SerializeField] private Button nextButton;
     [SerializeField] private TextMeshProUGUI countDown;
+    [SerializeField] private TextMeshProUGUI totalCoinText;
     private ConnectionCanvas connectionCanvas;
     private string lobbyId;
     private string playerName;
     private float winExitTimer = -1f;
     private float winExitDelay = 5f;
-
-    //Winner
-    [SerializeField] private TextMeshProUGUI totalCoinText;
     
+    [SerializeField] private TMP_Text earnedCoinText;
+
     public void Init(ConnectionCanvas connection, string lobbyId, string playerName)
     {
         this.connectionCanvas = connection;
@@ -146,7 +146,7 @@ public class GamePlayCanvas : BaseCanvas
             NetworkManager.Singleton != null &&
             !NetworkManager.Singleton.IsHost)
         {
-            UIManager.Instance?.SendNotification("Host has left the room. Returning to the menu scene...", 1);
+            UIManager.Instance?.SendNotification("Host has left the room. Returning to the menu scene...", 2);
         }
 
         if (NetworkManager.Singleton != null)
@@ -181,6 +181,9 @@ public class GamePlayCanvas : BaseCanvas
         viewUI.SetActive(true);
         gameOverUI.SetActive(false);
         menuButton.gameObject.SetActive(true);
+        CoinManager.Instance.ShowCoinText();
+        UIManager.Instance.ShowCountText();
+        totalCoinText.gameObject.SetActive(false);
     }
 
     private void OnMenuOpen()
@@ -199,11 +202,9 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         UIManager.Instance.HideCountText();
         gameOverUI.SetActive(true);
-        
-        int totalCoins = CoinManager.Instance.GetTotalCoins();
-        
-        totalCoinText.gameObject.SetActive(true);
-        totalCoinText.text = $"Total coins: {totalCoins}";
+        CoinManager.Instance.HideCoinText();
+        CoinManager.Instance.ShowEndMatchCoinText();
+        CoinManager.Instance.CommitSessionCoins();
     }
 
     public void OnGameWin()
@@ -213,7 +214,8 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
         countDown.gameObject.SetActive(true);
-
+        CoinManager.Instance.HideCoinText();
+        CoinManager.Instance.ShowEndMatchCoinText();
     }
 
     public void OnWinner()
@@ -224,11 +226,9 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
         countDown.gameObject.SetActive(true);
-        
-        int totalCoins = CoinManager.Instance.GetTotalCoins();
-        
-        totalCoinText.gameObject.SetActive(true);
-        totalCoinText.text = $"Total coins: {totalCoins}";
+        CoinManager.Instance.HideCoinText();
+
+        CoinManager.Instance.ShowEndMatchCoinText();
     }
 }
 

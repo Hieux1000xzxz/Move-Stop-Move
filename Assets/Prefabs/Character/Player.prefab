@@ -570,13 +570,14 @@ MonoBehaviour:
   attackDelay: 0.3
   weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
-  sizePerScore: 0.05
-  rangePerScore: 0.03
+  sizePerScore: 0.04
+  rangePerScore: 0.02
   moveSpeedPerScore: 0.05
-  maxScale: 2.5
+  maxScale: 2.2
   defaultWeapon: 5
   ownerType: 0
   detectAttackDelay: 0
+  isDead: 0
   Score:
     m_InternalValue: 0
   NetIsMoving:
@@ -641,6 +642,7 @@ MonoBehaviour:
   animator: {fileID: 1840719375837626499}
   maxHealth: 10
   deadLayerName: Death
+  playerRef: {fileID: 3008413264066109357}
   CurrentHealth:
     m_InternalValue: 0
 --- !u!120 &7545416753985370068

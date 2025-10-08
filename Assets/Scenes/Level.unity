@@ -2157,7 +2157,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 395, y: 320}
+  m_AnchoredPosition: {x: 395, y: 200}
   m_SizeDelta: {x: 150, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &158698597
@@ -2560,10 +2560,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 58942453}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -144, y: 736}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 232.719, y: -212.73291}
+  m_SizeDelta: {x: 465.438, y: 476.996}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &166628381
 MonoBehaviour:
@@ -2585,7 +2585,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: 'Coins: 0
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: c00a2eb1cac8d82498fa0acd1ab94ab9, type: 2}
   m_sharedMaterial: {fileID: -5466343542318523408, guid: c00a2eb1cac8d82498fa0acd1ab94ab9, type: 2}
@@ -2619,8 +2621,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 1
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -2650,7 +2652,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -111.77411, y: 0, z: -87.18376, w: 0}
+  m_margin: {x: -1.4812775, y: 299.8511, z: 1.0505676, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -3245,6 +3247,10 @@ PrefabInstance:
     - target: {fileID: 931519573865273358, guid: 8b791f67e4db6b741a7a6dea9b57868a, type: 3}
       propertyPath: m_LocalScale.z
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 931519573865273358, guid: 8b791f67e4db6b741a7a6dea9b57868a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 9.435
       objectReference: {fileID: 0}
     - target: {fileID: 1023123372515809062, guid: 8b791f67e4db6b741a7a6dea9b57868a, type: 3}
       propertyPath: m_Layer
@@ -5355,8 +5361,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1.435, y: -140.667}
-  m_SizeDelta: {x: 581.424, y: 240.665}
+  m_AnchoredPosition: {x: -1.435, y: -103}
+  m_SizeDelta: {x: 581.424, y: 215.438}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &390988509
 MonoBehaviour:
@@ -5412,8 +5418,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -8519,7 +8525,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &774288641
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8864,7 +8870,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyCountText: {fileID: 755656860}
-  displayFormat: 'Enemies Left: {0}'
+  displayFormat: 'Alive Players: {0}'
   mainMenuCanvas: {fileID: 2076837707}
   shopCanvas: {fileID: 1890431161}
   connectionCanvas: {fileID: 818691379}
@@ -9184,10 +9190,10 @@ MonoBehaviour:
   joinByIdButton: {fileID: 1896899660}
   editProfileButton: {fileID: 481264789}
   lobbyListContainer: {fileID: 1499184038}
-  lobbyItemPrefab: {fileID: 1322134928680955264, guid: c43dd758829e47c4db6f43f37384826f, type: 3}
+  lobbyItemPrefab: {fileID: 6465729975823214760, guid: c43dd758829e47c4db6f43f37384826f, type: 3}
   playerListContainer: {fileID: 165243570}
   lobbyId: {fileID: 445279851}
-  playerItemPrefab: {fileID: 1322134928680955264, guid: e19873896f675f54ba2e119060fb0469, type: 3}
+  playerItemPrefab: {fileID: -5300089561929930479, guid: e19873896f675f54ba2e119060fb0469, type: 3}
   startGameButton: {fileID: 932985443}
   settingButton: {fileID: 864593531}
   exitButton: {fileID: 1901760717}
@@ -9201,7 +9207,7 @@ MonoBehaviour:
   cancelJoinButton: {fileID: 1645761249}
   playerNameInputField: {fileID: 2011011086}
   avatarSelectionContainer: {fileID: 91584148}
-  avatarItemPrefab: {fileID: 6784370076822011926, guid: 9213b383f8928e84a98b37c774edfdcb, type: 3}
+  avatarItemPrefab: {fileID: -2627920825190806792, guid: 9213b383f8928e84a98b37c774edfdcb, type: 3}
   confirmPlayerInfoButton: {fileID: 852850}
   cancelPlayerInfoButton: {fileID: 18018006}
   playerInfoTitle: {fileID: 0}
@@ -9218,6 +9224,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: e85cba3f51c80e54da99817bf7b6d309, type: 3}
   - {fileID: 21300000, guid: 9703e7b7598a3d04b9952f6a7b6bd6f4, type: 3}
   - {fileID: 21300000, guid: 5b0910b390752e643bda1ac0ed661d3a, type: 3}
+  cachedAvatarItems: []
+  cachedPlayerItems: []
+  cachedLobbyItems: []
   isSinglePlayerMode: 0
 --- !u!1 &832575517
 GameObject:
@@ -10422,7 +10431,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  totalAIQuota: 15
+  totalAIQuota: 50
   currentAIQuota: 0
   aiSpawner: {fileID: 1639591196}
   zoomController: {fileID: 1246925140}
@@ -10436,6 +10445,9 @@ MonoBehaviour:
   weaponGrowPrefab: {fileID: 7797295479864358708, guid: 73f30cb686b247f45bee3ef5ee46fedb, type: 3}
   spawnPoints: []
   playerPreview: {fileID: 1118466717}
+  activeAINetworkObjects: []
+  activePlayerNetworkObjects: []
+  activeEntities: []
   mainJoystick: {fileID: 2133176642}
   ActiveAICount:
     m_InternalValue: 0
@@ -14740,7 +14752,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 633}
+  m_AnchoredPosition: {x: 0, y: 724}
   m_SizeDelta: {x: 450.38, y: 192.121}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1291464071
@@ -20129,6 +20141,7 @@ MonoBehaviour:
   nextButton: {fileID: 417030138}
   countDown: {fileID: 860936048}
   totalCoinText: {fileID: 1291959028}
+  earnedCoinText: {fileID: 0}
 --- !u!114 &1406031924
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22166,7 +22179,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 1544122849}
-    PlayerPrefab: {fileID: 7926306860219652939, guid: a2639b7dee820554390958935825b4ce, type: 3}
+    PlayerPrefab: {fileID: 0}
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: 7249176b4004015458ca769fd2a64033, type: 2}
@@ -22541,6 +22554,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1607504911}
+  - component: {fileID: 1607504912}
   - component: {fileID: 1607504910}
   m_Layer: 0
   m_Name: SpawnPoinPlayerManager
@@ -22561,6 +22575,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02195f96edea1194a88c2df3bc9a602b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   spawnPoints:
   - {fileID: 313894830}
   - {fileID: 1118631206}
@@ -22568,6 +22583,7 @@ MonoBehaviour:
   - {fileID: 304352614}
   - {fileID: 1800889295}
   - {fileID: 708264808}
+  playerPrefab: {fileID: 7926306860219652939, guid: a2639b7dee820554390958935825b4ce, type: 3}
 --- !u!4 &1607504911
 Transform:
   m_ObjectHideFlags: 0
@@ -22589,6 +22605,31 @@ Transform:
   - {fileID: 708264808}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1607504912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1607504909}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 1738793511
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &1611404696
 GameObject:
   m_ObjectHideFlags: 0
@@ -22923,7 +22964,7 @@ Transform:
   m_GameObject: {fileID: 1639591195}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.95, z: -12.5}
+  m_LocalPosition: {x: 0, y: -0.6, z: -12.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -25094,7 +25135,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1815817906
 RectTransform:
   m_ObjectHideFlags: 0
@@ -26511,8 +26552,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6673886dc76daa43b4eb708c06e1a4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalCoins: 0
   coinText: {fileID: 166628381}
+  endMatchCoinText: {fileID: 1291959028}
 --- !u!4 &1972228177
 Transform:
   m_ObjectHideFlags: 0

@@ -10,6 +10,7 @@ public class AIController : CharacterBase
     [SerializeField] private float observeMaxTime = 5f;
 
     [Header("Natural Behavior")]
+
     [SerializeField] private float aggressionLevel = 0.5f;
     [SerializeField] private float curiosityLevel = 0.7f;
     [SerializeField] private float fearLevel = 0.3f;
@@ -155,6 +156,8 @@ public class AIController : CharacterBase
 
     private void DecideNearTarget()
     {
+        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+            return;
         float approachChance = aggressionLevel * (1f - fearLevel);
 
         if (Random.value < approachChance)
@@ -197,6 +200,8 @@ public class AIController : CharacterBase
 
     private void ObserveTarget()
     {
+        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+            return;
         agent.isStopped = true;
         ChangeState(CharacterState.Idle);
         if (detectedTarget != null)
@@ -286,4 +291,10 @@ public class AIController : CharacterBase
             Gizmos.DrawWireSphere(lastInterestPoint, 1f);
         }
     }
+
+    private void OnEnable()
+    {
+       GameManager.Instance.RegisterKillScore(this.networkObject, scoreDisplay);
+    }
+
 }
