@@ -578,5 +578,35 @@ public class GameManager : NetworkBehaviour
             zoomController.baseFollowY = 5f;
         }
     }
+    #region Death Handling
+    public void HandleCharacterDeath(CharacterBase character)
+    {
+        if (character == null) return;
+
+        var netObj = character.GetComponent<NetworkObject>();
+        if (netObj == null) return;
+
+        if (character.ownerType == CharacterBase.OwnerType.AI)
+            UnregisterAI(netObj);
+        else
+            UnregisterPlayerInGame(netObj);
+
+        StartCoroutine(DelayedWeaponCleanup(character, 0.2f));
+    }
+
+    private IEnumerator DelayedWeaponCleanup(CharacterBase character, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (character == null || ObjectPool.Instance == null)
+            yield break;
+
+        var weapon = character.currentWeaponPublic;
+        if (weapon != null && weapon.NetworkObj != null && weapon.NetworkObj.IsSpawned)
+        {
+            ObjectPool.Instance.ReleaseWeapon(weapon.gameObject);
+        }
+    }
+    #endregion
 
 }

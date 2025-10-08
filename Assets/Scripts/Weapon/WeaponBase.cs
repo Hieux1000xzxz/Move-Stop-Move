@@ -39,6 +39,12 @@ public class WeaponBase : NetworkBehaviour
     
     public NetworkObject NetworkObj => netObj;
     public float BuffScaleMultiplier { get; set; } = 1f;
+    public bool IsBeingReleased { get; private set; } = false;
+
+    public void MarkAsReleased()
+    {
+        IsBeingReleased = true;
+    }
 
     #region INIT
     private void Awake()
@@ -54,8 +60,8 @@ public class WeaponBase : NetworkBehaviour
         owner = character;
         spawnPoint = hand;
 
-        transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.Euler(handRotationOffset);
+        transform.position = hand.position;
+        transform.rotation = hand.rotation * Quaternion.Euler(handRotationOffset);
 
         TrySpawnNetworkObject();
 

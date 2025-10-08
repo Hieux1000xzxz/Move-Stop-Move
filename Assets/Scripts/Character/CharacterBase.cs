@@ -821,19 +821,31 @@ public abstract class CharacterBase : NetworkBehaviour
             hasDied = true;
             isDead = true;
 
-            if (IsServer)
-                GameManager.Instance.UnregisterAI(this.networkObject);
-
             HandleDeathCleanup();
             HandleDeathAnimation();
 
             if (IsServer)
-                SpawnCoinUniversal();  
-
-            ReleaseWeaponOnDeath();
-
-            StartCoroutine(DelayedDisable(0f));
+            {
+                StartCoroutine(DeathSequenceCoroutine());
+            }
         }
+    }
+
+    private IEnumerator DeathSequenceCoroutine()
+    {
+
+        float deathAnimTime = 1.0f; 
+        yield return new WaitForSeconds(deathAnimTime);
+
+        if (IsServer && GameManager.Instance != null)
+        {
+            GameManager.Instance.HandleCharacterDeath(this);
+
+            SpawnCoinUniversal();
+        }
+
+        yield return new WaitForSeconds(0.1f);
+        gameObject.SetActive(false);
     }
 
     private void HandleDeathCleanup()
@@ -873,15 +885,15 @@ public abstract class CharacterBase : NetworkBehaviour
     private void ReleaseWeaponOnDeath()
     {
         if (currentWeapon == null) return;
-
+        
+        HideOrReleaseWeapon();
+        
         if (IsServer)
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
         else
             currentWeapon.gameObject.SetActive(false);
 
         currentWeapon = null;
-
-        HideOrReleaseWeapon();
     }
 
     private IEnumerator DelayedDisable(float delay)
