@@ -664,7 +664,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
         if (currentWeapon != null)
         {
-            currentWeapon.ApplyScale(newScale); // newScale from score
+            currentWeapon.ApplyScale(newScale);
         }
     }
     private void UpdateAttackRange()

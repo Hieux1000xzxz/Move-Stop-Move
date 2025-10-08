@@ -490,11 +490,17 @@ public class ConnectionCanvas : BaseCanvas
             ResetUIState();
             return;
         }
-
-        StartCoroutine(StartHostRoutineCoroutine(localUserName, "" + joinCode, joinCode, hostUserId));
+        String lobbyName = GenerateRandomLobbyName();
+        StartCoroutine(StartHostRoutineCoroutine(localUserName, lobbyName , joinCode, hostUserId));
         mainPanel.SetActive(false);
     }
 
+    private string GenerateRandomLobbyName()
+    {
+        System.Random random = new System.Random();
+        int randomNumber = random.Next(1000, 10000); // Từ 1000 đến 9999
+        return $"Lobby {randomNumber}";
+    }
     private IEnumerator StartHostRoutineCoroutine(string hostName, string lobbyName, string joinCode, string hostUserId)
     {
         var request = new RelayLobbyRegistrationRequest
@@ -895,7 +901,7 @@ public class ConnectionCanvas : BaseCanvas
 
             if (checkWww.result != UnityWebRequest.Result.Success)
             {
-                SendNotification("Failed to reach lobby server. Please check your internet connection.", 1);
+                SendNotification("Failed to join lobby. Please try again.", 1);
                 yield break;
             }
 
