@@ -480,25 +480,23 @@ public class ConnectionCanvas : BaseCanvas
         if (string.IsNullOrEmpty(joinCode))
         {
             SendNotification("Failed to create relay allocation. Please try again.", 1);
-            ResetUIState();
             return;
         }
 
         if (!networkManager.StartHost())
         {
             SendNotification("Failed to start host. Please try again.", 1);
-            ResetUIState();
             return;
         }
-        String lobbyName = GenerateRandomLobbyName();
-        StartCoroutine(StartHostRoutineCoroutine(localUserName, lobbyName , joinCode, hostUserId));
-        mainPanel.SetActive(false);
+
+        string lobbyName = GenerateRandomLobbyName();
+        StartCoroutine(StartHostRoutineCoroutine(localUserName, lobbyName, joinCode, hostUserId));
     }
 
     private string GenerateRandomLobbyName()
     {
         System.Random random = new System.Random();
-        int randomNumber = random.Next(1000, 10000); // Từ 1000 đến 9999
+        int randomNumber = random.Next(1000, 10000);
         return $"Lobby {randomNumber}";
     }
     private IEnumerator StartHostRoutineCoroutine(string hostName, string lobbyName, string joinCode, string hostUserId)
@@ -525,6 +523,27 @@ public class ConnectionCanvas : BaseCanvas
             Debug.LogWarning("Server not available, starting offline mode");
             currentLobbyId = "LOCAL";
             localUserName = hostName;
+
+            var offlineLobby = new RelayLobbyInfo
+            {
+                lobbyId = "LOCAL",
+                lobbyName = lobbyName,
+                relayJoinCode = joinCode,
+                maxPlayers = 6,
+                hostUserId = hostUserId,
+                users = new List<UserInfo>
+            {
+                new UserInfo
+                {
+                    userId = hostUserId,
+                    userName = hostName,
+                    avatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0),
+                    isReady = true
+                }
+            }
+            };
+
+            ShowLobbyUI(offlineLobby);
             mainPanel.SetActive(false);
         }
     }
@@ -557,16 +576,22 @@ public class ConnectionCanvas : BaseCanvas
             {
                 var lobby = JsonUtility.FromJson<RelayLobbyInfo>(www.downloadHandler.text);
                 currentLobbyId = lobby.lobbyId;
+
+                SendNotification("Lobby created successfully!", 4);
                 ShowLobbyUI(lobby);
+                mainPanel.SetActive(false); 
                 heartbeatRoutine = StartCoroutine(SendHeartbeatRoutine());
                 pollLobbyRoutine = StartCoroutine(PollLobbyInfo());
             }
             else
             {
-                Debug.LogWarning("Could not reach lobby server, starting local offline host");
-                currentLobbyId = "LOCAL";
-                localUserName = DEFAULT_PLAYER_NAME;
-                mainPanel.SetActive(false);
+                SendNotification("Failed to create lobby. Please try again.", 1);
+                Debug.LogWarning("Could not reach lobby server");
+
+                if (networkManager.IsHost)
+                {
+                    networkManager.Shutdown();
+                }
             }
         }
     }
