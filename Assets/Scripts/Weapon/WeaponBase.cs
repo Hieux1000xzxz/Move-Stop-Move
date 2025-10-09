@@ -169,10 +169,21 @@ public class WeaponBase : NetworkBehaviour
 
         if (other.CompareTag("Wall"))
         {
+            NetworkObject wallNetObj = other.GetComponent<NetworkObject>();
+            if (wallNetObj != null && IsServer)
+            {
+                HideWallClientRpc(wallNetObj);
+            }
+            else
+            {
+                other.gameObject.SetActive(false);
+            }
+
             ReturnToHand();
             ReturnToHandClientRpc();
             return;
         }
+
 
         CharacterBase victim = other.GetComponent<CharacterBase>();
         if (victim != null && victim != owner)
@@ -236,6 +247,14 @@ public class WeaponBase : NetworkBehaviour
     {
         if (!NetworkManager.Singleton.IsServer)
             ReturnToHand();
+    }
+    [ClientRpc]
+    private void HideWallClientRpc(NetworkObjectReference wallRef)
+    {
+        if (wallRef.TryGet(out NetworkObject wallObj))
+        {
+            wallObj.gameObject.SetActive(false);
+        }
     }
     #endregion
 
