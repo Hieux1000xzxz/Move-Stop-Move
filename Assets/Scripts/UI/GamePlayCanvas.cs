@@ -214,6 +214,8 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
         countDown.gameObject.SetActive(true);
+        
+        
         CoinManager.Instance.HideCoinText();
         CoinManager.Instance.ShowEndMatchCoinText();
     }
@@ -226,6 +228,8 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
         countDown.gameObject.SetActive(true);
+        
+
         CoinManager.Instance.HideCoinText();
 
         CoinManager.Instance.ShowEndMatchCoinText();

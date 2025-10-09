@@ -30,21 +30,31 @@ public class Coin : NetworkBehaviour
     
     private void OnTriggerEnter(Collider other)
     {
-        if (!IsServer) return; 
         if (isCollected) return;
 
         CharacterBase character = other.GetComponent<CharacterBase>();
         if (character == null) return;
+        if (character.ownerType != CharacterBase.OwnerType.Player) return;
 
-        if (character.ownerType == CharacterBase.OwnerType.Player)
+        isCollected = true;
+
+        if (character.IsOwner)
         {
-            isCollected = true;
             if (col != null) col.enabled = false;
+            gameObject.SetActive(false);
+            CoinManager.Instance.AddCoin(value);
+        }
 
-            character.AddCoinToClient(character.OwnerClientId, value);
-            
-            CancelInvoke();
+        if (IsServer)
+        {
+            if (!character.IsOwner && !IsHost)
+            {
+                character.AddCoinToClient(character.OwnerClientId, value);
+            }
+
+            if (col != null) col.enabled = false;
             ObjectPool.Instance.ReleaseCoin(gameObject);
         }
     }
+
 }

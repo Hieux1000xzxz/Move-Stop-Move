@@ -105,12 +105,21 @@ public class WeaponBase : NetworkBehaviour
         isFlying = true;
         isFollowing = false;
         rb.isKinematic = false;
-
+        if (col != null)
+        {
+            col.enabled = false;
+            StartCoroutine(EnableColliderNextFrame());
+        }
         transform.position = spawnPoint.position;
         rb.linearVelocity = dir * speed;
         launchPos = transform.position;
 
         StartRotation();
+    }
+    private IEnumerator EnableColliderNextFrame()
+    {
+        yield return null; 
+        if (col != null) col.enabled = true;
     }
 
     protected void ReturnToHand()
