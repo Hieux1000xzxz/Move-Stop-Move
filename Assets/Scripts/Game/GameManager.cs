@@ -68,6 +68,8 @@ public class GameManager : NetworkBehaviour
         DisableGamePlaySystem();
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
+        Input.multiTouchEnabled = false;
+
     }
 
     public override void OnNetworkSpawn()
