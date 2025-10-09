@@ -84,6 +84,10 @@ public class ConnectionCanvas : BaseCanvas
     [SerializeField] private List<PlayerItem> cachedPlayerItems = new List<PlayerItem>();
     [SerializeField] private List<LobbyItem> cachedLobbyItems = new List<LobbyItem>();
 
+    [Header("Status Flags")]
+    private bool isCreatingRoom = false;
+    private bool isJoiningRoom = false;
+
     private const string SERVER_URL = "https://mini-server-v6.onrender.com/api/lobby";
     private const string DEFAULT_LOBBY_NAME = "Lobby";
     private const string DEFAULT_PLAYER_NAME = "Player";
@@ -118,6 +122,7 @@ public class ConnectionCanvas : BaseCanvas
         InitializeAvatarSelection();
         InitializeInputValidation();
         autoRefreshLobbyRoutine = StartCoroutine(AutoRefreshLobbyList());
+       
     }
 
     private async Task InitializeUnityServices()
@@ -316,6 +321,7 @@ public class ConnectionCanvas : BaseCanvas
 
         confirmPlayerInfoButton.onClick.AddListener(OnConfirmPlayerInfo);
         cancelPlayerInfoButton.onClick.AddListener(OnCancelPlayerInfo);
+
     }
 
     private void InitializeInputValidation()
@@ -448,12 +454,16 @@ public class ConnectionCanvas : BaseCanvas
 
     private void OnBackToModePanel()
     {
+        if (isCreatingRoom || isJoiningRoom) return;
+
         mainPanel.SetActive(false);
         modePanel.SetActive(true);
     }
 
     private void OnStartHostClicked()
     {
+        if (isCreatingRoom || isJoiningRoom) return;
+
         ResetNetworkManager();
         StartHost();
     }
@@ -465,7 +475,7 @@ public class ConnectionCanvas : BaseCanvas
             SendNotification("Online services are not ready. Please try again.", 1);
             return;
         }
-
+        isCreatingRoom = true;
         SendNotification("Creating lobby...", 2);
 
         string hostUserId = PlayerPrefs.GetString("PlayerId", "");
@@ -579,7 +589,7 @@ public class ConnectionCanvas : BaseCanvas
 
                 SendNotification("Lobby created successfully!", 4);
                 ShowLobbyUI(lobby);
-                mainPanel.SetActive(false); 
+                mainPanel.SetActive(false);
                 heartbeatRoutine = StartCoroutine(SendHeartbeatRoutine());
                 pollLobbyRoutine = StartCoroutine(PollLobbyInfo());
             }
@@ -593,11 +603,14 @@ public class ConnectionCanvas : BaseCanvas
                     networkManager.Shutdown();
                 }
             }
+            isCreatingRoom = false;
         }
     }
 
     public void ShowJoinByIdPanel()
     {
+        if (isCreatingRoom || isJoiningRoom) return;
+
         if (joinByIdPanel != null)
         {
             joinByIdPanel.SetActive(true);
@@ -779,7 +792,8 @@ public class ConnectionCanvas : BaseCanvas
         }
 
         isIntentionalDisconnect = true;
-
+        isCreatingRoom = false;
+        isJoiningRoom = false;
         if (clientHeartbeatRoutine != null)
         {
             StopCoroutine(clientHeartbeatRoutine);
@@ -848,6 +862,8 @@ public class ConnectionCanvas : BaseCanvas
         if (settingPanel != null) settingPanel.SetActive(false);
         mainPanel.SetActive(true);
         modePanel.SetActive(false);
+        isCreatingRoom = false;
+        isJoiningRoom = false;
     }
 
     private void ShowLobbyUI(RelayLobbyInfo lobby)
@@ -919,69 +935,77 @@ public class ConnectionCanvas : BaseCanvas
 
     private IEnumerator JoinLobbyRoutine(string lobbyId, string playerName)
     {
-        using (var checkWww = UnityWebRequest.Get($"{SERVER_URL}/find/{lobbyId}"))
+        isJoiningRoom = true;
+        try
         {
-            checkWww.timeout = 10;
-            yield return checkWww.SendWebRequest();
-
-            if (checkWww.result != UnityWebRequest.Result.Success)
+            using (var checkWww = UnityWebRequest.Get($"{SERVER_URL}/find/{lobbyId}"))
             {
-                SendNotification("Failed to join lobby. Please try again.", 1);
-                yield break;
-            }
+                checkWww.timeout = 10;
+                yield return checkWww.SendWebRequest();
 
-            RelayLobbyInfo lobbyCheck = JsonUtility.FromJson<RelayLobbyInfo>(checkWww.downloadHandler.text);
-            if (lobbyCheck == null || lobbyCheck.isGameStarted)
-            {
-                SendNotification("Lobby not found or game already started.", 1);
-                yield break;
-            }
-        }
-
-        string playerId = PlayerPrefs.GetString("PlayerId", "");
-        if (string.IsNullOrEmpty(playerId))
-        {
-            playerId = System.Guid.NewGuid().ToString();
-            PlayerPrefs.SetString("PlayerId", playerId);
-        }
-
-        var user = new UserInfo
-        {
-            userId = playerId,
-            userName = playerName,
-            avatarIndex = selectedAvatarIndex
-        };
-        string json = JsonUtility.ToJson(user);
-
-        using (var www = new UnityWebRequest($"{SERVER_URL}/{lobbyId}/join", "POST"))
-        {
-            www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
-            www.downloadHandler = new DownloadHandlerBuffer();
-            www.SetRequestHeader("Content-Type", "application/json");
-            www.timeout = 10;
-
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                RelayLobbyInfo lobby = JsonUtility.FromJson<RelayLobbyInfo>(www.downloadHandler.text);
-                currentLobbyId = lobbyId;
-                localUserName = playerName;
-
-                yield return StartCoroutine(JoinRelayLobbyCoroutine(lobby.relayJoinCode));
-
-                if (!networkManager.IsHost)
+                if (checkWww.result != UnityWebRequest.Result.Success)
                 {
-                    if (clientHeartbeatRoutine != null) StopCoroutine(clientHeartbeatRoutine);
-                    clientHeartbeatRoutine = StartCoroutine(SendClientHeartbeatRoutine());
+                    SendNotification("Failed to join lobby. Please try again.", 1);
+                    yield break;
                 }
-                ShowLobbyUI(lobby);
-                RefreshLobbyList();
+
+                RelayLobbyInfo lobbyCheck = JsonUtility.FromJson<RelayLobbyInfo>(checkWww.downloadHandler.text);
+                if (lobbyCheck == null || lobbyCheck.isGameStarted)
+                {
+                    SendNotification("Lobby not found or game already started.", 1);
+                    yield break;
+                }
             }
-            else
+
+            string playerId = PlayerPrefs.GetString("PlayerId", "");
+            if (string.IsNullOrEmpty(playerId))
             {
-                SendNotification("Failed to join the lobby. It might be full or no longer available.", 1);
+                playerId = System.Guid.NewGuid().ToString();
+                PlayerPrefs.SetString("PlayerId", playerId);
             }
+
+            var user = new UserInfo
+            {
+                userId = playerId,
+                userName = playerName,
+                avatarIndex = selectedAvatarIndex
+            };
+            string json = JsonUtility.ToJson(user);
+
+            using (var www = new UnityWebRequest($"{SERVER_URL}/{lobbyId}/join", "POST"))
+            {
+                www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+                www.downloadHandler = new DownloadHandlerBuffer();
+                www.SetRequestHeader("Content-Type", "application/json");
+                www.timeout = 10;
+
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    RelayLobbyInfo lobby = JsonUtility.FromJson<RelayLobbyInfo>(www.downloadHandler.text);
+                    currentLobbyId = lobbyId;
+                    localUserName = playerName;
+
+                    yield return StartCoroutine(JoinRelayLobbyCoroutine(lobby.relayJoinCode));
+
+                    if (!networkManager.IsHost)
+                    {
+                        if (clientHeartbeatRoutine != null) StopCoroutine(clientHeartbeatRoutine);
+                        clientHeartbeatRoutine = StartCoroutine(SendClientHeartbeatRoutine());
+                    }
+                    ShowLobbyUI(lobby);
+                    RefreshLobbyList();
+                }
+                else
+                {
+                    SendNotification("Failed to join the lobby. It might be full or no longer available.", 1);
+                }
+            }
+        }
+        finally
+        {
+            isJoiningRoom = false;
         }
     }
 
@@ -1003,12 +1027,14 @@ public class ConnectionCanvas : BaseCanvas
             }
             else
             {
+                isJoiningRoom = false;
                 SendNotification("Failed to start client. Please try again.", 1);
                 ResetUIState();
             }
         }
         else
         {
+            isJoiningRoom = false;
             SendNotification("Failed to connect to the relay server. Please check the Lobby ID and try again.", 1);
             ResetUIState();
         }
