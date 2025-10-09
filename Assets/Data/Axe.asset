@@ -15,7 +15,7 @@ MonoBehaviour:
   weaponType: 2
   weaponName: Axe
   weaponIcon: {fileID: 21300000, guid: 7f394d24ce679db4d8b5291863a14644, type: 3}
-  price: 10
+  price: 30
   description: 'Speed: 13,   Wide AoE'
   previewPrefab: {fileID: 533960458729293413, guid: 8de5761b479ae544ab47a059cb66b6c1, type: 3}
   speed: 12

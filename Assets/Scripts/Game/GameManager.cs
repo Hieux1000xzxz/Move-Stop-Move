@@ -148,7 +148,7 @@ public class GameManager : NetworkBehaviour
             UpdateEnemyCount();
         }
 
-        Invoke(nameof(CheckLastSurvivor), 1.5f);
+        Invoke(nameof(CheckLastSurvivor), 1f);
     }
 
     public void RegisterPlayerInGame(NetworkObject playerNetworkObject)
@@ -498,6 +498,7 @@ public class GameManager : NetworkBehaviour
     {
         if (playerPreview != null)
             playerPreview.SetActive(true);
+        zoomController.SetUpBaseZoom();
     }
 
     [ClientRpc]
@@ -583,13 +584,13 @@ public class GameManager : NetworkBehaviour
     {
         if (character == null) return;
 
-        var netObj = character.GetComponent<NetworkObject>();
-        if (netObj == null) return;
+        //var netObj = character.GetComponent<NetworkObject>();
+        //if (netObj == null) return;
 
-        if (character.ownerType == CharacterBase.OwnerType.AI)
-            UnregisterAI(netObj);
-        else
-            UnregisterPlayerInGame(netObj);
+        //if (character.ownerType == CharacterBase.OwnerType.AI)
+        //    UnregisterAI(netObj);
+        //else
+        //    UnregisterPlayerInGame(netObj);
 
         StartCoroutine(DelayedWeaponCleanup(character, 0.2f));
     }

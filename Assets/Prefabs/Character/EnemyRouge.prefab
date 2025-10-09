@@ -548,7 +548,7 @@ MonoBehaviour:
   agent: {fileID: 4550715733078292569}
   animator: {fileID: 7106091414172362111}
   health: {fileID: -3577197991604517564}
-  attackRange: 7
+  attackRange: 6
   attackDuration: 0.5
   targetLayer:
     serializedVersion: 2
@@ -614,8 +614,8 @@ MonoBehaviour:
   patrolRadius: 10
   observeMinTime: 1
   observeMaxTime: 3
-  aggressionLevel: 0.8
-  curiosityLevel: 0.4
+  aggressionLevel: 0.98
+  curiosityLevel: 0.8
   fearLevel: 0.2
   attentionSpan: 5
   rayOrigin: {fileID: 0}
@@ -637,9 +637,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 7106091414172362111}
-  playerRef: {fileID: 196769706720819425}
   maxHealth: 10
   deadLayerName: Death
+  playerRef: {fileID: 0}
   CurrentHealth:
     m_InternalValue: 0
 --- !u!114 &-6433108579252654884

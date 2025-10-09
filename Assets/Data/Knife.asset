@@ -15,7 +15,7 @@ MonoBehaviour:
   weaponType: 3
   weaponName: Knife
   weaponIcon: {fileID: 21300000, guid: c583cfae75ec4714b995da400a71d607, type: 3}
-  price: 20
+  price: 50
   description: 'Speed: 16,   Small AoE'
   previewPrefab: {fileID: 533960458729293413, guid: 8de5761b479ae544ab47a059cb66b6c1, type: 3}
   speed: 12

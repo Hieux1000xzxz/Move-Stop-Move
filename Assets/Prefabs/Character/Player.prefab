@@ -558,7 +558,7 @@ MonoBehaviour:
   agent: {fileID: 3534665075435859495}
   animator: {fileID: 1840719375837626499}
   health: {fileID: 1186641312026304189}
-  attackRange: 7
+  attackRange: 6
   attackDuration: 0.5
   targetLayer:
     serializedVersion: 2
@@ -571,7 +571,7 @@ MonoBehaviour:
   weaponType: 1
   scoreDisplay: {fileID: 8885232775652440427}
   sizePerScore: 0.04
-  rangePerScore: 0.02
+  rangePerScore: 0.01
   moveSpeedPerScore: 0.05
   maxScale: 2.2
   defaultWeapon: 5

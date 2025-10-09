@@ -12,6 +12,7 @@ public class NotificationCanvas : BaseCanvas
     [SerializeField] private TextMeshProUGUI messageText;
     [SerializeField] private Button confirmButton;
     [SerializeField] private Button cancelButton;
+    [SerializeField] private GameObject panel;
 
     [SerializeField] private TextMeshProUGUI toastText;
     [SerializeField] private float toastDuration = 0.5f;
@@ -56,17 +57,20 @@ public class NotificationCanvas : BaseCanvas
     {
         confirmButton?.gameObject.SetActive(true);
         cancelButton?.gameObject.SetActive(true);
+        panel.SetActive(true);
     }
 
     public void HideConfirmButton()
     {
         confirmButton?.gameObject.SetActive(false);
         cancelButton?.gameObject.SetActive(false);
+        
     }
     public void ShowMainPanel()
     {
         mainPanel.gameObject.SetActive(true);
         toastText.gameObject.SetActive(false);
+        panel.SetActive(true);
     }
 
     public void HideMainPanel()
@@ -85,7 +89,7 @@ public class NotificationCanvas : BaseCanvas
     public void ShowToast(string message)
     {
         if (toastText == null) return;
-
+        panel.SetActive(false);
         currentToastTween?.Kill();
 
         toastText.gameObject.SetActive(true);

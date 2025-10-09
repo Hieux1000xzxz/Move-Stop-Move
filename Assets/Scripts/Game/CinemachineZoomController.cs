@@ -71,4 +71,14 @@ public class CinemachineZoomController : MonoBehaviour
         if (scoreDisplay != null)
             scoreDisplay.OnScoreChanged -= HandleScoreChanged;
     }
+
+    public void SetUpBaseZoom()
+    {
+        if (virtualCamera != null)
+            virtualCamera.Lens.FieldOfView = 35f;
+        if (transposer != null)
+        {
+            transposer.FollowOffset.y = 7f;
+        }
+    }
 }

@@ -701,6 +701,8 @@ public abstract class CharacterBase : NetworkBehaviour
         isAttacking = false;
         isDead = false;
         hasWeapon = true;
+        scoreDisplay.gameObject.SetActive(true);
+
     }
     private void ResetHealth()
     {
@@ -738,12 +740,7 @@ public abstract class CharacterBase : NetworkBehaviour
     }
     private void ResetAgent()
     {
-        if (agent != null && agent.isActiveAndEnabled)
-        {
-            agent.ResetPath();
-            agent.enabled = true; 
-            agent.velocity = Vector3.zero;
-        }
+        agent.enabled = true;
     }
     #endregion
 
@@ -823,7 +820,7 @@ public abstract class CharacterBase : NetworkBehaviour
 
             HandleDeathCleanup();
             HandleDeathAnimation();
-
+            scoreDisplay.gameObject.SetActive(false);
             if (IsServer)
             {
                 StartCoroutine(DeathSequenceCoroutine());

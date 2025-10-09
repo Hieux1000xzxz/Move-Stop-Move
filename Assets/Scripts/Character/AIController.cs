@@ -297,4 +297,8 @@ public class AIController : CharacterBase
        GameManager.Instance.RegisterKillScore(this.networkObject, scoreDisplay);
     }
 
+    private void OnDisable()
+    {
+        GameManager.Instance.UnregisterAI(this.networkObject);
+    }
 }
