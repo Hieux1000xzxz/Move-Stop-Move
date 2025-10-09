@@ -213,7 +213,6 @@ public class GameManager : NetworkBehaviour
 
                 if (ActivePlayerCount.Value > 0)
                 {
-                    CoinManager.Instance.CommitSessionCoins();
                     GameWinClientRpc();
 
                     var winnerId = lastNetObj.OwnerClientId;
@@ -221,7 +220,10 @@ public class GameManager : NetworkBehaviour
                     {
                         Send = new ClientRpcSendParams { TargetClientIds = new[] { winnerId } }
                     };
+                    NotifyClientCommitCoinClientRpc(clientRpcParams);
                     WinnerClientRpc(clientRpcParams);
+                    
+                   
                 }
                 else
                 {
@@ -609,5 +611,10 @@ public class GameManager : NetworkBehaviour
         }
     }
     #endregion
-
+    
+    [ClientRpc]
+    private void NotifyClientCommitCoinClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        CoinManager.Instance.CommitSessionCoins();
+    }
 }
