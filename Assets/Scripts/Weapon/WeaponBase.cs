@@ -171,6 +171,7 @@ public class WeaponBase : NetworkBehaviour
         {
             ReturnToHand();
             ReturnToHandClientRpc();
+            other.gameObject.SetActive(false);
             return;
         }
 

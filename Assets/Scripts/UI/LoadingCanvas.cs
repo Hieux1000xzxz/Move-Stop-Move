@@ -6,6 +6,7 @@ public class LoadingCanvas : BaseCanvas
 {
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI loadingText;
+    [SerializeField] private TextMeshProUGUI version;
     [SerializeField] private float bounceSpeed = 6f;   
     [SerializeField] private float bounceAmount = 20f; 
     [SerializeField] private float lifetime = 5f;      
