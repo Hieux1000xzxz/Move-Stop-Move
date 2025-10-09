@@ -604,7 +604,21 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         isAttacking = false;
         hasWeapon = true;
+
+        animator?.SetBool("IsAttacking", false);
+
+        // ✅ Nếu là server thì đổi state & sync cho toàn bộ client
+        if (IsServer && currentState == CharacterState.Attack && !isDead)
+        {
+            ChangeState(CharacterState.Idle);
+        }
+        // ✅ Nếu chỉ là client (non-host), đổi local anim thôi (ko sync)
+        else if (IsOwner && !IsServer)
+        {
+            currentState = CharacterState.Idle;
+        }
     }
+
     
     protected virtual void EndAttack(bool cancelByMove = false)
     {
