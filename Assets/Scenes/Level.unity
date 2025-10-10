@@ -4669,7 +4669,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: v0.0.0
+  m_text: v0.0.2
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8a89fa14b10d46a99122fd4f73fca9a2, type: 2}
   m_sharedMaterial: {fileID: 2140474, guid: 8a89fa14b10d46a99122fd4f73fca9a2, type: 2}
@@ -22618,21 +22618,22 @@ MonoBehaviour:
   - point: {fileID: 1859319951}
     spawnRadius: 20
   - point: {fileID: 1442310866}
-    spawnRadius: 15
+    spawnRadius: 25
   - point: {fileID: 457735703}
-    spawnRadius: 15
+    spawnRadius: 25
   - point: {fileID: 1311087750}
-    spawnRadius: 15
+    spawnRadius: 25
   - point: {fileID: 1391275640}
-    spawnRadius: 15
+    spawnRadius: 25
   - point: {fileID: 1396942409}
-    spawnRadius: 15
+    spawnRadius: 25
   - point: {fileID: 1386275605}
-    spawnRadius: 15
+    spawnRadius: 25
   baseSpawnDelay: 0.5
   delayIncrement: 1
   maxSpawnDelay: 2
   spawnPerWave: 7
+  playerSafeDistance: 15
 --- !u!4 &1639591197
 Transform:
   m_ObjectHideFlags: 0

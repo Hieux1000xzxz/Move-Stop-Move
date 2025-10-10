@@ -69,9 +69,19 @@ public class GameManager : NetworkBehaviour
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
         Input.multiTouchEnabled = false;
+        LookScreen();
 
     }
+    private void LookScreen()
+    {
+        Screen.orientation = ScreenOrientation.Portrait;
 
+        Screen.autorotateToLandscapeLeft = false;
+        Screen.autorotateToLandscapeRight = false;
+        Screen.autorotateToPortraitUpsideDown = false;
+        Screen.autorotateToPortrait = true;
+
+    }
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();

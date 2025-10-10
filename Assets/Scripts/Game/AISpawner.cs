@@ -8,7 +8,7 @@ using UnityEngine.AI;
 public class SpawnPointData
 {
     public Transform point;
-    public float spawnRadius = 10f; 
+    public float spawnRadius = 10f;
 }
 
 public class AISpawner : NetworkBehaviour
@@ -19,6 +19,8 @@ public class AISpawner : NetworkBehaviour
     [SerializeField] private float delayIncrement = 0.5f;
     [SerializeField] private float maxSpawnDelay = 8f;
     [SerializeField] private int spawnPerWave = 2;
+    [SerializeField] private float playerSafeDistance = 10f;
+
     private Dictionary<Transform, GameObject> spawnPointAIs = new Dictionary<Transform, GameObject>();
     private Coroutine spawnCoroutine;
     private int waveCount = 0;
@@ -85,35 +87,36 @@ public class AISpawner : NetworkBehaviour
         List<SpawnPointData> availablePoints = new List<SpawnPointData>();
         foreach (var sp in spawnPoints)
         {
-            if (spawnPointAIs[sp.point] == null && !IsPlayerInRange(sp))
+            if (spawnPointAIs[sp.point] == null && !IsPlayerInSafeRange(sp))
             {
                 availablePoints.Add(sp);
             }
         }
 
-        if (availablePoints.Count < spawnPerWave)
+        if (availablePoints.Count == 0)
         {
             spawnCoroutine = null;
             yield break;
         }
 
-        for (int i = 0; i < spawnPerWave; i++)
+        for (int i = 0; i < spawnPerWave && availablePoints.Count > 0; i++)
         {
             if (!GameManager.Instance.CanSpawnAI()) break;
 
             int index = Random.Range(0, availablePoints.Count);
             SpawnAtPoint(availablePoints[index].point);
+            availablePoints.RemoveAt(index);
 
-            availablePoints.RemoveAt(index); 
             yield return new WaitForSeconds(delay);
         }
 
         spawnCoroutine = null;
     }
 
-    private bool IsPlayerInRange(SpawnPointData sp)
+ 
+    private bool IsPlayerInSafeRange(SpawnPointData sp)
     {
-        Collider[] colliders = Physics.OverlapSphere(sp.point.position, sp.spawnRadius);
+        Collider[] colliders = Physics.OverlapSphere(sp.point.position, playerSafeDistance);
         foreach (var col in colliders)
         {
             if (col.CompareTag("Player"))
@@ -127,12 +130,15 @@ public class AISpawner : NetworkBehaviour
         if (!GameManager.Instance.CanSpawnAI()) return;
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening) return;
 
+        if (IsPlayerInSafeRange(new SpawnPointData { point = spawnPoint, spawnRadius = 0 }))
+            return;
+
         GameObject enemy = ObjectPool.Instance.SpawnRandomEnemy();
         if (enemy == null) return;
-        
+
         PositionEnemy(enemy, spawnPoint.position, spawnPoint.rotation);
         PrepareEnemy(enemy);
-        
+
         SyncNetworkObject(enemy, spawnPoint);
     }
 
@@ -149,7 +155,6 @@ public class AISpawner : NetworkBehaviour
     {
         enemy.transform.position = position;
         enemy.transform.rotation = rotation;
-
     }
 
     private void SyncNetworkObject(GameObject enemy, Transform spawnPoint)
@@ -158,12 +163,9 @@ public class AISpawner : NetworkBehaviour
             return;
 
         if (netObj.IsSpawned)
-        {
             netObj.Despawn(false);
-        }
 
         enemy.SetActive(true);
-        
         netObj.Spawn(true);
 
         if (GameManager.Instance.TryRegisterAI(netObj))
@@ -176,7 +178,7 @@ public class AISpawner : NetworkBehaviour
             enemy.SetActive(false);
         }
     }
-    
+
     public int GetActiveAICount()
     {
         int count = 0;

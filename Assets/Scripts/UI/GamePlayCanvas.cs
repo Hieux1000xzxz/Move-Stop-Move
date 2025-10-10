@@ -121,6 +121,7 @@ public class GamePlayCanvas : BaseCanvas
                 notify.SetText("If you leave, the game ends for all players. Continue?");
                 notify.HideCloseButton();
                 notify.ShowConfirmButton();
+                notify.ShowMainPanel();
                 notify.SetCallback((isConfirm) =>
                 {
                     if (isConfirm)

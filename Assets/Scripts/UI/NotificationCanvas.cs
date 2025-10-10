@@ -57,7 +57,6 @@ public class NotificationCanvas : BaseCanvas
     {
         confirmButton?.gameObject.SetActive(true);
         cancelButton?.gameObject.SetActive(true);
-        panel.SetActive(true);
     }
 
     public void HideConfirmButton()
@@ -68,9 +67,11 @@ public class NotificationCanvas : BaseCanvas
     }
     public void ShowMainPanel()
     {
+        Debug.Log($"ShowMainPanel() called | mainPanel: {mainPanel}, activeSelf: {mainPanel?.activeSelf}");
         mainPanel.gameObject.SetActive(true);
         toastText.gameObject.SetActive(false);
         panel.SetActive(true);
+
     }
 
     public void HideMainPanel()
