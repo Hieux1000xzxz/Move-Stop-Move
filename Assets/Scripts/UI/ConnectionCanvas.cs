@@ -149,7 +149,6 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-    // ========== CACHE MANAGEMENT ==========
     private T GetOrCreateCachedItem<T>(List<T> itemCache, T prefab, Transform parent, int index) where T : Component
     {
         if (index < itemCache.Count && itemCache[index] != null)
@@ -182,7 +181,6 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-    // ========== AVATAR SELECTION ==========
     private void InitializeAvatarSelection()
     {
         if (avatarSelectionContainer == null || avatarItemPrefab == null)
@@ -222,7 +220,6 @@ public class ConnectionCanvas : BaseCanvas
                 cachedAvatarItems[i].SetHighlight(i == index);
         }
     }
-    // ========== PLAYER LIST ==========
     private void UpdatePlayerList(RelayLobbyInfo lobby)
     {
         ClearContainerCache(cachedPlayerItems);
@@ -265,7 +262,6 @@ public class ConnectionCanvas : BaseCanvas
         return true;
     }
 
-    // ========== LOBBY LIST ==========
     public void RefreshLobbyList()
     {
         if (this != null)
@@ -295,7 +291,6 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
 
-    // ========== BUTTON HANDLERS ==========
     private void InitializeButtons()
     {
         singleButton.onClick.AddListener(OnSinglePlayerClicked);
@@ -400,6 +395,7 @@ public class ConnectionCanvas : BaseCanvas
             UIManager.Instance?.CloseNotification();
             modePanel.SetActive(false);
             mainPanel.SetActive(true);
+            EnableMainPanelButton();
         }
         else
         {
@@ -463,7 +459,7 @@ public class ConnectionCanvas : BaseCanvas
     private void OnStartHostClicked()
     {
         if (isCreatingRoom || isJoiningRoom) return;
-
+        DisableMainPanelButton();
         ResetNetworkManager();
         StartHost();
     }
@@ -615,7 +611,23 @@ public class ConnectionCanvas : BaseCanvas
         {
             joinByIdPanel.SetActive(true);
             lobbyIdInputField.text = string.Empty;
+            DisableMainPanelButton();
+
         }
+    }
+
+    public void DisableMainPanelButton()
+    {
+        startHostButton.interactable = false;
+        joinByIdButton.interactable = false;
+        backButton.interactable = false;
+    }
+
+    public void EnableMainPanelButton()
+    {
+        startHostButton.interactable = true;
+        joinByIdButton.interactable = true;
+        backButton.interactable = true;
     }
 
     private void CloseJoinByIdPanel()
@@ -623,6 +635,7 @@ public class ConnectionCanvas : BaseCanvas
         if (joinByIdPanel != null)
         {
             joinByIdPanel.SetActive(false);
+            EnableMainPanelButton();
         }
     }
 
@@ -861,6 +874,7 @@ public class ConnectionCanvas : BaseCanvas
         if (playerInfoPanel != null) playerInfoPanel.SetActive(false);
         if (settingPanel != null) settingPanel.SetActive(false);
         mainPanel.SetActive(true);
+        EnableMainPanelButton();
         modePanel.SetActive(false);
         isCreatingRoom = false;
         isJoiningRoom = false;
