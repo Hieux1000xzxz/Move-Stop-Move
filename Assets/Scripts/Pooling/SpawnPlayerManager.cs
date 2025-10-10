@@ -19,6 +19,8 @@ public class SpawnPlayerManager : NetworkBehaviour
     {
         if (IsServer && NetworkManager.Singleton != null)
         {
+            usedSpawnIndexes.Clear();
+            
             NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
             NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
 
@@ -68,18 +70,11 @@ public class SpawnPlayerManager : NetworkBehaviour
 
     private void ClearAllEvents(bool isHost)
     {
+        usedSpawnIndexes.Clear();
+        
         if (NetworkManager.Singleton == null) return;
 
         NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
         NetworkManager.Singleton.OnServerStopped -= ClearAllEvents;
-    }
-
-    private new void OnDestroy()
-    {
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
-            NetworkManager.Singleton.OnServerStopped -= ClearAllEvents;
-        }
     }
 }
