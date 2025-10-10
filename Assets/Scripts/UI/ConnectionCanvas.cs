@@ -316,7 +316,6 @@ public class ConnectionCanvas : BaseCanvas
 
         confirmPlayerInfoButton.onClick.AddListener(OnConfirmPlayerInfo);
         cancelPlayerInfoButton.onClick.AddListener(OnCancelPlayerInfo);
-
     }
 
     private void InitializeInputValidation()
@@ -485,12 +484,16 @@ public class ConnectionCanvas : BaseCanvas
         string joinCode = await CreateRelayAllocation(6);
         if (string.IsNullOrEmpty(joinCode))
         {
-            SendNotification("Failed to create relay allocation. Please try again.", 1);
+            SendNotification("Failed to create lobby. Please try again.", 1);
+            EnableMainPanelButton();
+            isCreatingRoom = false;
             return;
         }
 
         if (!networkManager.StartHost())
         {
+            EnableMainPanelButton();
+            isCreatingRoom = false;
             SendNotification("Failed to start host. Please try again.", 1);
             return;
         }
