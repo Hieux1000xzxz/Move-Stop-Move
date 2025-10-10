@@ -607,12 +607,10 @@ public abstract class CharacterBase : NetworkBehaviour
 
         animator?.SetBool("IsAttacking", false);
 
-        // ✅ Nếu là server thì đổi state & sync cho toàn bộ client
         if (IsServer && currentState == CharacterState.Attack && !isDead)
         {
             ChangeState(CharacterState.Idle);
         }
-        // ✅ Nếu chỉ là client (non-host), đổi local anim thôi (ko sync)
         else if (IsOwner && !IsServer)
         {
             currentState = CharacterState.Idle;

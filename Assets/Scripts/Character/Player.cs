@@ -127,27 +127,6 @@ public class Player : CharacterBase
             GameManager.Instance.BindCameraToPlayer(transform);
             GameManager.Instance.BindJoystick(this);
             GameManager.Instance.BindKillScoreDisplay(scoreDisplay);
-            ulong clientId = OwnerClientId;
-            Vector3 spawnPos = Vector3.zero;
-
-            if (clientId == 0) 
-            {
-                spawnPos = new Vector3(-10f, 0f, 0f); 
-            }
-            else if (clientId == 1) 
-            {
-                spawnPos = new Vector3(10f, 0f, 0f); 
-            }
-            else
-            {
-                float angle = (clientId - 1) * 90f;
-                float radius = 15f;
-                spawnPos = new Vector3(Mathf.Cos(angle * Mathf.Deg2Rad),
-                                       0f,
-                                       Mathf.Sin(angle * Mathf.Deg2Rad)) * radius;
-            }
-
-            transform.position = spawnPos;
         }
 
         if (IsServer)

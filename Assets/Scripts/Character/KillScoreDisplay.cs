@@ -50,7 +50,6 @@ public class KillScoreDisplay : MonoBehaviour
             return;
 
         bool needsPositionUpdate = false;
-        //bool needsRotationUpdate = false;
 
         if (transform.localScale != lastScale)
         {

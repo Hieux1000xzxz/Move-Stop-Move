@@ -1,10 +1,11 @@
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class SpawnPlayerManager : NetworkBehaviour
 {
     public static SpawnPlayerManager Instance;
-
+    private readonly List<int> usedSpawnIndexes = new();
     [Header("Setup")]
     [SerializeField] private Transform[] spawnPoints;
     [SerializeField] private GameObject playerPrefab;
@@ -30,11 +31,30 @@ public class SpawnPlayerManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        Vector3 spawnPos = GetSpawnPosition(clientId);
-        GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
+        Transform spawnPoint = GetAvailableSpawnPoint();
+        if (spawnPoint == null)
+        {
+            return;
+        }
 
+        GameObject player = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
         var netObj = player.GetComponent<NetworkObject>();
         netObj.SpawnAsPlayerObject(clientId, true);
+
+        usedSpawnIndexes.Add(System.Array.IndexOf(spawnPoints, spawnPoint));
+    }
+
+    private Transform GetAvailableSpawnPoint()
+    {
+        foreach (var point in spawnPoints)
+        {
+            int index = System.Array.IndexOf(spawnPoints, point);
+            if (!usedSpawnIndexes.Contains(index))
+            {
+                return point;
+            }
+        }
+        return null;
     }
 
     public Vector3 GetSpawnPosition(ulong clientId)
