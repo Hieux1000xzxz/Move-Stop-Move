@@ -963,6 +963,7 @@ public class ConnectionCanvas : BaseCanvas
                 if (checkWww.result != UnityWebRequest.Result.Success)
                 {
                     SendNotification("Failed to join lobby. Please try again.", 1);
+                    HandleExitLogic();
                     yield break;
                 }
 
@@ -1038,14 +1039,15 @@ public class ConnectionCanvas : BaseCanvas
             bool clientStarted = networkManager.StartClient();
             if (clientStarted)
             {
-                yield return new WaitForSeconds(2f);
                 mainPanel.SetActive(false);
+                yield return new WaitForSeconds(2f);
                 UIManager.Instance?.CloseNotification();
             }
             else
             {
                 isJoiningRoom = false;
                 SendNotification("Failed to start client. Please try again.", 1);
+                HandleExitLogic();
                 ResetUIState();
             }
         }
