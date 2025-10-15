@@ -249,7 +249,7 @@ MonoBehaviour:
   networkObject: {fileID: 1900684317061091773}
   weaponSpawnPoint: {fileID: 3690810974785102709}
   weaponRotationOffset: {x: -100, y: 0, z: 0}
-  attackDelay: 0.3
+  attackDelay: 0.28
   weaponType: 2
   scoreDisplay: {fileID: 8459014451873918741}
   sizePerScore: 0.05
