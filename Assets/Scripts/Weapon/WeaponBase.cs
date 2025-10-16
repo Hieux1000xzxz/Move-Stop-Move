@@ -171,7 +171,13 @@ public class WeaponBase : NetworkBehaviour
         {
             ReturnToHand();
             ReturnToHandClientRpc();
-            other.gameObject.SetActive(false);
+
+            var safe = other.GetComponent<NavMeshSafeObstacle>();
+            if (safe != null)
+                safe.DisableAndHide();   // ✅ gọi hàm an toàn
+            else
+                other.gameObject.SetActive(false); // fallback nếu chưa có script
+
             return;
         }
 
