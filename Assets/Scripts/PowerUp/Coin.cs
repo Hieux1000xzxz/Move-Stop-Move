@@ -25,7 +25,7 @@ public class Coin : NetworkBehaviour
         if (col != null) col.enabled = true;
         if (meshRenderer != null) meshRenderer.enabled = true;
 
-        TryAutoCollectImmediate();
+        TryAutoCollectNearby();
 
         CancelInvoke();
         Invoke(nameof(DespawnSelf), despawnDelay);
@@ -35,21 +35,6 @@ public class Coin : NetworkBehaviour
     {
         if (isCollected) return;
         TryAutoCollectNearby();
-    }
-
-    private void TryAutoCollectImmediate()
-    {
-        Collider[] hits = Physics.OverlapSphere(transform.position, autoPickupRadius);
-        foreach (var hit in hits)
-        {
-            if (!hit.TryGetComponent(out CharacterBase character)) continue;
-            if (character.ownerType != CharacterBase.OwnerType.Player) continue;
-            if (character.isDead || character.health == null || character.health.IsDead) continue;
-
-            if (meshRenderer != null) meshRenderer.enabled = false;
-            Collect(character);
-            return;
-        }
     }
 
     private void TryAutoCollectNearby()
