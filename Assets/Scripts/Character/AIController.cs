@@ -29,6 +29,8 @@ public class AIController : CharacterBase
     protected override void Start()
     {
         base.Start();
+        agent.autoRepath = true;
+
         ChangeWeapon(weaponType);
     }
 
@@ -243,19 +245,32 @@ public class AIController : CharacterBase
         isObserving = false;
         if (Random.value < 0.6f) SetRandomPatrolPoint();
     }
-
+    
     private void AvoidObstacle()
     {
-        if (rayOrigin == null) return;
+        if (rayOrigin == null || agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+            return;
 
-        Vector3 dir = agent.velocity.sqrMagnitude > 0.01f ? agent.velocity.normalized : transform.forward;
-        if (Physics.Raycast(rayOrigin.position, dir, rayDistance, obstacleLayer))
+        Vector3 dir = (agent.velocity.sqrMagnitude > 0.05f) ? agent.velocity.normalized : transform.forward;
+
+        if (Physics.SphereCast(rayOrigin.position, 0.5f, dir, out RaycastHit hit, rayDistance, obstacleLayer))
         {
             Vector3 avoidDir = Vector3.Cross(Vector3.up, dir).normalized;
             if (Random.value > 0.5f) avoidDir = -avoidDir;
-            TrySetDestination(transform.position + avoidDir * patrolRadius, patrolRadius);
+
+            Vector3 newTarget = transform.position + avoidDir * 3f;
+
+            if (NavMesh.SamplePosition(newTarget, out NavMeshHit navHit, 2f, NavMesh.AllAreas))
+            {
+                agent.isStopped = false;
+                agent.ResetPath();
+                agent.SetDestination(navHit.position);
+                ChangeState(CharacterState.Move);
+            }
         }
     }
+
+
 
     private bool TrySetDestination(Vector3 targetPos, float sampleDistance)
     {

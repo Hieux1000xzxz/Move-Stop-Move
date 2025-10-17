@@ -69,46 +69,68 @@ public class ObjectPool : Singleton<ObjectPool>
     #region ENEMY
     public GameObject SpawnRandomEnemy(Vector3 pos = default, Quaternion rot = default)
     {
-        GameObject enemy = null;
+        GameObject enemy = GetRandomAvailableEnemy();
+        if (enemy == null)
+        {
+            enemy = CreateExpandableEnemy();
+        }
+
+        if (enemy == null) return null;
+
+        SetupEnemyTransform(enemy, pos, rot);
+        return enemy;
+    }
+    
+    private GameObject GetRandomAvailableEnemy()
+    {
         List<GameObject> availableEnemies = new List<GameObject>();
 
         foreach (var obj in pooledGobjects)
         {
             if (obj == null || obj.activeSelf) continue;
-            foreach (var pre in preAllocations)
+
+            if (IsEnemyPrefab(obj))
             {
-                if (pre.type == ObjectType.Enemy && obj.name.Contains(pre.gameObject.name))
-                {
-                    availableEnemies.Add(obj);
-                    break;
-                }
+                availableEnemies.Add(obj);
             }
         }
 
-        if (availableEnemies.Count > 0)
+        if (availableEnemies.Count == 0) return null;
+        return availableEnemies[Random.Range(0, availableEnemies.Count)];
+    }
+    
+    private GameObject CreateExpandableEnemy()
+    {
+        foreach (var pre in preAllocations)
         {
-            enemy = availableEnemies[Random.Range(0, availableEnemies.Count)];
-        }
-        else
-        {
-            foreach (var pre in preAllocations)
+            if (pre.type == ObjectType.Enemy && pre.expandable)
             {
-                if (pre.type == ObjectType.Enemy && pre.expandable)
-                {
-                    enemy = CreateGobject(pre.gameObject);
-                    pooledGobjects.Add(enemy);
-                    break;
-                }
+                GameObject newEnemy = CreateGobject(pre.gameObject);
+                pooledGobjects.Add(newEnemy);
+                return newEnemy;
             }
         }
+        return null;
+    }
 
-        if (enemy == null) return null;
-
+    private bool IsEnemyPrefab(GameObject obj)
+    {
+        foreach (var pre in preAllocations)
+        {
+            if (pre.type == ObjectType.Enemy && obj.name.Contains(pre.gameObject.name))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private void SetupEnemyTransform(GameObject enemy, Vector3 pos, Quaternion rot)
+    {
         enemy.transform.position = pos;
         enemy.transform.rotation = rot;
-
-        return enemy;
     }
+
     #endregion
 
     #region WEAPON
