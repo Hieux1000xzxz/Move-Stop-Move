@@ -842,20 +842,22 @@ public abstract class CharacterBase : NetworkBehaviour
 
     private IEnumerator DeathSequenceCoroutine()
     {
-
-        float deathAnimTime = 1.0f; 
+        float deathAnimTime = 1.0f;
         yield return new WaitForSeconds(deathAnimTime);
 
         if (IsServer && GameManager.Instance != null)
         {
-            GameManager.Instance.HandleCharacterDeath(this);
+            if (characterCollider != null)
+                characterCollider.enabled = false;
 
+            GameManager.Instance.HandleCharacterDeath(this);
             SpawnCoinUniversal();
         }
 
         yield return new WaitForSeconds(0.1f);
         gameObject.SetActive(false);
     }
+
 
     private void HandleDeathCleanup()
     {
@@ -914,7 +916,6 @@ public abstract class CharacterBase : NetworkBehaviour
     private void SpawnCoinUniversal()
     {
         GameObject coin = ObjectPool.Instance.SpawnCoin(transform.position + Vector3.up, Quaternion.identity);
-        coin.SetActive(true);
     }
 
     #endregion
