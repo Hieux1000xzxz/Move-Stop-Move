@@ -143,7 +143,14 @@ public class GameManager : NetworkBehaviour
     }
     public void CaculateTotalQuota()
     {
-        totalAIQuota = totalAIQuota - ActivePlayerCount.Value;
+        if (ActivePlayerCount.Value == 0) 
+        {
+            totalAIQuota = totalAIQuota - 1;
+        }
+        else
+        {
+            totalAIQuota = totalAIQuota - ActivePlayerCount.Value;
+        }
     }
 
     public void UnregisterAI(NetworkObject aiNetworkObject)
