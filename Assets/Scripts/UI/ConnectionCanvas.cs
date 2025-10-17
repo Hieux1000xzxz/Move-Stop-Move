@@ -407,7 +407,13 @@ public class ConnectionCanvas : BaseCanvas
 
     private void OnReadyClicked()
     {
-        if (!canToggleReady) return;
+        if (!canToggleReady)
+        {
+            UIManager.Instance.SendNotification("Please wait!!!", 4);
+            return;
+
+        }
+
 
         isReady = !isReady;
         UpdateReadyButtonStatus();
@@ -526,34 +532,6 @@ public class ConnectionCanvas : BaseCanvas
         if (serverAvailable)
         {
             yield return StartCoroutine(RegisterRelayLobbyOnServer(request));
-        }
-        else
-        {
-            Debug.LogWarning("Server not available, starting offline mode");
-            currentLobbyId = "LOCAL";
-            localUserName = hostName;
-
-            var offlineLobby = new RelayLobbyInfo
-            {
-                lobbyId = "LOCAL",
-                lobbyName = lobbyName,
-                relayJoinCode = joinCode,
-                maxPlayers = 6,
-                hostUserId = hostUserId,
-                users = new List<UserInfo>
-            {
-                new UserInfo
-                {
-                    userId = hostUserId,
-                    userName = hostName,
-                    avatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0),
-                    isReady = true
-                }
-            }
-            };
-
-            ShowLobbyUI(offlineLobby);
-            mainPanel.SetActive(false);
         }
     }
 
@@ -1054,12 +1032,13 @@ public class ConnectionCanvas : BaseCanvas
         else
         {
             isJoiningRoom = false;
-            SendNotification("Failed to connect to the relay server. Please check the Lobby ID and try again.", 1);
+            SendNotification("Failed to connect to the lobby. Please check the Lobby ID and try again.", 1);
+            HandleExitLogic();
             ResetUIState();
         }
     }
 
-    private IEnumerator JoinRelayCoroutineWrapper(string joinCode, System.Action<bool> callback)
+    private IEnumerator JoinRelayCoroutineWrapper(string joinCode, Action<bool> callback)
     {
         bool completed = false;
         bool result = false;
@@ -1074,7 +1053,7 @@ public class ConnectionCanvas : BaseCanvas
         callback(result);
     }
 
-    private IEnumerator ExecuteAsync(System.Func<Task> asyncMethod)
+    private IEnumerator ExecuteAsync(Func<Task> asyncMethod)
     {
         var task = asyncMethod();
         yield return new WaitUntil(() => task.IsCompleted);
@@ -1098,7 +1077,7 @@ public class ConnectionCanvas : BaseCanvas
         }
         catch (RelayServiceException e)
         {
-            Debug.LogError($"Failed to create relay allocation: {e.Message}");
+            Debug.LogError($"Failed to create lobby: {e.Message}");
             return null;
         }
     }
@@ -1116,7 +1095,7 @@ public class ConnectionCanvas : BaseCanvas
         }
         catch (RelayServiceException e)
         {
-            Debug.LogError($"Failed to join relay: {e.Message}");
+            Debug.LogError($"Failed to join lobby: {e.Message}");
             return false;
         }
     }

@@ -1,9 +1,8 @@
 ﻿using DG.Tweening;
 using System;
-using System.Collections;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class NotificationCanvas : BaseCanvas
 {
@@ -13,18 +12,21 @@ public class NotificationCanvas : BaseCanvas
     [SerializeField] private Button confirmButton;
     [SerializeField] private Button cancelButton;
     [SerializeField] private GameObject panel;
-
     [SerializeField] private TextMeshProUGUI toastText;
     [SerializeField] private float toastDuration = 0.5f;
     [SerializeField] private float toastFadeTime = 0.25f;
     [Header("Countdown Toast")]
     [SerializeField] private TextMeshProUGUI countdownToastText;
-    private Action<bool> onDecision;
 
+    private Action<bool> onDecision;
     private Tween currentToastTween;
+    private Vector3 originalToastPos;
 
     void Start()
     {
+        if (toastText != null)
+            originalToastPos = toastText.rectTransform.anchoredPosition;
+
         closeButton.onClick.AddListener(() =>
         {
             onDecision?.Invoke(false);
@@ -63,15 +65,13 @@ public class NotificationCanvas : BaseCanvas
     {
         confirmButton?.gameObject.SetActive(false);
         cancelButton?.gameObject.SetActive(false);
-        
     }
+
     public void ShowMainPanel()
     {
-        Debug.Log($"ShowMainPanel() called | mainPanel: {mainPanel}, activeSelf: {mainPanel?.activeSelf}");
         mainPanel.gameObject.SetActive(true);
         toastText.gameObject.SetActive(false);
         panel.SetActive(true);
-
     }
 
     public void HideMainPanel()
@@ -86,7 +86,6 @@ public class NotificationCanvas : BaseCanvas
 
     private void CloseNotificationCanvas() => Hide();
 
-
     public void ShowToast(string message)
     {
         if (toastText == null) return;
@@ -100,21 +99,20 @@ public class NotificationCanvas : BaseCanvas
         c.a = 0f;
         toastText.color = c;
 
-        Vector3 originalPos = toastText.rectTransform.anchoredPosition;
-        toastText.rectTransform.anchoredPosition = originalPos + new Vector3(0, -50f, 0);
+        toastText.rectTransform.anchoredPosition = originalToastPos + new Vector3(0, -50f, 0);
 
         Sequence seq = DOTween.Sequence();
-
-        seq.Append(toastText.DOFade(1f, toastFadeTime)); 
-        seq.Join(toastText.rectTransform.DOAnchorPos(originalPos, toastFadeTime).SetEase(Ease.OutBack));
-
-        seq.AppendInterval(toastDuration); 
+        seq.Append(toastText.DOFade(1f, toastFadeTime));
+        seq.Join(toastText.rectTransform.DOAnchorPos(originalToastPos, toastFadeTime).SetEase(Ease.OutBack));
+        seq.AppendInterval(toastDuration);
         seq.Append(toastText.DOFade(0f, toastFadeTime));
-        seq.Join(toastText.rectTransform.DOAnchorPos(originalPos + new Vector3(0, 50f, 0), toastFadeTime).SetEase(Ease.InBack));
-
-        seq.OnComplete(() => toastText.gameObject.SetActive(false));
+        seq.Join(toastText.rectTransform.DOAnchorPos(originalToastPos + new Vector3(0, 50f, 0), toastFadeTime).SetEase(Ease.InBack));
+        seq.OnComplete(() =>
+        {
+            toastText.gameObject.SetActive(false);
+            toastText.rectTransform.anchoredPosition = originalToastPos;
+        });
 
         currentToastTween = seq;
     }
-
 }
