@@ -855,7 +855,8 @@ public abstract class CharacterBase : NetworkBehaviour
         }
 
         yield return new WaitForSeconds(0.1f);
-        gameObject.SetActive(false);
+        if (networkObject != null && networkObject.IsSpawned)
+            networkObject.Despawn(true);
     }
 
 

@@ -39,12 +39,7 @@ public class WeaponBase : NetworkBehaviour
     
     public NetworkObject NetworkObj => netObj;
     public float BuffScaleMultiplier { get; set; } = 1f;
-    public bool IsBeingReleased { get; private set; } = false;
-
-    public void MarkAsReleased()
-    {
-        IsBeingReleased = true;
-    }
+    
 
     #region INIT
     private void Awake()
@@ -174,9 +169,9 @@ public class WeaponBase : NetworkBehaviour
 
             var safe = other.GetComponent<NavMeshSafeObstacle>();
             if (safe != null)
-                safe.DisableAndHide();   // ✅ gọi hàm an toàn
+                safe.DisableAndHide();   
             else
-                other.gameObject.SetActive(false); // fallback nếu chưa có script
+                other.gameObject.SetActive(false); 
 
             return;
         }
@@ -245,14 +240,7 @@ public class WeaponBase : NetworkBehaviour
         if (!NetworkManager.Singleton.IsServer)
             ReturnToHand();
     }
-    [ClientRpc]
-    private void HideWallClientRpc(NetworkObjectReference wallRef)
-    {
-        if (wallRef.TryGet(out NetworkObject wallObj))
-        {
-            wallObj.gameObject.SetActive(false);
-        }
-    }
+   
     #endregion
 
     #region UTILITY
