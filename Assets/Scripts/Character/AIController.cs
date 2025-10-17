@@ -31,9 +31,15 @@ public class AIController : CharacterBase
         base.Start();
         agent.autoRepath = true;
 
+        StartCoroutine(DelayChangeWeapon());
+    }
+    private IEnumerator DelayChangeWeapon()
+    {
+        yield return new WaitUntil(() => IsSpawned && NetworkObject.IsSpawned);
+
+        yield return null;
         ChangeWeapon(weaponType);
     }
-
     protected override void Update()
     {
         if (!GameManager.Instance || !GameManager.Instance.IsGameStarted)
