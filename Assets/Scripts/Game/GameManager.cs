@@ -560,27 +560,16 @@ public class GameManager : NetworkBehaviour
         if (activeEntities.Count <= 1) return;
 
         spectatorIndex = (spectatorIndex + 1) % activeEntities.Count;
-
         var netObj = activeEntities[spectatorIndex];
-        if (netObj != null)
-        {
-            var senderId = rpcParams.Receive.SenderClientId;
-            var clientRpcParams = new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams { TargetClientIds = new[] { senderId } }
-            };
-            FocusCameraOnTargetClientRpc(netObj, clientRpcParams);
-            
-            if (IsHost) 
-            {
-                FocusCameraOnTarget(netObj);
-                if (netObj.TryGetComponent(out CharacterBase character))
-                {
-                    TrackSpectatedCoin(character); 
-                }
-            }
+        if (netObj == null) return;
 
-        }
+        var senderId = rpcParams.Receive.SenderClientId;
+        var clientRpcParams = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams { TargetClientIds = new[] { senderId } }
+        };
+
+        FocusCameraOnTargetClientRpc(netObj, clientRpcParams);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -592,21 +581,26 @@ public class GameManager : NetworkBehaviour
         if (spectatorIndex < 0) spectatorIndex = activeEntities.Count - 1;
 
         var netObj = activeEntities[spectatorIndex];
-        if (netObj != null)
+        if (netObj == null) return;
+
+        var senderId = rpcParams.Receive.SenderClientId;
+        var clientRpcParams = new ClientRpcParams
         {
-            var senderId = rpcParams.Receive.SenderClientId;
-            var clientRpcParams = new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams { TargetClientIds = new[] { senderId } }
-            };
-            FocusCameraOnTargetClientRpc(netObj, clientRpcParams);
-        }
+            Send = new ClientRpcSendParams { TargetClientIds = new[] { senderId } }
+        };
+
+        FocusCameraOnTargetClientRpc(netObj, clientRpcParams);
     }
 
 
     [ClientRpc]
     private void FocusCameraOnTargetClientRpc(NetworkObjectReference targetRef, ClientRpcParams rpcParams = default)
     {
+        if (rpcParams.Send.TargetClientIds != null &&
+            rpcParams.Send.TargetClientIds.Count > 0 &&
+            NetworkManager.Singleton.LocalClientId != rpcParams.Send.TargetClientIds[0])
+            return;
+        
         if (targetRef.TryGet(out NetworkObject netObj))
         {
             Transform t = netObj.transform;
