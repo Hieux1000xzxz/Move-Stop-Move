@@ -36,7 +36,20 @@ public class CoinManager : Singleton<CoinManager>
     {
         sessionCoins += amount;
         UpdateCoinUI();
+
+        if (Player.Local != null)
+        {
+            if (Player.Local.IsServer)
+            {
+                Player.Local.SessionCoin.Value = sessionCoins;
+            }
+            else
+            {
+                Player.Local.AddSessionCoinServerRpc(amount);
+            }
+        }
     }
+
 
     public void CommitSessionCoins()
     {
@@ -92,4 +105,18 @@ public class CoinManager : Singleton<CoinManager>
         endMatchCoinText.gameObject.SetActive(true);
         endMatchCoinText.text = $"+{earned} Coins earned!";
     }
+    
+    private int spectatorCoins = 0;
+
+    public void UpdateSpectatorCoin(int amount)
+    {
+        sessionCoins = amount;
+
+        if (coinText != null)
+        {
+            coinText.text = $"Coins: {sessionCoins}";
+            coinText.gameObject.SetActive(true);
+        }
+    }
+
 }

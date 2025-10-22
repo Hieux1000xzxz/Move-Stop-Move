@@ -182,7 +182,12 @@ public class GamePlayCanvas : BaseCanvas
         viewUI.SetActive(true);
         gameOverUI.SetActive(false);
         menuButton.gameObject.SetActive(true);
+    
         CoinManager.Instance.ShowCoinText();
+
+        ulong spectatedId = GameManager.Instance.CurrentSpectatedId;
+        GameManager.Instance.RequestSpectatedCoinUpdateServerRpc(spectatedId);
+
         UIManager.Instance.ShowCountText();
         totalCoinText.gameObject.SetActive(false);
     }

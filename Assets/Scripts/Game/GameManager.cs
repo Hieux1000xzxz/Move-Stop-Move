@@ -54,7 +54,9 @@ public class GameManager : NetworkBehaviour
     private int totalSpawned = 0;
     //private int totalKilled = 0;
     private bool isGameStarted = false;
-
+    [Header("Spectator")]
+    public ulong CurrentSpectatedId = 0;   
+    public bool IsSpectatorMode = false;
     public bool IsGameStarted => isGameStarted;
 
     protected void Awake()
@@ -491,12 +493,36 @@ public class GameManager : NetworkBehaviour
             {
                 zoomController.SetUp(killScore);
             }
+            
+            if (netObj.TryGetComponent(out CharacterBase character))
+            {
+                TrackSpectatedCoin(character); 
+            }
+
         }
     }
 
+    private CharacterBase currentSpectatedCharacter;
 
+    private void TrackSpectatedCoin(CharacterBase character)
+    {
+        if (currentSpectatedCharacter != null)
+        {
+            currentSpectatedCharacter.SessionCoin.OnValueChanged -= OnSpectatedCoinChanged;
+        }
 
+        currentSpectatedCharacter = character;
 
+        CoinManager.Instance?.UpdateSpectatorCoin(character.SessionCoin.Value);
+
+        character.SessionCoin.OnValueChanged += OnSpectatedCoinChanged;
+    }
+
+    private void OnSpectatedCoinChanged(int oldVal, int newVal)
+    {
+        CoinManager.Instance?.UpdateSpectatorCoin(newVal);
+    }
+    
     private void SpawnPowerup()
     {
         if (!IsServer) return;
@@ -544,6 +570,16 @@ public class GameManager : NetworkBehaviour
                 Send = new ClientRpcSendParams { TargetClientIds = new[] { senderId } }
             };
             FocusCameraOnTargetClientRpc(netObj, clientRpcParams);
+            
+            if (IsHost) 
+            {
+                FocusCameraOnTarget(netObj);
+                if (netObj.TryGetComponent(out CharacterBase character))
+                {
+                    TrackSpectatedCoin(character); 
+                }
+            }
+
         }
     }
 
@@ -582,6 +618,11 @@ public class GameManager : NetworkBehaviour
                 if (killScoreMap.TryGetValue(netObj, out var killScore))
                 {
                     zoomController.SetUp(killScore);
+                }
+                
+                if (netObj.TryGetComponent(out CharacterBase character))
+                {
+                    TrackSpectatedCoin(character); 
                 }
             }
         }
@@ -636,4 +677,29 @@ public class GameManager : NetworkBehaviour
     {
         CoinManager.Instance.CommitSessionCoins();
     }
+    
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestSpectatedCoinUpdateServerRpc(ulong targetId)
+    {
+        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(targetId, out var client))
+        {
+            CharacterBase targetCharacter = client.PlayerObject.GetComponent<CharacterBase>();
+            if (targetCharacter != null)
+            {
+                int coinValue = targetCharacter.Score.Value;
+                UpdateSpectatorCoinClientRpc(targetId, coinValue);
+            }
+        }
+    }
+
+    [ClientRpc]
+    private void UpdateSpectatorCoinClientRpc(ulong targetId, int coinValue)
+    {
+        if (GameManager.Instance.CurrentSpectatedId == targetId)
+        {
+            CoinManager.Instance.UpdateSpectatorCoin(coinValue);
+        }
+    }
+
+    
 }

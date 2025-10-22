@@ -98,6 +98,9 @@ public abstract class CharacterBase : NetworkBehaviour
         false,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> SessionCoin = new NetworkVariable<int>(
+        0, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
 
 
     #region Unity Lifecycle
@@ -1296,5 +1299,12 @@ public abstract class CharacterBase : NetworkBehaviour
         });
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    public void AddSessionCoinServerRpc(int amount)
+    {
+        SessionCoin.Value += amount;
+    }
+
     #endregion
+
 }

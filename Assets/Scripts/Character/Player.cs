@@ -19,6 +19,7 @@ public class Player : CharacterBase
     
     public NetworkVariable<float> NetSpeed = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public static Player Local { get; private set; }
 
     protected override void Start()
     {
@@ -124,6 +125,8 @@ public class Player : CharacterBase
         Debug.Log($"{name} spawned for ClientId={OwnerClientId}, IsOwner={IsOwner}");
         if (IsOwner)
         {
+            Local = this;
+            
             GameManager.Instance.BindCameraToPlayer(transform);
             GameManager.Instance.BindJoystick(this);
             GameManager.Instance.BindKillScoreDisplay(scoreDisplay);
@@ -133,6 +136,7 @@ public class Player : CharacterBase
         {
             StartCoroutine(DeferredRegister());
         }
+        
     }
 
     private IEnumerator DeferredRegister()
