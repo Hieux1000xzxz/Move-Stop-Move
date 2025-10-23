@@ -194,8 +194,8 @@ public class GamePlayCanvas : BaseCanvas
     {
         yield return new WaitForSeconds(0.2f); 
         ulong spectatedId = GameManager.Instance.CurrentSpectatedId;
-        if (spectatedId != 0)
-            GameManager.Instance.RequestSpectatedCoinUpdateServerRpc(spectatedId);
+        /*if (spectatedId != 0)
+            GameManager.Instance.RequestSpectatedCoinUpdateServerRpc(spectatedId);*/
     }
     private void OnMenuOpen()
     {

@@ -31,26 +31,7 @@ public class CoinManager : Singleton<CoinManager>
     {
         UpdateCoinUI();
     }
-
-    public void AddCoin(int amount)
-    {
-        sessionCoins += amount;
-        UpdateCoinUI();
-
-        if (Player.Local != null)
-        {
-            if (Player.Local.IsServer)
-            {
-                Player.Local.SessionCoin.Value = sessionCoins;
-            }
-            else
-            {
-                Player.Local.AddSessionCoinServerRpc(amount);
-            }
-        }
-    }
-
-
+    
     public void CommitSessionCoins()
     {
         lastSessionCoins = sessionCoins;
@@ -79,8 +60,14 @@ public class CoinManager : Singleton<CoinManager>
         PlayerPrefs.Save();
     }
 
-    private void UpdateCoinUI()
+    public void UpdateCoinUI()
     {
+        if (coinText != null)
+            coinText.text = $"Coins: {sessionCoins}";
+    }
+    public void UpdateCoinUIFromSession(int newAmount)
+    {
+        sessionCoins = newAmount;
         if (coinText != null)
             coinText.text = $"Coins: {sessionCoins}";
     }
@@ -107,16 +94,19 @@ public class CoinManager : Singleton<CoinManager>
     }
     
     private int spectatorCoins = 0;
+    private bool isSpectating = false;
 
     public void UpdateSpectatorCoin(int amount)
     {
-        sessionCoins = amount;
+        isSpectating = true;
+        spectatorCoins = amount;
 
         if (coinText != null)
         {
-            coinText.text = $"Coins: {sessionCoins}";
+            coinText.text = $"Coins: {spectatorCoins}";
             coinText.gameObject.SetActive(true);
         }
     }
 
+    
 }

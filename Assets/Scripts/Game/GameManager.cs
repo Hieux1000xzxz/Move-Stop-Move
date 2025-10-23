@@ -38,6 +38,7 @@ public class GameManager : NetworkBehaviour
 
     private Coroutine powerupRoutine;
     public FloatingJoystick mainJoystick;
+    private CharacterBase currentSpectatedCharacter;
 
   
     private int spectatorIndex = 0;
@@ -503,7 +504,6 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    private CharacterBase currentSpectatedCharacter;
 
     private void TrackSpectatedCoin(CharacterBase character)
     {
@@ -673,7 +673,7 @@ public class GameManager : NetworkBehaviour
         CoinManager.Instance.CommitSessionCoins();
     }
     
-    [ServerRpc(RequireOwnership = false)]
+    /*[ServerRpc(RequireOwnership = false)]
     public void RequestSpectatedCoinUpdateServerRpc(ulong targetId)
     {
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(targetId, out var client))
@@ -681,20 +681,31 @@ public class GameManager : NetworkBehaviour
             CharacterBase targetCharacter = client.PlayerObject.GetComponent<CharacterBase>();
             if (targetCharacter != null)
             {
-                int coinValue = targetCharacter.Score.Value;
+                int coinValue = targetCharacter.SessionCoin.Value;
                 UpdateSpectatorCoinClientRpc(targetId, coinValue);
             }
         }
-    }
+    }*/
 
+    /*
     [ClientRpc]
-    private void UpdateSpectatorCoinClientRpc(ulong targetId, int coinValue)
+    public void UpdateSpectatorCoinClientRpc(ulong targetId, int coinValue)
     {
         if (GameManager.Instance.CurrentSpectatedId == targetId)
         {
             CoinManager.Instance.UpdateSpectatorCoin(coinValue);
         }
-    }
+    }*/
 
-    
+    /*[ClientRpc]
+    public void UpdateSpectatorCoinForAllClientRpc(ulong playerId, int coinValue)
+    {
+        if (IsServer) return;
+
+        if (GameManager.Instance.CurrentSpectatedId == playerId)
+        {
+            CoinManager.Instance.UpdateSpectatorCoin(coinValue);
+        }
+    }*/
+
 }

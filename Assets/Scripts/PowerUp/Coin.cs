@@ -12,6 +12,9 @@ public class Coin : NetworkBehaviour
     private bool isCollected;
     private float spawnTime;
     private CharacterBase owner;
+    private NetworkVariable<bool> netIsCollected = new NetworkVariable<bool>(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     private void Awake()
     {
         ObjectPool.Instance?.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
@@ -23,28 +26,28 @@ public class Coin : NetworkBehaviour
     private void OnEnable()
     {
         isCollected = false;
+        if (IsServer)
+            netIsCollected.Value = false;
+        
         spawnTime = Time.time;
 
         if (col != null) col.enabled = true;
         if (meshRenderer != null) meshRenderer.enabled = true;
 
         CancelInvoke();
-        Invoke(nameof(EnableAutoCollect), 0.5f);
+        
         Invoke(nameof(DespawnSelf), despawnDelay);
     }
 
-    private void EnableAutoCollect()
-    {
-        TryAutoCollectNearby();
-    }
     private void Update()
     {
-        if (isCollected) return;
+        if (!IsServer || isCollected) return;
         TryAutoCollectNearby();
     }
 
     private void TryAutoCollectNearby()
     {
+        if (isCollected || netIsCollected.Value) return;
         
         Collider[] hits = Physics.OverlapSphere(transform.position, autoPickupRadius);
 
@@ -63,27 +66,23 @@ public class Coin : NetworkBehaviour
 
     private void Collect(CharacterBase character)
     {
-        if (isCollected) return;
+        if (isCollected || netIsCollected.Value) return;
         isCollected = true;
+        netIsCollected.Value = true;
 
         if (col != null) col.enabled = false;
         if (meshRenderer != null) meshRenderer.enabled = false;
 
+        // ✅ Chỉ server xử lý logic ăn coin
         if (IsServer)
         {
-            if (character != owner)
-            {
+            if (character != null && !character.isDead)
                 character.SessionCoin.Value += value;
-                character.AddCoinToClient(character.OwnerClientId, value);
-            }
 
             ObjectPool.Instance.ReleaseCoin(gameObject);
         }
-        else
-        {
-            gameObject.SetActive(false);
-        }
     }
+
 
     private void DespawnSelf()
     {

@@ -955,6 +955,23 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             currentState = newVal; // sync local state with server
         };
+        
+        /*SessionCoin.OnValueChanged += (oldVal, newVal) =>
+        {
+            if (IsServer)
+            {
+                GameManager.Instance.UpdateSpectatorCoinForAllClientRpc(OwnerClientId, newVal);
+            }
+        };*/
+        
+        SessionCoin.OnValueChanged += (oldVal, newVal) =>
+        {
+            if (IsOwner && CoinManager.Instance != null)
+            {
+                CoinManager.Instance.UpdateCoinUIFromSession(newVal);
+            }
+        };
+
     }
     private void SetupWeaponSync()
     {
@@ -1284,26 +1301,15 @@ public abstract class CharacterBase : NetworkBehaviour
     #endregion
 
     #region Coin
-    [ClientRpc]
-    private void AddCoinClientRpc(int amount, ClientRpcParams rpcParams = default)
-    {
-        CoinManager.Instance.AddCoin(amount);
-    }
-    public void AddCoinToClient(ulong clientId, int amount)
-    {
-        AddCoinClientRpc(amount, new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new[] { clientId }
-            }
-        });
-    }
-
     [ServerRpc(RequireOwnership = false)]
-    public void AddSessionCoinServerRpc(int amount)
+    public void NotifyCoinCollectedServerRpc(int amount)
     {
         SessionCoin.Value += amount;
+
+        if (GameManager.Instance != null && GameManager.Instance.CurrentSpectatedId == OwnerClientId)
+        {
+            CoinManager.Instance.UpdateSpectatorCoin(SessionCoin.Value);
+        }
     }
 
     #endregion
