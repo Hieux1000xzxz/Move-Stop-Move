@@ -497,6 +497,7 @@ public class GameManager : NetworkBehaviour
             if (netObj.TryGetComponent(out CharacterBase character))
             {
                 TrackSpectatedCoin(character); 
+                CurrentSpectatedId = netObj.OwnerClientId;
             }
 
         }

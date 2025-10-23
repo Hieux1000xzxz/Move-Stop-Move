@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Video;
-
+using System.Collections;
 public class GamePlayCanvas : BaseCanvas
 {
     [SerializeField] private GameObject gameOverUI;
@@ -185,13 +185,18 @@ public class GamePlayCanvas : BaseCanvas
     
         CoinManager.Instance.ShowCoinText();
 
-        ulong spectatedId = GameManager.Instance.CurrentSpectatedId;
-        GameManager.Instance.RequestSpectatedCoinUpdateServerRpc(spectatedId);
+        StartCoroutine(RequestCoinAfterFocus());
 
         UIManager.Instance.ShowCountText();
         totalCoinText.gameObject.SetActive(false);
     }
-
+    private IEnumerator RequestCoinAfterFocus()
+    {
+        yield return new WaitForSeconds(0.2f); 
+        ulong spectatedId = GameManager.Instance.CurrentSpectatedId;
+        if (spectatedId != 0)
+            GameManager.Instance.RequestSpectatedCoinUpdateServerRpc(spectatedId);
+    }
     private void OnMenuOpen()
     {
         menuUI.SetActive(true);

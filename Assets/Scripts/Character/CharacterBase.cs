@@ -867,7 +867,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         StopAllCoroutines();
         scoreDisplay.gameObject.SetActive(false);
-        characterCollider.enabled = true;
+        characterCollider.enabled = false;
 
         if (agent != null && agent.isActiveAndEnabled)
         {
@@ -920,6 +920,7 @@ public abstract class CharacterBase : NetworkBehaviour
     private void SpawnCoinUniversal()
     {
         GameObject coin = ObjectPool.Instance.SpawnCoin(transform.position + Vector3.up, Quaternion.identity);
+        coin.GetComponent<Coin>().SetOwner(this);
     }
 
     #endregion

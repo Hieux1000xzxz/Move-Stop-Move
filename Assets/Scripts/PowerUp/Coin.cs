@@ -11,12 +11,15 @@ public class Coin : NetworkBehaviour
 
     private bool isCollected;
     private float spawnTime;
-
+    private CharacterBase owner;
     private void Awake()
     {
         ObjectPool.Instance?.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
     }
-
+    public void SetOwner(CharacterBase creator)
+    {
+        owner = creator;
+    }
     private void OnEnable()
     {
         isCollected = false;
@@ -25,12 +28,15 @@ public class Coin : NetworkBehaviour
         if (col != null) col.enabled = true;
         if (meshRenderer != null) meshRenderer.enabled = true;
 
-        TryAutoCollectNearby();
-
         CancelInvoke();
+        Invoke(nameof(EnableAutoCollect), 0.5f);
         Invoke(nameof(DespawnSelf), despawnDelay);
     }
 
+    private void EnableAutoCollect()
+    {
+        TryAutoCollectNearby();
+    }
     private void Update()
     {
         if (isCollected) return;
@@ -39,11 +45,14 @@ public class Coin : NetworkBehaviour
 
     private void TryAutoCollectNearby()
     {
+        
         Collider[] hits = Physics.OverlapSphere(transform.position, autoPickupRadius);
 
         foreach (var hit in hits)
         {
             if (!hit.TryGetComponent(out CharacterBase character)) continue;
+            if (character == owner) continue;
+            
             if (character.ownerType != CharacterBase.OwnerType.Player) continue;
             if (character.isDead || character.health == null || character.health.IsDead) continue;
 
@@ -60,15 +69,13 @@ public class Coin : NetworkBehaviour
         if (col != null) col.enabled = false;
         if (meshRenderer != null) meshRenderer.enabled = false;
 
-        if (character.IsOwner)
-        {
-            CoinManager.Instance.AddCoin(value);
-        }
-
         if (IsServer)
         {
-            if (!character.IsOwner && !IsHost)
+            if (character != owner)
+            {
+                character.SessionCoin.Value += value;
                 character.AddCoinToClient(character.OwnerClientId, value);
+            }
 
             ObjectPool.Instance.ReleaseCoin(gameObject);
         }
