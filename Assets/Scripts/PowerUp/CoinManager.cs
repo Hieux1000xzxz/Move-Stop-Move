@@ -108,5 +108,10 @@ public class CoinManager : Singleton<CoinManager>
         }
     }
 
-    
+    public void HideEndMatchCoinText()
+    {
+        if (endMatchCoinText != null)
+            endMatchCoinText.gameObject.SetActive(false);
+    }
+
 }
