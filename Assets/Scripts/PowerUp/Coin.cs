@@ -10,85 +10,80 @@ public class Coin : NetworkBehaviour
     [SerializeField] private float despawnDelay = 3f;
 
     private bool isCollected;
-    private float spawnTime;
     private CharacterBase owner;
-    private NetworkVariable<bool> netIsCollected = new NetworkVariable<bool>(
-        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private float spawnTime;
 
     private void Awake()
     {
         ObjectPool.Instance?.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
     }
+
     public void SetOwner(CharacterBase creator)
     {
         owner = creator;
     }
+
     private void OnEnable()
     {
         isCollected = false;
-        if (IsServer)
-            netIsCollected.Value = false;
-        
         spawnTime = Time.time;
 
         if (col != null) col.enabled = true;
         if (meshRenderer != null) meshRenderer.enabled = true;
 
         CancelInvoke();
-        
-        Invoke(nameof(DespawnSelf), despawnDelay);
+        Invoke(nameof(DespawnSelf), despawnDelay); 
     }
 
-    private void Update()
+    private void OnTriggerEnter(Collider other)
     {
-        if (!IsServer || isCollected) return;
-        TryAutoCollectNearby();
-    }
+        if (isCollected) return;
+        if (!other.TryGetComponent(out CharacterBase character)) return;
+        if (character == owner) return;
+        if (character.isDead || character.health == null || character.health.IsDead) return;
+        if (character.ownerType != CharacterBase.OwnerType.Player) return;
 
-    private void TryAutoCollectNearby()
-    {
-        if (isCollected || netIsCollected.Value) return;
-        
-        Collider[] hits = Physics.OverlapSphere(transform.position, autoPickupRadius);
-
-        foreach (var hit in hits)
+        if (character.IsOwner)
         {
-            if (!hit.TryGetComponent(out CharacterBase character)) continue;
-            if (character == owner) continue;
-            
-            if (character.ownerType != CharacterBase.OwnerType.Player) continue;
-            if (character.isDead || character.health == null || character.health.IsDead) continue;
+            HideLocal();
 
-            Collect(character);
-            break;
+            CollectServerRpc(character.NetworkObject);
         }
     }
 
-    private void Collect(CharacterBase character)
+    [ServerRpc(RequireOwnership = false)]
+    private void CollectServerRpc(NetworkObjectReference playerRef)
     {
-        if (isCollected || netIsCollected.Value) return;
+        if (isCollected) return;
         isCollected = true;
-        netIsCollected.Value = true;
 
+        HideCoinClientRpc();
+
+        if (playerRef.TryGet(out NetworkObject netObj) &&
+            netObj.TryGetComponent(out CharacterBase character) &&
+            !character.isDead)
+        {
+            character.SessionCoin.Value += value;
+        }
+
+        Invoke(nameof(DespawnSelf), 0.2f);
+    }
+
+    [ClientRpc]
+    private void HideCoinClientRpc()
+    {
+        HideLocal();
+    }
+
+    private void HideLocal()
+    {
         if (col != null) col.enabled = false;
         if (meshRenderer != null) meshRenderer.enabled = false;
-
-        // ✅ Chỉ server xử lý logic ăn coin
-        if (IsServer)
-        {
-            if (character != null && !character.isDead)
-                character.SessionCoin.Value += value;
-
-            ObjectPool.Instance.ReleaseCoin(gameObject);
-        }
     }
-
 
     private void DespawnSelf()
     {
-        if (isCollected) return;
         if (!IsServer) return;
-
         ObjectPool.Instance.ReleaseCoin(gameObject);
     }
-}  
+}

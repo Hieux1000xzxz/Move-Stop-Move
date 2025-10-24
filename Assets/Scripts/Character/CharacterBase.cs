@@ -1300,18 +1300,4 @@ public abstract class CharacterBase : NetworkBehaviour
 
     #endregion
 
-    #region Coin
-    [ServerRpc(RequireOwnership = false)]
-    public void NotifyCoinCollectedServerRpc(int amount)
-    {
-        SessionCoin.Value += amount;
-
-        if (GameManager.Instance != null && GameManager.Instance.CurrentSpectatedId == OwnerClientId)
-        {
-            CoinManager.Instance.UpdateSpectatorCoin(SessionCoin.Value);
-        }
-    }
-
-    #endregion
-
 }
