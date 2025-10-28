@@ -42,4 +42,11 @@ public class LobbyItem : MonoBehaviour
     {
         joinButton.onClick.RemoveAllListeners();
     }
+    
+    public void SetJoinButtonInteractable(bool value)
+    {
+        if (joinButton != null)
+            joinButton.interactable = value;
+    }
+
 }

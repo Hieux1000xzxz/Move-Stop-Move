@@ -640,7 +640,12 @@ public class ConnectionCanvas : BaseCanvas
 
     public void JoinLobbyDirect(RelayLobbyInfo lobby)
     {
+        if (isJoiningRoom) return;
         if (lobby == null) return;
+        
+        isJoiningRoom = true; // ✅ Đặt cờ
+        DisableAllJoinButtons();
+            
         ResetNetworkManager();
         StartCoroutine(JoinLobbyRoutine(lobby.lobbyId, localUserName));
     }
@@ -1002,6 +1007,7 @@ public class ConnectionCanvas : BaseCanvas
         finally
         {
             isJoiningRoom = false;
+            EnableAllJoinButtons();
         }
     }
 
@@ -1579,6 +1585,26 @@ public class ConnectionCanvas : BaseCanvas
             Debug.LogWarning($"Leave lobby failed: {e.Message}");
         }
     }
+    
+    // ✅ Thêm ở đây, vẫn nằm trong class ConnectionCanvas
+    private void DisableAllJoinButtons()
+    {
+        foreach (var lobbyItem in cachedLobbyItems)
+        {
+            if (lobbyItem != null && lobbyItem.gameObject.activeSelf)
+                lobbyItem.SetJoinButtonInteractable(false);
+        }
+    }
+
+    private void EnableAllJoinButtons()
+    {
+        foreach (var lobbyItem in cachedLobbyItems)
+        {
+            if (lobbyItem != null && lobbyItem.gameObject.activeSelf)
+                lobbyItem.SetJoinButtonInteractable(true);
+        }
+    }
+
 }
 
 [Serializable]
@@ -1651,4 +1677,6 @@ public static class JsonHelper
     {
         public T[] array;
     }
+    
+    
 }
