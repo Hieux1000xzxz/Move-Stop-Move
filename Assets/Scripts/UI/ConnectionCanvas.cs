@@ -586,14 +586,20 @@ public class ConnectionCanvas : BaseCanvas
 
     public void ShowJoinByIdPanel()
     {
-        if (isCreatingRoom || isJoiningRoom) return;
-
+        if (isCreatingRoom || (lobbyPanel != null && lobbyPanel.activeSelf))
+            return;
+        
+        CancelJoinProcess();
+        
         if (joinByIdPanel != null)
         {
             joinByIdPanel.SetActive(true);
             lobbyIdInputField.text = string.Empty;
             DisableMainPanelButton();
-
+            
+            DisableAllJoinButtons();
+            
+            UIManager.Instance?.CloseNotification();
         }
     }
 
@@ -616,12 +622,15 @@ public class ConnectionCanvas : BaseCanvas
         if (joinByIdPanel != null)
         {
             joinByIdPanel.SetActive(false);
+            EnableAllJoinButtons();
             EnableMainPanelButton();
         }
     }
 
     private void OnConfirmJoinById()
     {
+        if (isCreatingRoom || isJoiningRoom) return;
+        
         string lobbyId = lobbyIdInputField.text.Trim();
         if (!Regex.IsMatch(lobbyId, @"^[a-zA-Z0-9 ]+$"))
         {
@@ -633,17 +642,26 @@ public class ConnectionCanvas : BaseCanvas
             SendNotification("Please enter a valid Lobby ID", 1);
             return;
         }
+        if (joinByIdPanel != null) 
+            joinByIdPanel.SetActive(false);
+        DisableMainPanelButton();
+        DisableAllJoinButtons();
 
-        CloseJoinByIdPanel();
+        UIManager.Instance?.CloseNotification();
+        
+        isJoiningRoom = true;
+        
+        /*DisableMainPanelButton();*/
         StartCoroutine(JoinLobbyRoutine(lobbyId, localUserName));
     }
 
     public void JoinLobbyDirect(RelayLobbyInfo lobby)
     {
-        if (isJoiningRoom) return;
+        if (isJoiningRoom || isCreatingRoom) return;
         if (lobby == null) return;
         
-        isJoiningRoom = true; // ✅ Đặt cờ
+        isJoiningRoom = true;
+        DisableMainPanelButton(); 
         DisableAllJoinButtons();
             
         ResetNetworkManager();
@@ -868,6 +886,9 @@ public class ConnectionCanvas : BaseCanvas
 
     private void ShowLobbyUI(RelayLobbyInfo lobby)
     {
+        if (joinByIdPanel != null && joinByIdPanel.activeSelf)
+            joinByIdPanel.SetActive(false);
+        
         currentLobbyInfo = lobby;
         lobbyPanel.SetActive(true);
         lobbyId.text = $"Lobby ID: {lobby.lobbyId}";
@@ -1007,12 +1028,21 @@ public class ConnectionCanvas : BaseCanvas
         finally
         {
             isJoiningRoom = false;
+            isCreatingRoom = false;
             EnableAllJoinButtons();
+            EnableMainPanelButton();
         }
     }
 
     private IEnumerator JoinRelayLobbyCoroutine(string joinCode)
     {
+        
+        if (joinByIdPanel != null && joinByIdPanel.activeSelf)
+            joinByIdPanel.SetActive(false);
+
+        if (!isJoiningRoom)
+            yield break;
+        
         SendNotification("Connecting to the lobby...", 2);
 
         bool joinSuccess = false;
@@ -1586,7 +1616,6 @@ public class ConnectionCanvas : BaseCanvas
         }
     }
     
-    // ✅ Thêm ở đây, vẫn nằm trong class ConnectionCanvas
     private void DisableAllJoinButtons()
     {
         foreach (var lobbyItem in cachedLobbyItems)
@@ -1602,6 +1631,18 @@ public class ConnectionCanvas : BaseCanvas
         {
             if (lobbyItem != null && lobbyItem.gameObject.activeSelf)
                 lobbyItem.SetJoinButtonInteractable(true);
+        }
+    }
+    private void CancelJoinProcess()
+    {
+        if (isJoiningRoom)
+        {
+            Debug.LogWarning("Join process cancelled because player opened Join by ID panel.");
+            isJoiningRoom = false;
+            StopCoroutine("JoinLobbyRoutine");
+            UIManager.Instance?.CloseNotification();
+            EnableAllJoinButtons();
+            EnableMainPanelButton();
         }
     }
 
