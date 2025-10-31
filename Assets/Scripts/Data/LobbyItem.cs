@@ -1,6 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class LobbyItem : MonoBehaviour
 {
@@ -26,12 +27,26 @@ public class LobbyItem : MonoBehaviour
     {
         if (connectionCanvas != null && lobbyInfo != null)
         {
-            connectionCanvas.JoinLobbyDirect(lobbyInfo);
+            joinButton.interactable = false;
+            StartCoroutine(DelayJoin());
         }
+    }
+
+    private IEnumerator DelayJoin()
+    {
+        yield return new WaitForSeconds(0.5f);
+        connectionCanvas.JoinLobbyDirect(lobbyInfo);
     }
 
     private void OnDestroy()
     {
         joinButton.onClick.RemoveAllListeners();
     }
+    
+    public void SetJoinButtonInteractable(bool value)
+    {
+        if (joinButton != null)
+            joinButton.interactable = value;
+    }
+
 }

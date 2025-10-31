@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Video;
-
+using System.Collections;
 public class GamePlayCanvas : BaseCanvas
 {
     [SerializeField] private GameObject gameOverUI;
@@ -182,11 +182,21 @@ public class GamePlayCanvas : BaseCanvas
         viewUI.SetActive(true);
         gameOverUI.SetActive(false);
         menuButton.gameObject.SetActive(true);
+    
         CoinManager.Instance.ShowCoinText();
+
+        StartCoroutine(RequestCoinAfterFocus());
+
         UIManager.Instance.ShowCountText();
         totalCoinText.gameObject.SetActive(false);
     }
-
+    private IEnumerator RequestCoinAfterFocus()
+    {
+        yield return new WaitForSeconds(0.2f); 
+        ulong spectatedId = GameManager.Instance.CurrentSpectatedId;
+        /*if (spectatedId != 0)
+            GameManager.Instance.RequestSpectatedCoinUpdateServerRpc(spectatedId);*/
+    }
     private void OnMenuOpen()
     {
         menuUI.SetActive(true);
@@ -204,7 +214,10 @@ public class GamePlayCanvas : BaseCanvas
         UIManager.Instance.HideCountText();
         gameOverUI.SetActive(true);
         CoinManager.Instance.HideCoinText();
-        CoinManager.Instance.ShowEndMatchCoinText();
+        if (!GameManager.Instance.IsSpectatorMode && !viewUI.activeSelf)
+            CoinManager.Instance.ShowEndMatchCoinText();
+        else
+            CoinManager.Instance.HideEndMatchCoinText();
         CoinManager.Instance.CommitSessionCoins();
     }
 
@@ -218,7 +231,10 @@ public class GamePlayCanvas : BaseCanvas
         
         
         CoinManager.Instance.HideCoinText();
-        CoinManager.Instance.ShowEndMatchCoinText();
+        if (!GameManager.Instance.IsSpectatorMode && !viewUI.activeSelf)
+            CoinManager.Instance.ShowEndMatchCoinText();
+        else
+            CoinManager.Instance.HideEndMatchCoinText();
     }
 
     public void OnWinner()
@@ -233,7 +249,10 @@ public class GamePlayCanvas : BaseCanvas
 
         CoinManager.Instance.HideCoinText();
 
-        CoinManager.Instance.ShowEndMatchCoinText();
+        if (!GameManager.Instance.IsSpectatorMode && !viewUI.activeSelf)
+            CoinManager.Instance.ShowEndMatchCoinText();
+        else
+            CoinManager.Instance.HideEndMatchCoinText();
     }
 }
 

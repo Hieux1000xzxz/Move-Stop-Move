@@ -31,13 +31,7 @@ public class CoinManager : Singleton<CoinManager>
     {
         UpdateCoinUI();
     }
-
-    public void AddCoin(int amount)
-    {
-        sessionCoins += amount;
-        UpdateCoinUI();
-    }
-
+    
     public void CommitSessionCoins()
     {
         lastSessionCoins = sessionCoins;
@@ -66,8 +60,14 @@ public class CoinManager : Singleton<CoinManager>
         PlayerPrefs.Save();
     }
 
-    private void UpdateCoinUI()
+    public void UpdateCoinUI()
     {
+        if (coinText != null)
+            coinText.text = $"Coins: {sessionCoins}";
+    }
+    public void UpdateCoinUIFromSession(int newAmount)
+    {
+        sessionCoins = newAmount;
         if (coinText != null)
             coinText.text = $"Coins: {sessionCoins}";
     }
@@ -92,4 +92,26 @@ public class CoinManager : Singleton<CoinManager>
         endMatchCoinText.gameObject.SetActive(true);
         endMatchCoinText.text = $"+{earned} Coins earned!";
     }
+    
+    private int spectatorCoins = 0;
+    private bool isSpectating = false;
+
+    public void UpdateSpectatorCoin(int amount)
+    {
+        isSpectating = true;
+        spectatorCoins = amount;
+
+        if (coinText != null)
+        {
+            coinText.text = $"Coins: {spectatorCoins}";
+            coinText.gameObject.SetActive(true);
+        }
+    }
+
+    public void HideEndMatchCoinText()
+    {
+        if (endMatchCoinText != null)
+            endMatchCoinText.gameObject.SetActive(false);
+    }
+
 }

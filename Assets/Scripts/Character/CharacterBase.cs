@@ -98,6 +98,9 @@ public abstract class CharacterBase : NetworkBehaviour
         false,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> SessionCoin = new NetworkVariable<int>(
+        0, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
 
 
     #region Unity Lifecycle
@@ -864,7 +867,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         StopAllCoroutines();
         scoreDisplay.gameObject.SetActive(false);
-        characterCollider.enabled = true;
+        characterCollider.enabled = false;
 
         if (agent != null && agent.isActiveAndEnabled)
         {
@@ -917,6 +920,7 @@ public abstract class CharacterBase : NetworkBehaviour
     private void SpawnCoinUniversal()
     {
         GameObject coin = ObjectPool.Instance.SpawnCoin(transform.position + Vector3.up, Quaternion.identity);
+        coin.GetComponent<Coin>().SetOwner(this);
     }
 
     #endregion
@@ -951,6 +955,23 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             currentState = newVal; // sync local state with server
         };
+        
+        /*SessionCoin.OnValueChanged += (oldVal, newVal) =>
+        {
+            if (IsServer)
+            {
+                GameManager.Instance.UpdateSpectatorCoinForAllClientRpc(OwnerClientId, newVal);
+            }
+        };*/
+        
+        SessionCoin.OnValueChanged += (oldVal, newVal) =>
+        {
+            if (IsOwner && CoinManager.Instance != null)
+            {
+                CoinManager.Instance.UpdateCoinUIFromSession(newVal);
+            }
+        };
+
     }
     private void SetupWeaponSync()
     {
@@ -1279,22 +1300,4 @@ public abstract class CharacterBase : NetworkBehaviour
 
     #endregion
 
-    #region Coin
-    [ClientRpc]
-    private void AddCoinClientRpc(int amount, ClientRpcParams rpcParams = default)
-    {
-        CoinManager.Instance.AddCoin(amount);
-    }
-    public void AddCoinToClient(ulong clientId, int amount)
-    {
-        AddCoinClientRpc(amount, new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new[] { clientId }
-            }
-        });
-    }
-
-    #endregion
 }

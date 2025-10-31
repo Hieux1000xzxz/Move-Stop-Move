@@ -46,6 +46,16 @@ public class NotificationCanvas : BaseCanvas
         });
     }
 
+    private void OnEnable()
+    {
+        if (toastText != null)
+        {
+            toastText.gameObject.SetActive(true);
+            originalToastPos = toastText.rectTransform.anchoredPosition;
+        }
+    }
+
+    
     public void SetText(string message)
     {
         if (messageText != null)
@@ -89,30 +99,35 @@ public class NotificationCanvas : BaseCanvas
     public void ShowToast(string message)
     {
         if (toastText == null) return;
+
         panel.SetActive(false);
         currentToastTween?.Kill();
 
+        toastText.rectTransform.anchorMin = new Vector2(0.5f, 0f);   
+        toastText.rectTransform.anchorMax = new Vector2(0.5f, 0f);
+        toastText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        toastText.rectTransform.anchoredPosition = new Vector2(0f, 150f); 
         toastText.gameObject.SetActive(true);
         toastText.text = message;
 
-        Color c = toastText.color;
+        var c = toastText.color;
         c.a = 0f;
         toastText.color = c;
 
-        toastText.rectTransform.anchoredPosition = originalToastPos + new Vector3(0, -50f, 0);
+        toastText.rectTransform.anchoredPosition += new Vector2(0f, -50f);
 
         Sequence seq = DOTween.Sequence();
         seq.Append(toastText.DOFade(1f, toastFadeTime));
-        seq.Join(toastText.rectTransform.DOAnchorPos(originalToastPos, toastFadeTime).SetEase(Ease.OutBack));
+        seq.Join(toastText.rectTransform.DOAnchorPosY(150f, toastFadeTime).SetEase(Ease.OutBack));
         seq.AppendInterval(toastDuration);
         seq.Append(toastText.DOFade(0f, toastFadeTime));
-        seq.Join(toastText.rectTransform.DOAnchorPos(originalToastPos + new Vector3(0, 50f, 0), toastFadeTime).SetEase(Ease.InBack));
+        seq.Join(toastText.rectTransform.DOAnchorPosY(250f, toastFadeTime).SetEase(Ease.InBack));
         seq.OnComplete(() =>
         {
             toastText.gameObject.SetActive(false);
-            toastText.rectTransform.anchoredPosition = originalToastPos;
         });
 
         currentToastTween = seq;
     }
+
 }
