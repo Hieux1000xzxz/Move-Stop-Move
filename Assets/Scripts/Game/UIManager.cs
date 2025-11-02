@@ -14,6 +14,13 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] private ConnectionCanvas connectionCanvas;
     [SerializeField] private LoadingCanvas loadingCanvas;
     [SerializeField] private NotificationCanvas notificationCanvas;
+    [SerializeField] private CharacterShopCanvas characterShopCanvas;
+
+    [SerializeField] private ShopSelectionCanvas shopSelectionCanvas;
+    
+    public void OpenShopSelection() => OpenUI(shopSelectionCanvas);
+    public ShopCanvas GetShopCanvas() => shopCanvas;
+
     public void UpdateEnemyCount(int count)
     {
         if (count <= 0)
@@ -129,11 +136,20 @@ public class UIManager : Singleton<UIManager>
         shopCanvas.UpdateCoinUI();
     }
 
+    public void OpenCharacterShop()
+    {
+        if (characterShopCanvas == null)
+        {
+            Debug.LogWarning("CharacterShopCanvas chưa được gán trong UIManager!");
+            return;
+        }
+
+        OpenUI(characterShopCanvas);
+    }
+
     public void OpenConnection() =>OpenUI(connectionCanvas);
     public void OpenNotification() => OpenNoti(notificationCanvas);
-
-    public void CloseMainMenu() => CloseUI(mainMenuCanvas);
-    public void CloseShop() => CloseUI(shopCanvas);
+    
     public void CloseNetwork() => CloseUI(connectionCanvas);
     public void CloseNotification() => CloseUI(notificationCanvas);
 }

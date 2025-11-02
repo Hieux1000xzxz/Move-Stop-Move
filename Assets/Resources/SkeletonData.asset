@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af88735f0565284428d56de23d2c19f4, type: 3}
+  m_Name: SkeletonData
+  m_EditorClassIdentifier: 
+  characterName: Skeleton
+  icon: {fileID: 21300000, guid: 79c44074871e2044cb053b5668ccc7a5, type: 3}
+  price: 0
+  description: 
+  previewPrefab: {fileID: 7193694367047912757, guid: ce876bae62107114ba9c7915d7a574c3, type: 3}
+  moveSpeed: 5
+  health: 100
+  attack: 10
+  prefab: {fileID: 7193694367047912757, guid: ce876bae62107114ba9c7915d7a574c3, type: 3}
+  handSocket: {fileID: 7206821806707166240, guid: cbfde7d752571b3448dc52c967d9f444, type: 3}

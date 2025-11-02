@@ -8,6 +8,11 @@ public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+    [Header("Character Data")]
+    [SerializeField] private CharacterData[] allCharacters;
+    [SerializeField] private Transform playerSpawnPoint;
+    [SerializeField] private CharacterData defaultCharacter; 
+
     [Header("AI Settings")]
     [SerializeField] private int totalAIQuota = 100;
     [SerializeField] private int currentAIQuota;
@@ -52,6 +57,9 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<int> EnemyCount = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    public CharacterData[] AllCharacters => allCharacters;
+    public CharacterData DefaultCharacter => defaultCharacter;
+
     private int totalSpawned = 0;
     //private int totalKilled = 0;
     private bool isGameStarted = false;
@@ -67,7 +75,7 @@ public class GameManager : NetworkBehaviour
         Instance = this;
         isGameStarted = false;
         currentAIQuota = totalAIQuota;
-        shopCanvas.LoadSelectedWeapon();
+        //shopCanvas.LoadSelectedWeapon();
         DisableGamePlaySystem();
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
@@ -673,39 +681,47 @@ public class GameManager : NetworkBehaviour
         CoinManager.Instance.CommitSessionCoins();
     }
     
-    /*[ServerRpc(RequireOwnership = false)]
-    public void RequestSpectatedCoinUpdateServerRpc(ulong targetId)
+ 
+    public void SpawnSelectedCharacter(NetworkManager network)
     {
-        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(targetId, out var client))
+        if (!IsServer) return;
+
+        string selectedName = PlayerPrefs.GetString("SelectedCharacter", "");
+        CharacterData selected = null;
+
+        // 🔍 Tìm nhân vật trùng tên trong danh sách
+        foreach (var c in allCharacters)
         {
-            CharacterBase targetCharacter = client.PlayerObject.GetComponent<CharacterBase>();
-            if (targetCharacter != null)
+            if (c != null && c.Name == selectedName)
             {
-                int coinValue = targetCharacter.SessionCoin.Value;
-                UpdateSpectatorCoinClientRpc(targetId, coinValue);
+                selected = c;
+                break;
             }
         }
-    }*/
 
-    /*
-    [ClientRpc]
-    public void UpdateSpectatorCoinClientRpc(ulong targetId, int coinValue)
-    {
-        if (GameManager.Instance.CurrentSpectatedId == targetId)
+        if (selected == null)
         {
-            CoinManager.Instance.UpdateSpectatorCoin(coinValue);
+            Debug.LogWarning("⚠️ Không tìm thấy CharacterData tương ứng, dùng default.");
+            selected = defaultCharacter;
         }
-    }*/
 
-    /*[ClientRpc]
-    public void UpdateSpectatorCoinForAllClientRpc(ulong playerId, int coinValue)
-    {
-        if (IsServer) return;
-
-        if (GameManager.Instance.CurrentSpectatedId == playerId)
+        if (selected == null)
         {
-            CoinManager.Instance.UpdateSpectatorCoin(coinValue);
+            Debug.LogError("❌ Không có prefab nhân vật để spawn!");
+            return;
         }
-    }*/
 
+        // 🟢 Tạo player từ prefab đã chọn
+        GameObject playerObj = Instantiate(selected.Prefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
+        var netObj = playerObj.GetComponent<NetworkObject>();
+        if (netObj != null)
+        {
+            netObj.SpawnAsPlayerObject(NetworkManager.Singleton.LocalClientId);
+            Debug.Log($"✅ Spawned selected character: {selected.Name}");
+        }
+        else
+        {
+            Debug.LogError("❌ Prefab nhân vật không có NetworkObject!");
+        }
+    }
 }

@@ -22,7 +22,7 @@ public class MainMenuCanvas : BaseCanvas
     private void OnShopClicked()
     {
         Debug.Log("Open Shop!");
-        UIManager.Instance.OpenShop();
+        UIManager.Instance.OpenShopSelection();
     }
 
     private void OnMultiplayerClicked()

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af88735f0565284428d56de23d2c19f4, type: 3}
+  m_Name: KnightData
+  m_EditorClassIdentifier: 
+  characterName: Knight
+  icon: {fileID: 21300000, guid: 9703e7b7598a3d04b9952f6a7b6bd6f4, type: 3}
+  price: 0
+  description: 
+  previewPrefab: {fileID: 7926306860219652939, guid: a2639b7dee820554390958935825b4ce, type: 3}
+  moveSpeed: 5
+  health: 100
+  attack: 10
+  prefab: {fileID: 7926306860219652939, guid: a2639b7dee820554390958935825b4ce, type: 3}
+  handSocket: {fileID: 2853226076700162114, guid: bed2355327d94474bbbf4cc69eb917eb, type: 3}

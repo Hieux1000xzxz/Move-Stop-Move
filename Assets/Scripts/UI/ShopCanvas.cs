@@ -12,11 +12,31 @@ public class ShopCanvas : BaseCanvas
     [SerializeField] private Button selectButton;
     [SerializeField] private Button closeButton;
 
+    [Header("Shop Panels")]
+    [SerializeField] private GameObject mainWeaponPanel;    // object MAIN
+    [SerializeField] private GameObject mainCharacterPanel; // object MAIN2
+
+    
     [Header("Weapons Data")]
     [SerializeField] private WeaponData[] weapons;
     [SerializeField] private Player player;
     [SerializeField] private PlayerPreview previewPlayer;
 
+    
+    [Header("Character Shop UI")]
+    [SerializeField] private Transform charactersGrid;
+    [SerializeField] private GameObject characterItemPrefab;
+    [SerializeField] private CharacterData[] characters;
+
+    [Header("Character Buttons")]
+    [SerializeField] private Button buyCharacterButton;
+    [SerializeField] private Button selectCharacterButton;
+    [SerializeField] private GameObject shopSelectionPanel;
+
+    private CharacterData selectedCharacter;
+    private readonly Dictionary<string, CharacterItem> characterItems = new();
+
+    
     private WeaponData selectedWeapon;
     private Dictionary<string, WeaponItem> weaponItems = new Dictionary<string, WeaponItem>();
   
@@ -33,7 +53,12 @@ public class ShopCanvas : BaseCanvas
         buyButton.onClick.AddListener(OnBuyWeapon);
         selectButton.onClick.AddListener(OnSelectWeapon);
         closeButton.onClick.AddListener(CloseShop);
+        buyCharacterButton.onClick.AddListener(OnBuyCharacter);
+        selectCharacterButton.onClick.AddListener(OnSelectCharacter);
+
         InitializeWeaponsGrid();
+        InitializeCharactersGrid();
+        previewPlayer.ShowCharacter(characters[0]);
         InitSelectedWeapon();
     }
     
@@ -88,9 +113,6 @@ public class ShopCanvas : BaseCanvas
             }
         }
     }
-
-
-
     private void InitializeWeaponsGrid()
     {
         foreach (Transform child in weaponsGrid)
@@ -119,6 +141,100 @@ public class ShopCanvas : BaseCanvas
             }
         }
     }
+    
+    private void InitializeCharactersGrid()
+    {
+        Debug.Log($"[CharacterShop] Initialize grid, count = {characters.Length}");
+
+        foreach (Transform child in charactersGrid)
+            Destroy(child.gameObject);
+
+        characterItems.Clear();
+
+        foreach (CharacterData character in characters)
+        {
+            if (character == null)
+            {
+                Debug.LogWarning("[CharacterShop] Null CharacterData found!");
+                continue;
+            }
+
+            Debug.Log($"[CharacterShop] Creating item: {character.Name}");
+
+            GameObject obj = Instantiate(characterItemPrefab, charactersGrid);
+            CharacterItem item = obj.GetComponent<CharacterItem>();
+
+            bool isBought = PlayerPrefs.GetInt("CharacterBought_" + character.Name, 0) == 1;
+            bool isSelected = PlayerPrefs.GetString("SelectedCharacter", "") == character.Name;
+
+            item.Initialize(character, isBought, isSelected);
+            item.SetChosen(false);
+            item.OnClicked += OnCharacterSelected;
+
+            if (!characterItems.ContainsKey(character.Name))
+                characterItems.Add(character.Name, item);
+            else
+                Debug.LogError($"[CharacterShop] Duplicate name found: {character.Name}");
+        }
+    }
+
+    private void OnCharacterSelected(CharacterData character)
+    {
+        selectedCharacter = character;
+        foreach (var item in characterItems.Values)
+        {
+            bool isSelected = item.Data == character;
+            item.SetSelected(item.Data == character);
+            item.SetChosen(isSelected);
+        }
+            
+        previewPlayer.ShowCharacter(selectedCharacter);
+        UpdateCharacterButtons();
+    }
+
+    private void OnBuyCharacter()
+    {
+        if (selectedCharacter == null) return;
+
+        if (!CoinManager.Instance.SpendCoin(selectedCharacter.Price))
+        {
+            UIManager.Instance.SendNotification("Not enough coins to buy this character!", 1);
+            return;
+        }
+
+        PlayerPrefs.SetInt("CharacterBought_" + selectedCharacter.Name, 1);
+        PlayerPrefs.Save();
+
+        characterItems[selectedCharacter.Name].SetBought(true);
+        UpdateCharacterButtons();
+        UpdateCoinUI();
+    }
+
+    private void OnSelectCharacter()
+    {
+        if (selectedCharacter == null) return;
+
+        PlayerPrefs.SetString("SelectedCharacter", selectedCharacter.Name);
+        PlayerPrefs.Save();
+
+        foreach (var item in characterItems.Values)
+            item.SetSelected(item.Data == selectedCharacter);
+
+        UIManager.Instance.SendNotification($"Selected {selectedCharacter.Name}!", 4);
+        UpdateCharacterButtons();
+    }
+
+    private void UpdateCharacterButtons()
+    {
+        if (selectedCharacter == null) return;
+
+        bool isBought = PlayerPrefs.GetInt("CharacterBought_" + selectedCharacter.Name, 0) == 1;
+        bool isSelected = PlayerPrefs.GetString("SelectedCharacter", "") == selectedCharacter.Name;
+
+        buyButton.interactable = !isBought;
+        selectButton.interactable = isBought && !isSelected;
+    }
+
 
     private void OnEnable()
     {
@@ -209,10 +325,6 @@ public class ShopCanvas : BaseCanvas
                 netChar.RequestChangeWeaponServerRpc(selectedWeapon.weaponType);
             }
         }
-        else
-        {
-            Debug.LogWarning("Player not found in scene!");
-        }
 
         UpdateButtons();
     }
@@ -228,15 +340,9 @@ public class ShopCanvas : BaseCanvas
                 if (weapon.weaponName == selectedWeaponName)
                 {
                     player.ChangeWeapon(weapon.weaponType);
-                    Debug.Log("Loaded selected weapon: " + weapon.weaponName);
                     return;
                 }
             }
-            Debug.LogWarning("Selected weapon not found: " + selectedWeaponName);
-        }
-        else if (player == null)
-        {
-            Debug.LogWarning("Player not found, cannot load selected weapon");
         }
     }
 
@@ -246,6 +352,22 @@ public class ShopCanvas : BaseCanvas
         coinText.gameObject.SetActive(false);
         InitSelectedWeapon();
         UIManager.Instance.OpenMainMenu();
+    }
+
+    public void ShowWeaponShop()
+    {
+        if (mainWeaponPanel != null) mainWeaponPanel.SetActive(true);
+        if (mainCharacterPanel != null) mainCharacterPanel.SetActive(false);
+        if (shopSelectionPanel != null) shopSelectionPanel.SetActive(false);
+
+    }
+
+    public void ShowCharacterShop()
+    {
+        if (mainWeaponPanel != null) mainWeaponPanel.SetActive(false);
+        if (mainCharacterPanel != null) mainCharacterPanel.SetActive(true);
+        if (shopSelectionPanel != null) shopSelectionPanel.SetActive(false);
+        InitializeCharactersGrid();
     }
 
     private void OnDestroy()

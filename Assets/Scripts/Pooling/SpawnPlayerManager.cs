@@ -45,6 +45,7 @@ public class SpawnPlayerManager : NetworkBehaviour
     {
         yield return null;
 
+        // Nếu client đã có player thì không spawn lại
         if (NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId)
             && NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject != null)
         {
@@ -53,13 +54,26 @@ public class SpawnPlayerManager : NetworkBehaviour
 
         Transform spawnPoint = GetAvailableSpawnPoint();
         if (spawnPoint == null)
-        {
             yield break;
+
+        string selectedName = PlayerPrefs.GetString("SelectedCharacter", "");
+        CharacterData selected = null;
+        foreach (var c in GameManager.Instance.AllCharacters)
+        {
+            if (c != null && c.Name == selectedName)
+            {
+                selected = c;
+                break;
+            }
         }
 
-        GameObject player = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
-        var netObj = player.GetComponent<NetworkObject>();
+        if (selected == null)
+        {
+            selected = GameManager.Instance.DefaultCharacter;
+        }
 
+        GameObject player = Instantiate(selected.Prefab, spawnPoint.position, spawnPoint.rotation);
+        var netObj = player.GetComponent<NetworkObject>();
         if (netObj == null)
         {
             Destroy(player);
@@ -69,7 +83,9 @@ public class SpawnPlayerManager : NetworkBehaviour
         netObj.SpawnAsPlayerObject(clientId, true);
         usedSpawnIndexes.Add(System.Array.IndexOf(spawnPoints, spawnPoint));
 
+        Debug.Log($"✅ Spawned player {selected.Name} for client {clientId}");
     }
+
 
     private void HandleClientDisconnected(ulong clientId)
     {
