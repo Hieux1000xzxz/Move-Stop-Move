@@ -1,0 +1,9 @@
+﻿.sonarqube
+Library
+Temp
+obj
+Logs
+*.csproj
+Move-Stop-Move.sln
+.vsconfig
+UserSettings
