@@ -17,7 +17,7 @@ public class CharacterPreviewStrategy : IPreviewStrategy<CharacterData>
 
         if (data.Prefab != null)
         {
-            currentPreview = Object.Instantiate(data.Prefab, previewPoint.position, Quaternion.identity, previewPoint);
+            currentPreview = Object.Instantiate(data.Prefab, previewPoint.position, Quaternion.Euler(0, 180f, 0), previewPoint);
         }
     }
 }

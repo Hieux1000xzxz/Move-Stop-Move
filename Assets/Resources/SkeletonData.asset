@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: Skeleton
   icon: {fileID: 21300000, guid: 79c44074871e2044cb053b5668ccc7a5, type: 3}
-  price: 0
+  price: 20
   description: 
   previewPrefab: {fileID: 7193694367047912757, guid: ce876bae62107114ba9c7915d7a574c3, type: 3}
   moveSpeed: 5

@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
-
+using Unity.Netcode;
 public class ShopCanvas : BaseCanvas
 {
     [Header("UI References")]
@@ -58,8 +58,15 @@ public class ShopCanvas : BaseCanvas
 
         InitializeWeaponsGrid();
         InitializeCharactersGrid();
-        previewPlayer.ShowCharacter(characters[0]);
+        
+        string selected = PlayerPrefs.GetString("SelectedCharacter", "");
+        if (string.IsNullOrEmpty(selected))
+        {
+            previewPlayer.ShowCharacter(characters[0]); 
+        }
+        
         InitSelectedWeapon();
+        InitSelectedCharacter();
     }
     
     public void InitSelectedWeapon()
@@ -144,8 +151,6 @@ public class ShopCanvas : BaseCanvas
     
     private void InitializeCharactersGrid()
     {
-        Debug.Log($"[CharacterShop] Initialize grid, count = {characters.Length}");
-
         foreach (Transform child in charactersGrid)
             Destroy(child.gameObject);
 
@@ -155,11 +160,8 @@ public class ShopCanvas : BaseCanvas
         {
             if (character == null)
             {
-                Debug.LogWarning("[CharacterShop] Null CharacterData found!");
                 continue;
             }
-
-            Debug.Log($"[CharacterShop] Creating item: {character.Name}");
 
             GameObject obj = Instantiate(characterItemPrefab, charactersGrid);
             CharacterItem item = obj.GetComponent<CharacterItem>();
@@ -178,6 +180,47 @@ public class ShopCanvas : BaseCanvas
         }
     }
 
+    private void InitSelectedCharacter()
+    {
+        string selectedCharacterName = PlayerPrefs.GetString("SelectedCharacter", "");
+
+        if (!string.IsNullOrEmpty(selectedCharacterName) && characterItems.ContainsKey(selectedCharacterName))
+        {
+            CharacterItem selectedItem = characterItems[selectedCharacterName];
+            selectedCharacter = selectedItem.Data;
+
+            foreach (var item in characterItems.Values)
+            {
+                bool isSelected = item == selectedItem;
+                item.SetChosen(isSelected);
+                item.SetSelected(isSelected);
+            }
+
+            previewPlayer.ShowCharacter(selectedCharacter);
+            UpdateCharacterButtons();
+        }
+        else if (characters.Length > 0)
+        {
+            CharacterData defaultCharacter = characters[0];
+            selectedCharacter = defaultCharacter;
+
+            PlayerPrefs.SetString("SelectedCharacter", defaultCharacter.Name);
+            PlayerPrefs.SetInt("CharacterBought_" + defaultCharacter.Name, 1);
+            PlayerPrefs.Save();
+
+            foreach (var item in characterItems.Values)
+            {
+                bool isSelected = item.Data.Name == defaultCharacter.Name;
+                item.SetBought(isSelected);
+                item.SetSelected(isSelected);
+                item.SetChosen(isSelected);
+            }
+
+            previewPlayer.ShowCharacter(defaultCharacter);
+            UpdateCharacterButtons();
+        }
+    }
+
     private void OnCharacterSelected(CharacterData character)
     {
         selectedCharacter = character;
@@ -190,13 +233,19 @@ public class ShopCanvas : BaseCanvas
             
         previewPlayer.ShowCharacter(selectedCharacter);
         UpdateCharacterButtons();
+        
+        buyCharacterButton.gameObject.SetActive(true);
+        selectCharacterButton.gameObject.SetActive(true);
     }
 
     private void OnBuyCharacter()
     {
         if (selectedCharacter == null) return;
 
-        if (!CoinManager.Instance.SpendCoin(selectedCharacter.Price))
+        int price = selectedCharacter.Price;
+
+        bool success = CoinManager.Instance.SpendCoin(price);
+        if (!success)
         {
             UIManager.Instance.SendNotification("Not enough coins to buy this character!", 1);
             return;
@@ -205,17 +254,36 @@ public class ShopCanvas : BaseCanvas
         PlayerPrefs.SetInt("CharacterBought_" + selectedCharacter.Name, 1);
         PlayerPrefs.Save();
 
-        characterItems[selectedCharacter.Name].SetBought(true);
+        if (characterItems.ContainsKey(selectedCharacter.Name))
+            characterItems[selectedCharacter.Name].SetBought(true);
+
+        UIManager.Instance.SendNotification($"Bought {selectedCharacter.Name} successfully!", 4);
+
         UpdateCharacterButtons();
         UpdateCoinUI();
     }
+
 
     private void OnSelectCharacter()
     {
         if (selectedCharacter == null) return;
 
+        bool isBought = PlayerPrefs.GetInt("CharacterBought_" + selectedCharacter.Name, 0) == 1;
+        if (!isBought)
+        {
+            UIManager.Instance.SendNotification("You must buy this character first!", 2);
+            return;
+        }
+        
         PlayerPrefs.SetString("SelectedCharacter", selectedCharacter.Name);
         PlayerPrefs.Save();
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
+        {
+            var sync = FindObjectOfType<PlayerSelectionSync>();
+            if (sync != null)
+                sync.SendSelectedCharacterServerRpc(selectedCharacter.Name);
+        }
 
         foreach (var item in characterItems.Values)
             item.SetSelected(item.Data == selectedCharacter);
@@ -227,12 +295,21 @@ public class ShopCanvas : BaseCanvas
     private void UpdateCharacterButtons()
     {
         if (selectedCharacter == null) return;
-
+        
+        buyCharacterButton.interactable = false;
+        selectCharacterButton.interactable = false;
+        
         bool isBought = PlayerPrefs.GetInt("CharacterBought_" + selectedCharacter.Name, 0) == 1;
         bool isSelected = PlayerPrefs.GetString("SelectedCharacter", "") == selectedCharacter.Name;
 
-        buyButton.interactable = !isBought;
-        selectButton.interactable = isBought && !isSelected;
+        if (!isBought)
+        {
+            buyCharacterButton.interactable = true;
+        }
+        else if (!isSelected)
+        {
+            selectCharacterButton.interactable = true;
+        }
     }
 
 
@@ -261,10 +338,10 @@ public class ShopCanvas : BaseCanvas
             item.SetChosen(item.WeaponData == weapon);
         }
 
-        if (previewPlayer != null)
+        /*if (previewPlayer != null)
         {
             previewPlayer.ShowWeapon(weapon);
-        }
+        }*/
     }
 
     private void UpdateButtons()
@@ -329,28 +406,11 @@ public class ShopCanvas : BaseCanvas
         UpdateButtons();
     }
 
-    public void LoadSelectedWeapon()
-    {
-        string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
-
-        if (!string.IsNullOrEmpty(selectedWeaponName) && player != null)
-        {
-            foreach (WeaponData weapon in weapons)
-            {
-                if (weapon.weaponName == selectedWeaponName)
-                {
-                    player.ChangeWeapon(weapon.weaponType);
-                    return;
-                }
-            }
-        }
-    }
-
     private void CloseShop()
     {
         root.SetActive(false);
         coinText.gameObject.SetActive(false);
-        InitSelectedWeapon();
+        //InitSelectedWeapon();
         UIManager.Instance.OpenMainMenu();
     }
 
@@ -360,6 +420,8 @@ public class ShopCanvas : BaseCanvas
         if (mainCharacterPanel != null) mainCharacterPanel.SetActive(false);
         if (shopSelectionPanel != null) shopSelectionPanel.SetActive(false);
 
+        buyCharacterButton.interactable = false;
+        selectCharacterButton.interactable = false;
     }
 
     public void ShowCharacterShop()
@@ -368,6 +430,7 @@ public class ShopCanvas : BaseCanvas
         if (mainCharacterPanel != null) mainCharacterPanel.SetActive(true);
         if (shopSelectionPanel != null) shopSelectionPanel.SetActive(false);
         InitializeCharactersGrid();
+        UpdateCharacterButtons();
     }
 
     private void OnDestroy()

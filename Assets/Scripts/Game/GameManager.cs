@@ -75,7 +75,6 @@ public class GameManager : NetworkBehaviour
         Instance = this;
         isGameStarted = false;
         currentAIQuota = totalAIQuota;
-        //shopCanvas.LoadSelectedWeapon();
         DisableGamePlaySystem();
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
@@ -98,9 +97,6 @@ public class GameManager : NetworkBehaviour
         base.OnNetworkSpawn();
         if (IsClient)
         {
-            //ActiveAICount.OnValueChanged += OnAICountChanged;
-            //ActivePlayerCount.OnValueChanged += OnPlayerCountChanged;
-            //RemainingAIQuota.OnValueChanged += OnQuotaChanged;
             EnemyCount.OnValueChanged += OnEnemyCountChanged;
             UIManager.Instance?.UpdateEnemyCount(EnemyCount.Value);
 
@@ -648,15 +644,7 @@ public class GameManager : NetworkBehaviour
     public void HandleCharacterDeath(CharacterBase character)
     {
         if (character == null) return;
-
-        //var netObj = character.GetComponent<NetworkObject>();
-        //if (netObj == null) return;
-
-        //if (character.ownerType == CharacterBase.OwnerType.AI)
-        //    UnregisterAI(netObj);
-        //else
-        //    UnregisterPlayerInGame(netObj);
-
+        
         StartCoroutine(DelayedWeaponCleanup(character, 0.2f));
     }
 
@@ -681,47 +669,20 @@ public class GameManager : NetworkBehaviour
         CoinManager.Instance.CommitSessionCoins();
     }
     
- 
-    public void SpawnSelectedCharacter(NetworkManager network)
+    public CharacterData GetSelectedCharacter()
     {
-        if (!IsServer) return;
-
         string selectedName = PlayerPrefs.GetString("SelectedCharacter", "");
-        CharacterData selected = null;
 
-        // 🔍 Tìm nhân vật trùng tên trong danh sách
-        foreach (var c in allCharacters)
+        if (!string.IsNullOrEmpty(selectedName))
         {
-            if (c != null && c.Name == selectedName)
+            foreach (var c in allCharacters)
             {
-                selected = c;
-                break;
+                if (c.Name == selectedName)
+                    return c;
             }
         }
 
-        if (selected == null)
-        {
-            Debug.LogWarning("⚠️ Không tìm thấy CharacterData tương ứng, dùng default.");
-            selected = defaultCharacter;
-        }
-
-        if (selected == null)
-        {
-            Debug.LogError("❌ Không có prefab nhân vật để spawn!");
-            return;
-        }
-
-        // 🟢 Tạo player từ prefab đã chọn
-        GameObject playerObj = Instantiate(selected.Prefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
-        var netObj = playerObj.GetComponent<NetworkObject>();
-        if (netObj != null)
-        {
-            netObj.SpawnAsPlayerObject(NetworkManager.Singleton.LocalClientId);
-            Debug.Log($"✅ Spawned selected character: {selected.Name}");
-        }
-        else
-        {
-            Debug.LogError("❌ Prefab nhân vật không có NetworkObject!");
-        }
+        return defaultCharacter;
     }
+
 }

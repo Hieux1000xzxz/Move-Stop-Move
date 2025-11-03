@@ -15,6 +15,9 @@ public class SpawnPlayerManager : NetworkBehaviour
     private void Awake()
     {
         Instance = this;
+        
+        if (NetworkManager.Singleton != null)
+            NetworkManager.Singleton.NetworkConfig.PlayerPrefab = null;
     }
 
     public override void OnNetworkSpawn()
@@ -37,15 +40,16 @@ public class SpawnPlayerManager : NetworkBehaviour
     private void HandleClientConnected(ulong clientId)
     {
         if (!IsServer) return;
-
+        
+        if (clientId == NetworkManager.ServerClientId)
+            return;
         StartCoroutine(SpawnAfterSync(clientId));
     }
 
     private IEnumerator SpawnAfterSync(ulong clientId)
     {
-        yield return null;
-
-        // Nếu client đã có player thì không spawn lại
+        yield return new WaitForSeconds(0.3f);
+        PlayerPrefs.Save();
         if (NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId)
             && NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject != null)
         {
@@ -56,7 +60,11 @@ public class SpawnPlayerManager : NetworkBehaviour
         if (spawnPoint == null)
             yield break;
 
-        string selectedName = PlayerPrefs.GetString("SelectedCharacter", "");
+        string selectedName = "";
+        var sync = PlayerSelectionSync.Instance;
+        if (sync != null)
+            selectedName = sync.GetSelectedCharacter(clientId);
+
         CharacterData selected = null;
         foreach (var c in GameManager.Instance.AllCharacters)
         {

@@ -1,10 +1,18 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class CharacterShopService : IShopService<CharacterData>
 {
+    private readonly Dictionary<string, CharacterItem> characterItems;
+
+    public CharacterShopService(Dictionary<string, CharacterItem> items)
+    {
+        characterItems = items;
+    }
+
     public bool IsBought(CharacterData item)
     {
-        return PlayerPrefs.GetInt("CharBought_" + item.Name, 0) == 1;
+        return PlayerPrefs.GetInt("CharacterBought_" + item.Name, 0) == 1;
     }
 
     public bool IsSelected(CharacterData item)
@@ -19,24 +27,29 @@ public class CharacterShopService : IShopService<CharacterData>
 
     public void BuyItem(CharacterData item)
     {
-        if (!CanAfford(item.Price))
-        {
-            UIManager.Instance.SendNotification("Không đủ xu để mua!", 1);
+        if (item == null) return;
+
+        int currentCoins = CoinManager.Instance.GetShopCoins();
+        if (currentCoins < item.Price)
             return;
-        }
 
         CoinManager.Instance.SpendCoin(item.Price);
-        PlayerPrefs.SetInt("CharBought_" + item.Name, 1);
+        PlayerPrefs.SetInt("CharacterBought_" + item.Name, 1);
         PlayerPrefs.Save();
-
-        UIManager.Instance.SendNotification($"Đã mua {item.Name}!", 4);
     }
 
     public void SelectItem(CharacterData item)
     {
+        if (!IsBought(item)) return;
+
         PlayerPrefs.SetString("SelectedCharacter", item.Name);
         PlayerPrefs.Save();
 
-        UIManager.Instance.SendNotification($"Đã chọn {item.Name}!", 4);
+        foreach (var kvp in characterItems)
+        {
+            bool isSelected = kvp.Key == item.Name;
+            kvp.Value.SetSelected(isSelected);
+            kvp.Value.SetChosen(isSelected);
+        }
     }
 }
