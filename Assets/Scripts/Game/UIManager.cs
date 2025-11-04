@@ -14,8 +14,6 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] private ConnectionCanvas connectionCanvas;
     [SerializeField] private LoadingCanvas loadingCanvas;
     [SerializeField] private NotificationCanvas notificationCanvas;
-    [SerializeField] private CharacterShopCanvas characterShopCanvas;
-
     [SerializeField] private ShopSelectionCanvas shopSelectionCanvas;
     
     public void OpenShopSelection() => OpenUI(shopSelectionCanvas);
@@ -120,14 +118,6 @@ public class UIManager : Singleton<UIManager>
         return notificationCanvas;
     }
 
-    public void HideClosreNotifiButton() 
-    {
-        if (notificationCanvas != null)
-        {
-            notificationCanvas.HideCloseButton();
-        }
-    }
-
     public void OpenLoadingCanvas() => OpenUI(loadingCanvas);
     public void OpenMainMenu() => OpenUI(mainMenuCanvas);
     public void OpenShop()  
@@ -135,18 +125,6 @@ public class UIManager : Singleton<UIManager>
         OpenUI(shopCanvas);
         shopCanvas.UpdateCoinUI();
     }
-
-    public void OpenCharacterShop()
-    {
-        if (characterShopCanvas == null)
-        {
-            Debug.LogWarning("CharacterShopCanvas chưa được gán trong UIManager!");
-            return;
-        }
-
-        OpenUI(characterShopCanvas);
-    }
-
     public void OpenConnection() =>OpenUI(connectionCanvas);
     public void OpenNotification() => OpenNoti(notificationCanvas);
     

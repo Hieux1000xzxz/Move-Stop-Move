@@ -621,6 +621,8 @@ MonoBehaviour:
     m_InternalValue: 0
   NetIsAttacking:
     m_InternalValue: 0
+  SessionCoin:
+    m_InternalValue: 0
   joystick: {fileID: 6433299856123335784, guid: 0bd3649e64dbcd840962fac485ab370f, type: 3}
   isMovingInput: 0
   minIdleDelay: 0.05

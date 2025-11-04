@@ -17,7 +17,6 @@ public class PlayerSelectionSync : NetworkBehaviour
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
         selectedCharacters[clientId] = selectedCharacter;
-        Debug.Log($"[Server] Client {clientId} chọn nhân vật: {selectedCharacter}");
     }
 
     public string GetSelectedCharacter(ulong clientId)

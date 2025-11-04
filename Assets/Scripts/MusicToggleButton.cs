@@ -11,22 +11,32 @@ public class MusicToggleButton : MonoBehaviour
     [SerializeField] private Image buttonImage;
     [SerializeField] private Button button;
 
-    private bool isMusicOn = true;
+    private bool isMusicOn;
+
+    private const string MusicKey = "MusicOn";
 
     private void Start()
     {
-        if (button == null) button = GetComponent<Button>();
-        if (buttonImage == null) buttonImage = GetComponent<Image>();
+        isMusicOn = PlayerPrefs.GetInt(MusicKey, 1) == 1;
 
         button.onClick.AddListener(ToggleMusic);
 
-        UpdateButtonSprite();
+        ApplyMusicState();
     }
 
     private void ToggleMusic()
     {
         isMusicOn = !isMusicOn;
 
+        // Save state for all scenes
+        PlayerPrefs.SetInt(MusicKey, isMusicOn ? 1 : 0);
+        PlayerPrefs.Save();
+
+        ApplyMusicState();
+    }
+
+    private void ApplyMusicState()
+    {
         if (isMusicOn)
         {
             SoundManager.Instance.PlayBGM();
@@ -36,11 +46,6 @@ public class MusicToggleButton : MonoBehaviour
             SoundManager.Instance.StopBGM();
         }
 
-        UpdateButtonSprite();
-    }
-
-    private void UpdateButtonSprite()
-    {
         if (buttonImage != null)
         {
             buttonImage.sprite = isMusicOn ? musicOnSprite : musicOffSprite;

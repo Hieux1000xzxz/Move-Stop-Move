@@ -122,7 +122,6 @@ public class Player : CharacterBase
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        Debug.Log($"{name} spawned for ClientId={OwnerClientId}, IsOwner={IsOwner}");
         if (IsOwner)
         {
             Local = this;

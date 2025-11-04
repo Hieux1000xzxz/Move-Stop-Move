@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.PlayerLoop;
 
 public class CoinManager : Singleton<CoinManager>
 {
@@ -68,8 +69,7 @@ public class CoinManager : Singleton<CoinManager>
     public void UpdateCoinUIFromSession(int newAmount)
     {
         sessionCoins = newAmount;
-        if (coinText != null)
-            coinText.text = $"Coins: {sessionCoins}";
+        UpdateCoinUI();
     }
 
     public void HideCoinText()

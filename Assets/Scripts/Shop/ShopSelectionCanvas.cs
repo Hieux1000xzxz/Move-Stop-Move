@@ -7,7 +7,6 @@ public class ShopSelectionCanvas : BaseCanvas
     [SerializeField] private Button weaponShopButton;
     [SerializeField] private Button characterShopButton;
     [SerializeField] private Button backButton;
-
     private void Start()
     {
         weaponShopButton.onClick.AddListener(OpenWeaponShop);
@@ -18,18 +17,19 @@ public class ShopSelectionCanvas : BaseCanvas
     private void OpenWeaponShop()
     {
         UIManager.Instance.OpenShop();
-        UIManager.Instance.GetShopCanvas().ShowWeaponShop(); // hiển thị MAIN
+        UIManager.Instance.GetShopCanvas().ShowWeaponShop(); 
     }
 
     private void OpenCharacterShop()
     {
         UIManager.Instance.OpenShop();
-        UIManager.Instance.GetShopCanvas().ShowCharacterShop(); // hiển thị MAIN2
+        UIManager.Instance.GetShopCanvas().ShowCharacterShop(); 
     }
 
 
     private void BackToMainMenu()
     {
         UIManager.Instance.OpenMainMenu();
+        Hide();
     }
 }

@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class CharacterShopService : IShopService<CharacterData>
+public class CharacterShopService : MonoBehaviour
 {
     private readonly Dictionary<string, CharacterItem> characterItems;
 

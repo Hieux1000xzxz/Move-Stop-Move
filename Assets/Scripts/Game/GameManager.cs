@@ -32,9 +32,6 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject weaponGrowPrefab;
     [SerializeField] private Transform[] spawnPoints;
 
-    [Header("UI / Preview")]
-    [SerializeField] private GameObject playerPreview;
-
     [Header("Cache")]
     [SerializeField] private List<NetworkObject> activeAINetworkObjects = new List<NetworkObject>();
     [SerializeField] private List<NetworkObject> activePlayerNetworkObjects = new List<NetworkObject>();
@@ -316,13 +313,15 @@ public class GameManager : NetworkBehaviour
         {
             ResetGame();
         }
-        HidePlayerPreview();
+        
+        shopCanvas.gameObject.SetActive(false);
         UIManager.Instance.CloseAllUI();
     }
 
     public void GameOver()
     {
         CoinManager.Instance.CommitSessionCoins();
+        shopCanvas.gameObject.SetActive(false);
         gamePlayCanvas.OnGameOver();
     }
 
@@ -540,16 +539,8 @@ public class GameManager : NetworkBehaviour
         obj.GetComponent<Powerup>().SetType(type);
     }
 
-    public void HidePlayerPreview()
-    {
-        if (playerPreview != null)
-            playerPreview.SetActive(false);
-    }
-
     public void ShowPlayerPreview()
     {
-        if (playerPreview != null)
-            playerPreview.SetActive(true);
         zoomController.SetUpBaseZoom();
     }
 
@@ -667,22 +658,6 @@ public class GameManager : NetworkBehaviour
     private void NotifyClientCommitCoinClientRpc(ClientRpcParams clientRpcParams = default)
     {
         CoinManager.Instance.CommitSessionCoins();
-    }
-    
-    public CharacterData GetSelectedCharacter()
-    {
-        string selectedName = PlayerPrefs.GetString("SelectedCharacter", "");
-
-        if (!string.IsNullOrEmpty(selectedName))
-        {
-            foreach (var c in allCharacters)
-            {
-                if (c.Name == selectedName)
-                    return c;
-            }
-        }
-
-        return defaultCharacter;
     }
 
 }
