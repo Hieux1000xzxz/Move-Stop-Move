@@ -94,11 +94,9 @@ public class CoinManager : Singleton<CoinManager>
     }
     
     private int spectatorCoins = 0;
-    private bool isSpectating = false;
 
     public void UpdateSpectatorCoin(int amount)
     {
-        isSpectating = true;
         spectatorCoins = amount;
 
         if (coinText != null)

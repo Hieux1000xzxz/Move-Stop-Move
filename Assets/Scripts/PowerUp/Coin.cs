@@ -6,7 +6,6 @@ public class Coin : NetworkBehaviour
     [SerializeField] private int value = 100;
     [SerializeField] private Collider col;
     [SerializeField] private MeshRenderer meshRenderer;
-    [SerializeField] private float autoPickupRadius = 0.8f;
     [SerializeField] private float despawnDelay = 3f;
 
     private bool isCollected;

@@ -318,8 +318,10 @@ public class AIController : CharacterBase
        GameManager.Instance.RegisterKillScore(this.networkObject, scoreDisplay);
     }
 
-    private void OnDisable()
+    //SonarQueb
+    protected override void OnDisable()
     {
+        base.OnDisable();
         GameManager.Instance.UnregisterAI(this.networkObject);
     }
 }

@@ -268,7 +268,7 @@ public class WeaponBase : NetworkBehaviour
         gameObject.SetActive(false);
     }
 
-    private void OnDestroy()
+    protected new void OnDestroy()
     {
         StopRotation();
     }
