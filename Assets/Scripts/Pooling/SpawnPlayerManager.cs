@@ -15,6 +15,9 @@ public class SpawnPlayerManager : NetworkBehaviour
     private void Awake()
     {
         Instance = this;
+        
+        if (NetworkManager.Singleton != null)
+            NetworkManager.Singleton.NetworkConfig.PlayerPrefab = null;
     }
 
     public override void OnNetworkSpawn()
@@ -37,39 +40,59 @@ public class SpawnPlayerManager : NetworkBehaviour
     private void HandleClientConnected(ulong clientId)
     {
         if (!IsServer) return;
-
+        
+        if (clientId == NetworkManager.ServerClientId)
+            return;
         StartCoroutine(SpawnAfterSync(clientId));
     }
 
-    private IEnumerator SpawnAfterSync(ulong clientId)
-    {
-        yield return null;
-
-        if (NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId)
-            && NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject != null)
+        private IEnumerator SpawnAfterSync(ulong clientId)
         {
-            yield break;
+            yield return new WaitForSeconds(0.3f);
+            PlayerPrefs.Save();
+            if (NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId)
+                && NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject != null)
+            {
+                yield break;
+            }
+
+            Transform spawnPoint = GetAvailableSpawnPoint();
+            if (spawnPoint == null)
+                yield break;
+
+            string selectedName = "";
+            var sync = PlayerSelectionSync.Instance;
+            if (sync != null)
+                selectedName = sync.GetSelectedCharacter(clientId);
+
+            CharacterData selected = null;
+            foreach (var c in GameManager.Instance.AllCharacters)
+            {
+                if (c != null && c.Name == selectedName)
+                {
+                    selected = c;
+                    break;
+                }
+            }
+
+            if (selected == null)
+            {
+                selected = GameManager.Instance.DefaultCharacter;
+            }
+
+            GameObject player = Instantiate(selected.Prefab, spawnPoint.position, spawnPoint.rotation);
+            var netObj = player.GetComponent<NetworkObject>();
+            if (netObj == null)
+            {
+                Destroy(player);
+                yield break;
+            }
+
+            netObj.SpawnAsPlayerObject(clientId, true);
+            usedSpawnIndexes.Add(System.Array.IndexOf(spawnPoints, spawnPoint));
+
         }
 
-        Transform spawnPoint = GetAvailableSpawnPoint();
-        if (spawnPoint == null)
-        {
-            yield break;
-        }
-
-        GameObject player = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
-        var netObj = player.GetComponent<NetworkObject>();
-
-        if (netObj == null)
-        {
-            Destroy(player);
-            yield break;
-        }
-
-        netObj.SpawnAsPlayerObject(clientId, true);
-        usedSpawnIndexes.Add(System.Array.IndexOf(spawnPoints, spawnPoint));
-
-    }
 
     private void HandleClientDisconnected(ulong clientId)
     {

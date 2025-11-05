@@ -8,6 +8,11 @@ public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+    [Header("Character Data")]
+    [SerializeField] private CharacterData[] allCharacters;
+    [SerializeField] private Transform playerSpawnPoint;
+    [SerializeField] private CharacterData defaultCharacter; 
+
     [Header("AI Settings")]
     [SerializeField] private int totalAIQuota = 100;
     [SerializeField] private int currentAIQuota;
@@ -26,9 +31,6 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject speedPrefab;
     [SerializeField] private GameObject weaponGrowPrefab;
     [SerializeField] private Transform[] spawnPoints;
-
-    [Header("UI / Preview")]
-    [SerializeField] private GameObject playerPreview;
 
     [Header("Cache")]
     [SerializeField] private List<NetworkObject> activeAINetworkObjects = new List<NetworkObject>();
@@ -52,6 +54,9 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<int> EnemyCount = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    public CharacterData[] AllCharacters => allCharacters;
+    public CharacterData DefaultCharacter => defaultCharacter;
+
     private int totalSpawned = 0;
     //private int totalKilled = 0;
     private bool isGameStarted = false;
@@ -67,7 +72,6 @@ public class GameManager : NetworkBehaviour
         Instance = this;
         isGameStarted = false;
         currentAIQuota = totalAIQuota;
-        shopCanvas.LoadSelectedWeapon();
         DisableGamePlaySystem();
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
@@ -90,9 +94,6 @@ public class GameManager : NetworkBehaviour
         base.OnNetworkSpawn();
         if (IsClient)
         {
-            //ActiveAICount.OnValueChanged += OnAICountChanged;
-            //ActivePlayerCount.OnValueChanged += OnPlayerCountChanged;
-            //RemainingAIQuota.OnValueChanged += OnQuotaChanged;
             EnemyCount.OnValueChanged += OnEnemyCountChanged;
             UIManager.Instance?.UpdateEnemyCount(EnemyCount.Value);
 
@@ -312,13 +313,15 @@ public class GameManager : NetworkBehaviour
         {
             ResetGame();
         }
-        HidePlayerPreview();
+        
+        shopCanvas.gameObject.SetActive(false);
         UIManager.Instance.CloseAllUI();
     }
 
     public void GameOver()
     {
         CoinManager.Instance.CommitSessionCoins();
+        shopCanvas.gameObject.SetActive(false);
         gamePlayCanvas.OnGameOver();
     }
 
@@ -536,16 +539,8 @@ public class GameManager : NetworkBehaviour
         obj.GetComponent<Powerup>().SetType(type);
     }
 
-    public void HidePlayerPreview()
-    {
-        if (playerPreview != null)
-            playerPreview.SetActive(false);
-    }
-
     public void ShowPlayerPreview()
     {
-        if (playerPreview != null)
-            playerPreview.SetActive(true);
         zoomController.SetUpBaseZoom();
     }
 
@@ -640,15 +635,7 @@ public class GameManager : NetworkBehaviour
     public void HandleCharacterDeath(CharacterBase character)
     {
         if (character == null) return;
-
-        //var netObj = character.GetComponent<NetworkObject>();
-        //if (netObj == null) return;
-
-        //if (character.ownerType == CharacterBase.OwnerType.AI)
-        //    UnregisterAI(netObj);
-        //else
-        //    UnregisterPlayerInGame(netObj);
-
+        
         StartCoroutine(DelayedWeaponCleanup(character, 0.2f));
     }
 
@@ -672,40 +659,5 @@ public class GameManager : NetworkBehaviour
     {
         CoinManager.Instance.CommitSessionCoins();
     }
-    
-    /*[ServerRpc(RequireOwnership = false)]
-    public void RequestSpectatedCoinUpdateServerRpc(ulong targetId)
-    {
-        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(targetId, out var client))
-        {
-            CharacterBase targetCharacter = client.PlayerObject.GetComponent<CharacterBase>();
-            if (targetCharacter != null)
-            {
-                int coinValue = targetCharacter.SessionCoin.Value;
-                UpdateSpectatorCoinClientRpc(targetId, coinValue);
-            }
-        }
-    }*/
-
-    /*
-    [ClientRpc]
-    public void UpdateSpectatorCoinClientRpc(ulong targetId, int coinValue)
-    {
-        if (GameManager.Instance.CurrentSpectatedId == targetId)
-        {
-            CoinManager.Instance.UpdateSpectatorCoin(coinValue);
-        }
-    }*/
-
-    /*[ClientRpc]
-    public void UpdateSpectatorCoinForAllClientRpc(ulong playerId, int coinValue)
-    {
-        if (IsServer) return;
-
-        if (GameManager.Instance.CurrentSpectatedId == playerId)
-        {
-            CoinManager.Instance.UpdateSpectatorCoin(coinValue);
-        }
-    }*/
 
 }

@@ -1713,11 +1713,12 @@ public static class JsonHelper
         return wrapper.array;
     }
 
+#pragma warning disable 0649
     [Serializable]
     private class Wrapper<T>
     {
         public T[] array;
     }
-    
+#pragma warning restore 0649
     
 }

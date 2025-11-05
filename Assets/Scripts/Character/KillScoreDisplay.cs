@@ -117,27 +117,14 @@ public class KillScoreDisplay : MonoBehaviour
             playerName.text = name;
         }
     }
-
-    public void SetTextColor(Color newColor)
+    
+    public void SetVisible(bool visible)
     {
-        if (textColor == newColor) return;
+        if (textMesh != null)
+            textMesh.gameObject.SetActive(visible);
 
-        textColor = newColor;
-        UpdateScoreText();
+        if (playerName != null)
+            playerName.gameObject.SetActive(visible);
     }
 
-    public void SetFontSize(int newSize)
-    {
-        if (fontSize == newSize) return;
-
-        fontSize = newSize;
-        UpdateScoreText();
-    }
-
-    public void SetFaceCamera(bool shouldFaceCamera)
-    {
-        faceCamera = shouldFaceCamera;
-        if (faceCamera)
-            UpdateRotation();
-    }
 }

@@ -52,11 +52,22 @@ public class WeaponBase : NetworkBehaviour
 
     public void Init(CharacterBase character, Transform hand)
     {
+        // 🧹 Step 1: Remove any old weapon
+        foreach (Transform child in hand)
+        {
+            WeaponBase existing = child.GetComponent<WeaponBase>();
+            if (existing != null && existing != this)
+            {
+                Destroy(existing.gameObject);
+            }
+        }
+
+        // 🪄 Step 2: Continue normal setup
         owner = character;
         spawnPoint = hand;
-
-        transform.position = hand.position;
-        transform.rotation = hand.rotation * Quaternion.Euler(handRotationOffset);
+        transform.SetParent(hand);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.Euler(handRotationOffset);
 
         TrySpawnNetworkObject();
 
@@ -66,6 +77,7 @@ public class WeaponBase : NetworkBehaviour
 
         StartRotation();
     }
+
 
     private void TrySpawnNetworkObject()
     {
@@ -256,7 +268,7 @@ public class WeaponBase : NetworkBehaviour
         gameObject.SetActive(false);
     }
 
-    private void OnDestroy()
+    protected new void OnDestroy()
     {
         StopRotation();
     }
