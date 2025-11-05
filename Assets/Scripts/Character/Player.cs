@@ -44,7 +44,7 @@ public class Player : CharacterBase
             lastMoveInputTime = Time.time;
         }
         
-        NetSpeed.Value = input.magnitude * moveSpeed;
+        NetSpeed.Value = input.magnitude * MoveSpeed;
         
         if (NetIsMoving.Value != isMovingInput)
             NetIsMoving.Value = isMovingInput;
@@ -72,7 +72,7 @@ public class Player : CharacterBase
         if (IsOwner)
         {
             bool effectiveMoving = isMovingInput || (Time.time - lastMoveInputTime < minIdleDelay);
-            targetSpeed = effectiveMoving ? moveSpeed : 0f;
+            targetSpeed = effectiveMoving ? MoveSpeed : 0f;
         }
         else
         {
@@ -154,7 +154,7 @@ public class Player : CharacterBase
             Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
 
-            transform.position += direction.normalized * moveSpeed * Time.deltaTime;
+            transform.position += direction.normalized * MoveSpeed * Time.deltaTime;
         }
     }
 

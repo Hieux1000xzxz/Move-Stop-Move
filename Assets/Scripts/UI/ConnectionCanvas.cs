@@ -108,6 +108,7 @@ public class ConnectionCanvas : BaseCanvas
     private bool canToggleReady = true;
     private Coroutine clientHeartbeatRoutine;
     private bool isIntentionalDisconnect = false;
+    private Coroutine joinLobbyCoroutine;
 
     private async void Start()
     {
@@ -391,7 +392,7 @@ public class ConnectionCanvas : BaseCanvas
 
         if (serverAvailable && isUnityServicesInitialized)
         {
-            UIManager.Instance?.CloseNotification();
+            UIManager.Instance.CloseNotification();
             modePanel.SetActive(false);
             mainPanel.SetActive(true);
             EnableMainPanelButton();
@@ -599,7 +600,7 @@ public class ConnectionCanvas : BaseCanvas
             
             DisableAllJoinButtons();
             
-            UIManager.Instance?.CloseNotification();
+            UIManager.Instance.CloseNotification();
         }
     }
 
@@ -647,12 +648,11 @@ public class ConnectionCanvas : BaseCanvas
         DisableMainPanelButton();
         DisableAllJoinButtons();
 
-        UIManager.Instance?.CloseNotification();
+        UIManager.Instance.CloseNotification();
         
         isJoiningRoom = true;
         
-        /*DisableMainPanelButton();*/
-        StartCoroutine(JoinLobbyRoutine(lobbyId, localUserName));
+        joinLobbyCoroutine = StartCoroutine(JoinLobbyRoutine(lobbyId, localUserName));
     }
 
     public void JoinLobbyDirect(RelayLobbyInfo lobby)
@@ -665,7 +665,7 @@ public class ConnectionCanvas : BaseCanvas
         DisableAllJoinButtons();
             
         ResetNetworkManager();
-        StartCoroutine(JoinLobbyRoutine(lobby.lobbyId, localUserName));
+        joinLobbyCoroutine = StartCoroutine(JoinLobbyRoutine(lobby.lobbyId, localUserName));
     }
 
     private void ShowEditProfilePanel()
@@ -1055,7 +1055,7 @@ public class ConnectionCanvas : BaseCanvas
             {
                 mainPanel.SetActive(false);
                 yield return new WaitForSeconds(2f);
-                UIManager.Instance?.CloseNotification();
+                UIManager.Instance.CloseNotification();
             }
             else
             {
@@ -1108,7 +1108,7 @@ public class ConnectionCanvas : BaseCanvas
             transport.SetRelayServerData(relayServerData);
             currentRelayJoinCode = joinCode;
 
-            UIManager.Instance?.CloseNotification();
+            UIManager.Instance.CloseNotification();
             return joinCode;
         }
         catch (RelayServiceException e)
@@ -1198,8 +1198,8 @@ public class ConnectionCanvas : BaseCanvas
             }
             else
             {
-                UIManager.Instance?.SendNotification("Host has left the room. The game has ended.", 1);
-                UIManager.Instance?.OpenNotification();
+                UIManager.Instance.SendNotification("Host has left the room. The game has ended.", 1);
+                UIManager.Instance.OpenNotification();
                 HandleClientDisconnect();
             }
             return;
@@ -1255,9 +1255,9 @@ public class ConnectionCanvas : BaseCanvas
         lobbyPanel.SetActive(false);
         if (joinByIdPanel != null) joinByIdPanel.SetActive(false);
         GameManager.Instance.ShowPlayerPreview();
-        UIManager.Instance?.CloseNotification();
-        UIManager.Instance?.CloseNetwork();
-        UIManager.Instance?.OpenMainMenu();
+        UIManager.Instance.CloseNotification();
+        UIManager.Instance.CloseNetwork();
+        UIManager.Instance.OpenMainMenu();
     }
 
     private void ClearContainer(Transform container)
@@ -1475,8 +1475,8 @@ public class ConnectionCanvas : BaseCanvas
 
     private void SendNotification(string message, int type)
     {
-        UIManager.Instance?.SendNotification(message, type);
-        UIManager.Instance?.OpenNotification();
+        UIManager.Instance.SendNotification(message, type);
+        UIManager.Instance.OpenNotification();
     }
 
     private void ResetNetworkManager()
@@ -1639,8 +1639,12 @@ public class ConnectionCanvas : BaseCanvas
         {
             Debug.LogWarning("Join process cancelled because player opened Join by ID panel.");
             isJoiningRoom = false;
-            StopCoroutine("JoinLobbyRoutine");
-            UIManager.Instance?.CloseNotification();
+            if (joinLobbyCoroutine != null)
+            {
+                StopCoroutine(joinLobbyCoroutine);
+                joinLobbyCoroutine = null;
+            }
+            UIManager.Instance.CloseNotification();
             EnableAllJoinButtons();
             EnableMainPanelButton();
         }
@@ -1716,7 +1720,9 @@ public static class JsonHelper
     [Serializable]
     private class Wrapper<T>
     {
+#pragma warning disable 0649
         public T[] array;
+#pragma warning restore 0649
     }
     
     

@@ -29,19 +29,19 @@ public class NotificationCanvas : BaseCanvas
 
         closeButton.onClick.AddListener(() =>
         {
-            onDecision?.Invoke(false);
+            onDecision.Invoke(false);
             CloseNotificationCanvas();
         });
 
         cancelButton.onClick.AddListener(() =>
         {
-            onDecision?.Invoke(false);
+            onDecision.Invoke(false);
             CloseNotificationCanvas();
         });
 
         confirmButton.onClick.AddListener(() =>
         {
-            onDecision?.Invoke(true);
+            onDecision.Invoke(true);
             CloseNotificationCanvas();
         });
     }
@@ -62,31 +62,31 @@ public class NotificationCanvas : BaseCanvas
             messageText.text = message;
     }
 
-    public void HideCloseButton() => closeButton?.gameObject.SetActive(false);
-    public void ShowCloseButton() => closeButton?.gameObject.SetActive(true);
+    public void HideCloseButton() => closeButton.gameObject.SetActive(false);
+    public void ShowCloseButton() => closeButton.gameObject.SetActive(true);
 
     public void ShowConfirmButton()
     {
-        confirmButton?.gameObject.SetActive(true);
-        cancelButton?.gameObject.SetActive(true);
+        confirmButton.gameObject.SetActive(true);
+        cancelButton.gameObject.SetActive(true);
     }
 
     public void HideConfirmButton()
     {
-        confirmButton?.gameObject.SetActive(false);
-        cancelButton?.gameObject.SetActive(false);
+        confirmButton.gameObject.SetActive(false);
+        cancelButton.gameObject.SetActive(false);
     }
 
     public void ShowMainPanel()
     {
-        mainPanel.gameObject.SetActive(true);
+        mainPanel.SetActive(true);
         toastText.gameObject.SetActive(false);
         panel.SetActive(true);
     }
 
     public void HideMainPanel()
     {
-        mainPanel.gameObject.SetActive(false);
+        mainPanel.SetActive(false);
     }
 
     public void SetCallback(Action<bool> decisionCallback)
@@ -101,7 +101,7 @@ public class NotificationCanvas : BaseCanvas
         if (toastText == null) return;
 
         panel.SetActive(false);
-        currentToastTween?.Kill();
+        currentToastTween.Kill();
 
         toastText.rectTransform.anchorMin = new Vector2(0.5f, 0f);   
         toastText.rectTransform.anchorMax = new Vector2(0.5f, 0f);

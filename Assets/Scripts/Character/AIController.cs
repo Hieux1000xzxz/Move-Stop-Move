@@ -29,7 +29,7 @@ public class AIController : CharacterBase
     protected override void Start()
     {
         base.Start();
-        agent.autoRepath = true;
+        Agent.autoRepath = true;
 
         StartCoroutine(DelayChangeWeapon());
     }
@@ -72,7 +72,7 @@ public class AIController : CharacterBase
         if (currentState == CharacterState.Attack)
         {
             isAttacking = false;
-            agent.isStopped = false;
+            Agent.isStopped = false;
             ChangeState(CharacterState.Idle);
         }
 
@@ -111,9 +111,9 @@ public class AIController : CharacterBase
 
         if (detectedTarget == null || !detectedTarget.gameObject.activeInHierarchy)
         {
-            if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+            if (Agent != null && Agent.isActiveAndEnabled && Agent.isOnNavMesh)
             {
-                if (!isObserving && (!agent.pathPending && agent.remainingDistance <= 0.5f))
+                if (!isObserving && (!Agent.pathPending && Agent.remainingDistance <= 0.5f))
                     DecideWhenIdle();
             }
             return;
@@ -164,7 +164,7 @@ public class AIController : CharacterBase
 
     private void DecideNearTarget()
     {
-        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+        if (Agent == null || !Agent.isActiveAndEnabled || !Agent.isOnNavMesh)
             return;
         float approachChance = aggressionLevel * (1f - fearLevel);
 
@@ -208,9 +208,9 @@ public class AIController : CharacterBase
 
     private void ObserveTarget()
     {
-        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+        if (Agent == null || !Agent.isActiveAndEnabled || !Agent.isOnNavMesh)
             return;
-        agent.isStopped = true;
+        Agent.isStopped = true;
         ChangeState(CharacterState.Idle);
         if (detectedTarget != null)
         {
@@ -229,8 +229,8 @@ public class AIController : CharacterBase
 
     private void MoveTo(Vector3 position)
     {
-        agent.isStopped = false;
-        agent.SetDestination(position);
+        Agent.isStopped = false;
+        Agent.SetDestination(position);
         ChangeState(CharacterState.Move);
     }
 
@@ -243,7 +243,7 @@ public class AIController : CharacterBase
     private IEnumerator ObserveRoutine()
     {
         isObserving = true;
-        agent.isStopped = true;
+        Agent.isStopped = true;
         ChangeState(CharacterState.Idle);
 
         yield return new WaitForSeconds(Random.Range(observeMinTime, observeMaxTime));
@@ -254,10 +254,10 @@ public class AIController : CharacterBase
     
     private void AvoidObstacle()
     {
-        if (rayOrigin == null || agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+        if (rayOrigin == null || Agent == null || !Agent.isActiveAndEnabled || !Agent.isOnNavMesh)
             return;
 
-        Vector3 dir = (agent.velocity.sqrMagnitude > 0.05f) ? agent.velocity.normalized : transform.forward;
+        Vector3 dir = (Agent.velocity.sqrMagnitude > 0.05f) ? Agent.velocity.normalized : transform.forward;
 
         if (Physics.SphereCast(rayOrigin.position, 0.5f, dir, out RaycastHit hit, rayDistance, obstacleLayer))
         {
@@ -268,9 +268,9 @@ public class AIController : CharacterBase
 
             if (NavMesh.SamplePosition(newTarget, out NavMeshHit navHit, 2f, NavMesh.AllAreas))
             {
-                agent.isStopped = false;
-                agent.ResetPath();
-                agent.SetDestination(navHit.position);
+                Agent.isStopped = false;
+                Agent.ResetPath();
+                Agent.SetDestination(navHit.position);
                 ChangeState(CharacterState.Move);
             }
         }
@@ -280,13 +280,13 @@ public class AIController : CharacterBase
 
     private bool TrySetDestination(Vector3 targetPos, float sampleDistance)
     {
-        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+        if (Agent == null || !Agent.isActiveAndEnabled || !Agent.isOnNavMesh)
             return false;
 
         if (NavMesh.SamplePosition(targetPos, out NavMeshHit hit, sampleDistance, NavMesh.AllAreas))
         {
-            agent.isStopped = false;
-            agent.SetDestination(hit.position);
+            Agent.isStopped = false;
+            Agent.SetDestination(hit.position);
             ChangeState(CharacterState.Move);
             return true;
         }
@@ -298,7 +298,7 @@ public class AIController : CharacterBase
         base.EndAttack(cancelByMove);
         lastInterestPoint = transform.position;
         if (Random.value < 0.4f) detectedTarget = null;
-        agent.isStopped = false;
+        Agent.isStopped = false;
     }
 
     public override Vector3 GetMovementInput() => Vector3.zero;
@@ -318,8 +318,9 @@ public class AIController : CharacterBase
        GameManager.Instance.RegisterKillScore(this.networkObject, scoreDisplay);
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
         GameManager.Instance.UnregisterAI(this.networkObject);
     }
 }

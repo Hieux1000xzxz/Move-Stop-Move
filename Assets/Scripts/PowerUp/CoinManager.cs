@@ -12,6 +12,7 @@ public class CoinManager : Singleton<CoinManager>
     private int sessionCoins = 0; 
     private int shopCoins = 0;
     private int lastSessionCoins = 0; 
+    private int spectatorCoins = 0;
     
     public int GetShopCoins() => shopCoins;
 
@@ -92,13 +93,9 @@ public class CoinManager : Singleton<CoinManager>
         endMatchCoinText.gameObject.SetActive(true);
         endMatchCoinText.text = $"+{earned} Coins earned!";
     }
-    
-    private int spectatorCoins = 0;
-    private bool isSpectating = false;
 
     public void UpdateSpectatorCoin(int amount)
     {
-        isSpectating = true;
         spectatorCoins = amount;
 
         if (coinText != null)

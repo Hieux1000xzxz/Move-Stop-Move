@@ -103,7 +103,7 @@ public class ShopCanvas : BaseCanvas
         foreach (WeaponData weapon in weapons)
         {
             GameObject weaponItemObj = Instantiate(weaponItemPrefab, weaponsGrid);
-            WeaponItem weaponItem = weaponItemObj.GetComponent<WeaponItem>();
+            if (weaponItemObj.TryGetComponent(out WeaponItem weaponItem))
 
             if (weaponItem != null)
             {

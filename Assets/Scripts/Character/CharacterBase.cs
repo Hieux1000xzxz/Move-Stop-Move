@@ -14,10 +14,10 @@ public abstract class CharacterBase : NetworkBehaviour
     public enum OwnerType { Player, AI }
 
     [Header("Character Settings")]
-    [SerializeField] public float moveSpeed = 5f;
-    [SerializeField] public NavMeshAgent agent;
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private NavMeshAgent agent;
     [SerializeField] protected Animator animator;
-    [SerializeField] public Health health;
+    [SerializeField] private Health health;
     [SerializeField] protected float attackRange = 2f;
     [SerializeField] protected float attackDuration = 0.5f;
     [SerializeField] protected LayerMask targetLayer;
@@ -56,9 +56,7 @@ public abstract class CharacterBase : NetworkBehaviour
     public bool isDead = false;
     private Vector3 lastPosition;
     private Coroutine attackRoutine;
-    //private bool hasSpawnedBefore = false;
 
-    // Powerup state
     private Coroutine speedBoostRoutine;
     private Coroutine weaponGrowRoutine;
     private bool isSpeedBoostActive = false;
@@ -69,7 +67,11 @@ public abstract class CharacterBase : NetworkBehaviour
 
     public float currentAttackRange => attackRange;
     public WeaponBase currentWeaponPublic => currentWeapon;
-
+    public float MoveSpeed => moveSpeed;
+    public NavMeshAgent Agent => agent;
+    public bool IsHealthDead => health != null && health.IsDead;
+    public Health HealthComponent => health;
+    
     public NetworkVariable<int> Score = new NetworkVariable<int>(
     0, NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server);
@@ -1212,7 +1214,7 @@ public abstract class CharacterBase : NetworkBehaviour
             isWeaponGrowActive = true;
 
             weapon.BuffScaleMultiplier = scaleMultiplier;
-            weapon.speed = weapon.OriginalSpeed * speedMultiplier;
+            weapon.Speed = weapon.OriginalSpeed * speedMultiplier;
             
             weapon.ApplyScale();
         }
@@ -1229,7 +1231,7 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             WeaponBase weapon = currentWeaponPublic;
             weapon.BuffScaleMultiplier = 1f;
-            weapon.speed = weapon.OriginalSpeed;
+            weapon.Speed = weapon.OriginalSpeed;
             
             weapon.ApplyScale();
         }

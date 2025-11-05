@@ -115,7 +115,7 @@ public class GamePlayCanvas : BaseCanvas
     {
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost && !connectionCanvas.isSinglePlayerMode)
         {
-            var notify = UIManager.Instance?.BindNotification();
+            var notify = UIManager.Instance.BindNotification();
             if (notify != null)
             {
                 notify.SetText("If you leave, the game ends for all players. Continue?");
@@ -127,9 +127,6 @@ public class GamePlayCanvas : BaseCanvas
                     if (isConfirm)
                     {
                         OnExitGame(false);
-                    }
-                    else
-                    {
                     }
                 });
             }
@@ -147,7 +144,7 @@ public class GamePlayCanvas : BaseCanvas
             NetworkManager.Singleton != null &&
             !NetworkManager.Singleton.IsHost)
         {
-            UIManager.Instance?.SendNotification("Host has left the room. Returning to the menu scene...", 2);
+            UIManager.Instance.SendNotification("Host has left the room. Returning to the menu scene...", 2);
         }
 
         if (NetworkManager.Singleton != null)
@@ -171,7 +168,7 @@ public class GamePlayCanvas : BaseCanvas
             connectionCanvas.HandleExitLogic();
         }
 
-        UIManager.Instance?.OpenLoadingCanvas();
+        UIManager.Instance.OpenLoadingCanvas();
         Invoke(nameof(OnBackToMenu), 2.4f);
     }
 

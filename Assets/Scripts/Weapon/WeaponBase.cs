@@ -7,7 +7,7 @@ using System.Collections.Generic;
 public class WeaponBase : NetworkBehaviour
 {
     [Header("Weapon Settings")]
-    [SerializeField] public float speed = 12f;
+    [SerializeField] private float speed = 12f;
     [SerializeField] private int damage = 1;
     [SerializeField] private Vector3 handRotationOffset = Vector3.zero;
 
@@ -35,16 +35,20 @@ public class WeaponBase : NetworkBehaviour
 
     public float OriginalSpeed => originalSpeed;
     public bool IsFlying => isFlying;
-    public Vector3 BaseScale => baseScale;
     
     public NetworkObject NetworkObj => netObj;
     public float BuffScaleMultiplier { get; set; } = 1f;
-    
+
+    public float Speed
+    {
+        get => speed;
+        set => speed = value;
+    }
 
     #region INIT
     private void Awake()
     {
-        ObjectPool.Instance?.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
+        ObjectPool.Instance.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
         
         baseScale = transform.localScale;
         originalSpeed = speed;
@@ -55,8 +59,10 @@ public class WeaponBase : NetworkBehaviour
         owner = character;
         spawnPoint = hand;
 
-        transform.position = hand.position;
-        transform.rotation = hand.rotation * Quaternion.Euler(handRotationOffset);
+        transform.SetPositionAndRotation(
+            hand.position,
+            hand.rotation * Quaternion.Euler(handRotationOffset)
+        );
 
         TrySpawnNetworkObject();
 
@@ -81,8 +87,10 @@ public class WeaponBase : NetworkBehaviour
     {
         if (isFollowing && !isFlying && spawnPoint != null)
         {
-            transform.position = spawnPoint.position;
-            transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
+            transform.SetPositionAndRotation(
+                spawnPoint.position,
+                spawnPoint.rotation * Quaternion.Euler(handRotationOffset)
+            );
         }
 
         if (baseScale == Vector3.zero)
@@ -131,12 +139,12 @@ public class WeaponBase : NetworkBehaviour
             spawnPoint = owner.weaponSpawnPoint;
 
         if (spawnPoint)
-        {
-            transform.position = spawnPoint.position;
-            transform.rotation = spawnPoint.rotation * Quaternion.Euler(handRotationOffset);
-        }
+            transform.SetPositionAndRotation(
+                spawnPoint.position,
+                spawnPoint.rotation * Quaternion.Euler(handRotationOffset)
+            );
 
-        owner?.OnWeaponReturned();
+        owner.OnWeaponReturned();
         StartRotation();
     }
     #endregion
@@ -157,7 +165,7 @@ public class WeaponBase : NetworkBehaviour
     protected virtual void OnTriggerEnter(Collider other)
     {
         if (!IsServer || !isFlying) return;
-        if (other.gameObject == owner?.gameObject) return;
+        if (other.gameObject == owner.gameObject) return;
 
         if (col)
             StartCoroutine(ReenableColliderNextFrame());
@@ -167,18 +175,15 @@ public class WeaponBase : NetworkBehaviour
             ReturnToHand();
             ReturnToHandClientRpc();
 
-            var safe = other.GetComponent<NavMeshSafeObstacle>();
-            if (safe != null)
-                safe.DisableAndHide();   
+            if (other.TryGetComponent<NavMeshSafeObstacle>(out var safe))
+                safe.DisableAndHide();
             else
-                other.gameObject.SetActive(false); 
+                other.gameObject.SetActive(false);
 
             return;
         }
-
-
-        CharacterBase victim = other.GetComponent<CharacterBase>();
-        if (victim != null && victim != owner)
+        
+        if (other.TryGetComponent<CharacterBase>(out var victim) && victim != owner)
         {
             ApplyDamageAndScore(victim);
             ReturnToHand();
@@ -198,8 +203,8 @@ public class WeaponBase : NetworkBehaviour
     {
         if (victim == null || victim == owner) return;
 
-        victim.health?.ApplyDamage(damage);
-        owner?.AddScore(1);
+        victim.HealthComponent.ApplyDamage(damage);
+        owner.AddScore(1);
 
         if (victim.characterCollider != null)
             victim.characterCollider.enabled = false;
@@ -256,14 +261,14 @@ public class WeaponBase : NetworkBehaviour
         gameObject.SetActive(false);
     }
 
-    private void OnDestroy()
+    protected new void OnDestroy()
     {
         StopRotation();
     }
 
     public void ApplyScale(float ownerScale = 1f)
     {
-        transform.localScale = baseScale * BuffScaleMultiplier * ownerScale;
+        transform.localScale = baseScale * (BuffScaleMultiplier * ownerScale);
     }
     
     public override void OnNetworkSpawn()

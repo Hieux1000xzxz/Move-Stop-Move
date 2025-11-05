@@ -127,8 +127,7 @@ public class ObjectPool : Singleton<ObjectPool>
     
     private void SetupEnemyTransform(GameObject enemy, Vector3 pos, Quaternion rot)
     {
-        enemy.transform.position = pos;
-        enemy.transform.rotation = rot;
+        enemy.transform.SetPositionAndRotation(pos, rot);
     }
 
     #endregion
@@ -143,14 +142,14 @@ public class ObjectPool : Singleton<ObjectPool>
 
     private GameObject SpawnWeaponInternal(WeaponType type, ObjectType objType, Transform parent, bool attachToParent)
     {
-        GameObject obj = GetInactiveWeapon(type, objType) ?? ExpandWeapon(type, objType);
+        GameObject obj = GetInactiveWeapon(type, objType);
+        if (obj == null)
+            obj = ExpandWeapon(type, objType);
+        
         if (obj == null) return null;
 
         if (parent != null)
-        {
-            obj.transform.position = parent.position;
-            obj.transform.rotation = parent.rotation;
-        }
+            obj.transform.SetPositionAndRotation(parent.position, parent.rotation);
 
         obj.SetActive(true);
         return obj;
@@ -218,12 +217,11 @@ public class ObjectPool : Singleton<ObjectPool>
 
         if (obj == null) return null;
 
-        obj.transform.position = pos;
-        obj.transform.rotation = rot;
+        obj.transform.SetPositionAndRotation(pos, rot); 
         obj.SetActive(true);
 
-        var netObj = obj.GetComponent<NetworkObject>();
-        if (netObj != null && !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
+        if (netCache.TryGetValue(obj, out var netObj) &&
+            !netObj.IsSpawned && NetworkManager.Singleton.IsServer)
         {
             netObj.Spawn(false);
         }
@@ -235,8 +233,8 @@ public class ObjectPool : Singleton<ObjectPool>
     {
         if (obj == null) return;
 
-        var netObj = obj.GetComponent<NetworkObject>();
-        if (netObj != null && netObj.IsSpawned && NetworkManager.Singleton.IsServer)
+        if (netCache.TryGetValue(obj, out var netObj) &&
+            netObj.IsSpawned && NetworkManager.Singleton.IsServer)
         {
             netObj.Despawn(false);
         }
@@ -321,8 +319,7 @@ public class ObjectPool : Singleton<ObjectPool>
 
         if (obj == null) return null;
 
-        obj.transform.position = pos;
-        obj.transform.rotation = rot;
+        obj.transform.SetLocalPositionAndRotation(pos, rot);
         obj.SetActive(true);
 
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)

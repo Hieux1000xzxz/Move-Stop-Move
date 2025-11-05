@@ -6,7 +6,6 @@ public class Coin : NetworkBehaviour
     [SerializeField] private int value = 100;
     [SerializeField] private Collider col;
     [SerializeField] private MeshRenderer meshRenderer;
-    [SerializeField] private float autoPickupRadius = 0.8f;
     [SerializeField] private float despawnDelay = 3f;
 
     private bool isCollected;
@@ -15,7 +14,7 @@ public class Coin : NetworkBehaviour
 
     private void Awake()
     {
-        ObjectPool.Instance?.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
+        ObjectPool.Instance.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
     }
 
     public void SetOwner(CharacterBase creator)
@@ -37,16 +36,18 @@ public class Coin : NetworkBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (isCollected) return;
-        if (!other.TryGetComponent(out CharacterBase character)) return;
-        if (character == owner) return;
-        if (character.isDead || character.health == null || character.health.IsDead) return;
-        if (character.ownerType != CharacterBase.OwnerType.Player) return;
+        if (!other.TryGetComponent(out CharacterBase character)
+            || character == owner
+            || isCollected
+            || character.isDead
+            || character.HealthComponent == null
+            || character.IsHealthDead
+            || character.ownerType != CharacterBase.OwnerType.Player)
+            return;
 
         if (character.IsOwner)
         {
             HideLocal();
-
             CollectServerRpc(character.NetworkObject);
         }
     }
