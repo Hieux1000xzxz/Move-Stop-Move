@@ -240,6 +240,7 @@ public class WeaponBase : NetworkBehaviour
             rotateTween = null;
         }
     }
+    
     #endregion
 
     #region NETWORK

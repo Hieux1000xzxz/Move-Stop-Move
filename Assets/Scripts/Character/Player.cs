@@ -86,34 +86,7 @@ public class Player : CharacterBase
         bool attackingNow = IsOwner ? isAttacking : NetIsAttacking.Value;
         animator.SetBool("IsAttacking", attackingNow);
     }
-
     
-    protected override void OnTargetLost(Transform lostTarget)
-    {
-        base.OnTargetLost(lostTarget);
-        if (isMovingInput && currentState == CharacterState.Attack)
-        {
-            ChangeState(CharacterState.Move);
-        }
-    }
-
-    protected override void OnNewTargetFound(Transform newTarget)
-    {
-        base.OnNewTargetFound(newTarget);
-
-        if (!IsServer) return;
-
-        if (!isMovingInput)
-        {
-            float distance = Vector3.Distance(transform.position, newTarget.position);
-            if (distance <= attackRange)
-            {
-                attackTarget = newTarget;
-                ChangeState(CharacterState.Attack);
-            }
-        }
-    }
-
     public override Vector3 GetMovementInput()
     {
         return new Vector3(joystick.Horizontal, 0f, joystick.Vertical);
@@ -122,7 +95,6 @@ public class Player : CharacterBase
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        Debug.Log($"{name} spawned for ClientId={OwnerClientId}, IsOwner={IsOwner}");
         if (IsOwner)
         {
             Local = this;

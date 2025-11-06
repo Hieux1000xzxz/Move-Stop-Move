@@ -65,45 +65,6 @@ public class AIController : CharacterBase
         }
     }
 
-    protected override void OnTargetLost(Transform lostTarget)
-    {
-        base.OnTargetLost(lostTarget);
-
-        if (currentState == CharacterState.Attack)
-        {
-            isAttacking = false;
-            Agent.isStopped = false;
-            ChangeState(CharacterState.Idle);
-        }
-
-        lastInterestPoint = transform.position;
-        Invoke(nameof(SetRandomPatrolPoint), 0.5f);
-    }
-
-    protected override void OnNewTargetFound(Transform newTarget)
-    {
-        base.OnNewTargetFound(newTarget);
-        targetFoundTime = Time.time;
-    }
-
-    protected override void OnTargetSwitched(Transform oldTarget, Transform newTarget)
-    {
-        base.OnTargetSwitched(oldTarget, newTarget);
-        targetFoundTime = Time.time;
-
-        if (currentState == CharacterState.Attack)
-        {
-            float distanceToNew = Vector3.Distance(transform.position, newTarget.position);
-            if (distanceToNew <= attackRange && Random.value < aggressionLevel)
-            {
-                attackTarget = newTarget;
-            }
-        }
-    }
-
-    protected override void CheckForAttack()
-    {
-    }
 
     private void MakeDecision()
     {
@@ -275,9 +236,7 @@ public class AIController : CharacterBase
             }
         }
     }
-
-
-
+    
     private bool TrySetDestination(Vector3 targetPos, float sampleDistance)
     {
         if (Agent == null || !Agent.isActiveAndEnabled || !Agent.isOnNavMesh)
@@ -293,25 +252,7 @@ public class AIController : CharacterBase
         return false;
     }
 
-    protected override void EndAttack(bool cancelByMove = false)
-    {
-        base.EndAttack(cancelByMove);
-        lastInterestPoint = transform.position;
-        if (Random.value < 0.4f) detectedTarget = null;
-        Agent.isStopped = false;
-    }
-
     public override Vector3 GetMovementInput() => Vector3.zero;
-
-    protected override void OnDrawGizmosSelected()
-    {
-        base.OnDrawGizmosSelected();
-        if (lastInterestPoint != Vector3.zero)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(lastInterestPoint, 1f);
-        }
-    }
 
     private void OnEnable()
     {
