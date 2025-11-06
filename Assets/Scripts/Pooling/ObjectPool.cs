@@ -158,8 +158,8 @@ public class ObjectPool : Singleton<ObjectPool>
     {
         GameObject go = owner.ownerType switch
         {
-            CharacterBase.OwnerType.Player => SpawnPlayerWeaponByType(type, owner.weaponSpawnPoint, true),
-            CharacterBase.OwnerType.AI => SpawnAIWeaponByType(type, owner.weaponSpawnPoint, true),
+            CharacterBase.OwnerType.Player => SpawnPlayerWeaponByType(type, owner.WeaponSpawnPoint, true),
+            CharacterBase.OwnerType.AI => SpawnAIWeaponByType(type, owner.WeaponSpawnPoint, true),
             _ => null
         };
 

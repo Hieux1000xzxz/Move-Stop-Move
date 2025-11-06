@@ -38,7 +38,7 @@ public class AIController : CharacterBase
         yield return new WaitUntil(() => IsSpawned && NetworkObject.IsSpawned);
 
         yield return null;
-        ChangeWeapon(weaponType);
+        ChangeWeapon(WeaponType);
     }
     protected override void Update()
     {

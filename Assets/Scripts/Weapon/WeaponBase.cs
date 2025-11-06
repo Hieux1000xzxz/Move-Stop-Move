@@ -136,7 +136,7 @@ public class WeaponBase : NetworkBehaviour
         if (col) col.enabled = true;
 
         if (spawnPoint == null && owner != null)
-            spawnPoint = owner.weaponSpawnPoint;
+            spawnPoint = owner.WeaponSpawnPoint;
 
         if (spawnPoint)
             transform.SetPositionAndRotation(
@@ -170,27 +170,38 @@ public class WeaponBase : NetworkBehaviour
         if (col)
             StartCoroutine(ReenableColliderNextFrame());
 
-        if (other.CompareTag("Wall"))
-        {
-            ReturnToHand();
-            ReturnToHandClientRpc();
+        if (HandleWallCollision(other)) return;
 
-            if (other.TryGetComponent<NavMeshSafeObstacle>(out var safe))
-                safe.DisableAndHide();
-            else
-                other.gameObject.SetActive(false);
-
-            return;
-        }
-        
-        if (other.TryGetComponent<CharacterBase>(out var victim) && victim != owner)
-        {
-            ApplyDamageAndScore(victim);
-            ReturnToHand();
-            ReturnToHandClientRpc();
-        }
+        HandleCharacterCollision(other);
     }
+    private bool HandleWallCollision(Collider other)
+    {
+        if (!other.CompareTag("Wall")) 
+            return false;
 
+        ReturnToHand();
+        ReturnToHandClientRpc();
+
+        if (other.TryGetComponent<NavMeshSafeObstacle>(out var safe))
+            safe.DisableAndHide();
+        else
+            other.gameObject.SetActive(false);
+
+        return true;
+    }
+    
+    private void HandleCharacterCollision(Collider other)
+    {
+        if (!other.TryGetComponent<CharacterBase>(out var victim)) 
+            return;
+
+        if (victim == owner) 
+            return;
+
+        ApplyDamageAndScore(victim);
+        ReturnToHand();
+        ReturnToHandClientRpc();
+    }
     private IEnumerator ReenableColliderNextFrame()
     {
         col.enabled = false;
@@ -206,8 +217,8 @@ public class WeaponBase : NetworkBehaviour
         victim.HealthComponent.ApplyDamage(damage);
         owner.AddScore(1);
 
-        if (victim.characterCollider != null)
-            victim.characterCollider.enabled = false;
+        if (victim.CharacterCollider != null)
+            victim.CharacterCollider.enabled = false;
     }
     #endregion
 
@@ -252,7 +263,7 @@ public class WeaponBase : NetworkBehaviour
     public void SetOwner(CharacterBase newOwner)
     {
         owner = newOwner;
-        spawnPoint = newOwner ? newOwner.weaponSpawnPoint : null;
+        spawnPoint = newOwner ? newOwner.WeaponSpawnPoint : null;
     }
 
     public void ClearOwner()

@@ -148,7 +148,7 @@ public class AISpawner : NetworkBehaviour
             return;
 
         character.ResetState();
-        character.ChangeWeapon(character.weaponType);
+        character.ChangeWeapon(character.WeaponType);
     }
 
     private void PositionEnemy(GameObject enemy, Vector3 position, Quaternion rotation)
@@ -179,11 +179,4 @@ public class AISpawner : NetworkBehaviour
         }
     }
 
-    public int GetActiveAICount()
-    {
-        int count = 0;
-        foreach (var ai in spawnPointAIs.Values)
-            if (ai != null) count++;
-        return count;
-    }
 }

@@ -45,32 +45,34 @@ public class SpawnPlayerManager : NetworkBehaviour
     {
         yield return null;
 
-        if (NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId)
-            && NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject != null)
-        {
+        if (IsAlreadySpawned(clientId))
             yield break;
-        }
 
         Transform spawnPoint = GetAvailableSpawnPoint();
         if (spawnPoint == null)
-        {
             yield break;
-        }
-
+        
+        SpawnPlayerForClient(clientId, spawnPoint);
+    }
+    private bool IsAlreadySpawned(ulong clientId)
+    {
+        return NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId)
+               && NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject != null;
+    }
+    
+    private void SpawnPlayerForClient(ulong clientId, Transform spawnPoint)
+    {
         GameObject player = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
-        var netObj = player.GetComponent<NetworkObject>();
 
-        if (netObj == null)
+        if (!player.TryGetComponent(out NetworkObject netObj))
         {
             Destroy(player);
-            yield break;
+            return;
         }
 
         netObj.SpawnAsPlayerObject(clientId, true);
         usedSpawnIndexes.Add(System.Array.IndexOf(spawnPoints, spawnPoint));
-
     }
-
     private void HandleClientDisconnected(ulong clientId)
     {
         if (!IsServer) return;

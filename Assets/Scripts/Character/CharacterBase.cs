@@ -21,14 +21,14 @@ public abstract class CharacterBase : NetworkBehaviour
     [SerializeField] protected float attackRange = 2f;
     [SerializeField] protected float attackDuration = 0.5f;
     [SerializeField] protected LayerMask targetLayer;
-    [SerializeField] public Collider characterCollider;
+    [SerializeField] private Collider characterCollider;
     [SerializeField] protected NetworkObject networkObject;
 
     [Header("Weapon Settings")]
-    [SerializeField] public Transform weaponSpawnPoint;
+    [SerializeField] private Transform weaponSpawnPoint;
     [SerializeField] protected Vector3 weaponRotationOffset = Vector3.zero;
     [SerializeField] protected float attackDelay = 0.5f;
-    [SerializeField] public WeaponType weaponType;
+    [SerializeField] private WeaponType weaponType;
     protected WeaponBase currentWeapon;
 
     [Header("Score Settings")]
@@ -42,7 +42,7 @@ public abstract class CharacterBase : NetworkBehaviour
     [SerializeField] private WeaponType defaultWeapon;
 
     [Header("Character Owner")]
-    [SerializeField] public OwnerType ownerType = OwnerType.Player;
+    public OwnerType ownerType = OwnerType.Player;
 
     [Header("Attack Settings")] [SerializeField]
     private float detectAttackDelay = 0.5f;
@@ -71,7 +71,11 @@ public abstract class CharacterBase : NetworkBehaviour
     public NavMeshAgent Agent => agent;
     public bool IsHealthDead => health != null && health.IsDead;
     public Health HealthComponent => health;
-    
+    public Transform WeaponSpawnPoint => weaponSpawnPoint;
+    public WeaponType WeaponType => weaponType;
+
+    public Collider CharacterCollider => characterCollider;
+
     public NetworkVariable<int> Score = new NetworkVariable<int>(
     0, NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server);
@@ -106,10 +110,12 @@ public abstract class CharacterBase : NetworkBehaviour
 
 
     #region Unity Lifecycle
+    
+    
     protected virtual void Awake()
     {
-        ObjectPool.Instance?.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
-        ObjectPool.Instance?.RegisterCharacter(gameObject, this);
+        ObjectPool.Instance.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
+        ObjectPool.Instance.RegisterCharacter(gameObject, this);
     }
 
     protected virtual void Start()
@@ -564,7 +570,8 @@ public abstract class CharacterBase : NetworkBehaviour
         hasWeapon = false;
         nextAttackTime = Time.time + attackDelay;
 
-        animator?.SetBool("IsAttacking", true);
+        if(animator != null)
+            animator.SetBool("IsAttacking", true);
 
         if (attackRoutine != null)
             StopCoroutine(attackRoutine);
@@ -610,7 +617,8 @@ public abstract class CharacterBase : NetworkBehaviour
         isAttacking = false;
         hasWeapon = true;
 
-        animator?.SetBool("IsAttacking", false);
+        if(animator != null)
+            animator.SetBool("IsAttacking", false);
 
         if (IsServer && currentState == CharacterState.Attack && !isDead)
         {
@@ -644,7 +652,8 @@ public abstract class CharacterBase : NetworkBehaviour
             else
                 ChangeState(CharacterState.Idle);
 
-            animator?.SetBool("IsAttacking", false);
+            if(animator != null)
+                animator.SetBool("IsAttacking", false);
         }
     }
     
@@ -957,14 +966,6 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             currentState = newVal; // sync local state with server
         };
-        
-        /*SessionCoin.OnValueChanged += (oldVal, newVal) =>
-        {
-            if (IsServer)
-            {
-                GameManager.Instance.UpdateSpectatorCoinForAllClientRpc(OwnerClientId, newVal);
-            }
-        };*/
         
         SessionCoin.OnValueChanged += (oldVal, newVal) =>
         {
