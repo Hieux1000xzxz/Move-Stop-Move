@@ -7,19 +7,11 @@ public partial class CharacterBase
     {
         if (currentState == newState) return;
         currentState = newState;
-        if (IsServer)
-        {
-            NetState.Value = newState; 
-        }
 
-        if (IsServer && newState == CharacterState.Attack)
+        if (newState == CharacterState.Attack && AgentValid)
         {
-            if (AgentValid)
-            {
-                agent.isStopped = true;
-                agent.ResetPath();
-                agent.velocity = Vector3.zero;
-            }
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
         }
     }
 
@@ -38,13 +30,9 @@ public partial class CharacterBase
     {
         Vector3 input = GetMovementInput();
         if (input.magnitude > 0.01f)
-        {
             Move(input);
-        }
         else
-        {
             ChangeState(CharacterState.Idle);
-        }
     }
 
     protected void HandleAttack()
@@ -61,14 +49,20 @@ public partial class CharacterBase
         
         FaceTarget(attackTarget.position);
         
-        if (!isAttacking)
-            PerformAttack();
-
+        /*if (!isAttacking)
+            PerformAttack();*/
+        
+        if (IsServer && !isAttacking)
+            BeginAttack();
         if (AgentValid)
         {
             agent.isStopped = true;
             agent.ResetPath();
             agent.velocity = Vector3.zero;
+        }
+        if (!IsServer && !isAttacking)
+        {
+            ChangeState(IsMovingNow() ? CharacterState.Move : CharacterState.Idle);
         }
     }
     #endregion
@@ -79,20 +73,17 @@ public partial class CharacterBase
         isAttacking = false;
         hasWeapon = true;
         SetAttackAnim(false);
-
+        
         if (attackRoutine != null)
         {
             StopCoroutine(attackRoutine);
             attackRoutine = null;
         }
 
-        if (IsServer)
-        {
-            NetIsAttacking.Value = false;
-            nextAttackTime = Time.time;
-            if (resetState)
-                ChangeState(IsMovingNow() ? CharacterState.Move : CharacterState.Idle);
-        }
+        nextAttackTime = Time.time;
+
+        if (resetState)
+            ChangeState(IsMovingNow() ? CharacterState.Move : CharacterState.Idle);
     }
 
     protected virtual void CheckForAttack()
@@ -110,8 +101,8 @@ public partial class CharacterBase
 
         if (this is Player player)
         {
-            if (player.isMovingInput && player.NetIsMoving.Value)
-                return true;
+           // if (player.isMovingInput && player.NetIsMoving.Value)
+               // return true;
         }
 
         return false;
@@ -189,14 +180,31 @@ public partial class CharacterBase
 
     private void BeginAttack()
     {
-        isAttacking = true;
-        if (IsServer) 
-            NetIsAttacking.Value = true;
+        /*if (isAttacking) return;
 
+        isAttacking = true;
         hasWeapon = false;
         nextAttackTime = Time.time + attackDelay;
 
+        // 🔥 Gửi trạng thái cho host & client khác
+        if (IsOwner)
+            NetIsAttacking.Value = true;
+
         SetAttackAnim(true);
+
+        if (attackRoutine != null)
+            StopCoroutine(attackRoutine);
+
+        attackRoutine = StartCoroutine(AttackRoutine());*/
+        
+        if (isAttacking) return;
+        if (currentWeapon == null || currentWeapon.IsFlying) return;
+
+        isAttacking = true;
+        hasWeapon = false;
+        nextAttackTime = Time.time + attackDelay;
+
+        animator.SetBool("IsAttacking", true); // ✅ NetworkAnimator sẽ sync tự động
 
         if (attackRoutine != null)
             StopCoroutine(attackRoutine);

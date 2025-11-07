@@ -9,12 +9,7 @@ public partial class CharacterBase
         {
             if (player.IsOwner)
                 return player.isMovingInput;
-            if (player.NetIsMoving.Value)
-                return true;
-
-            if (player.NetSpeed.Value > 0.1f)
-                return true;
-
+            
             if (AgentValid)
                 return agent.velocity.magnitude > 0.05f;
 
@@ -33,6 +28,9 @@ public partial class CharacterBase
         if (agent == null || !agent.isActiveAndEnabled) return;
         if (isDead) return;
 
+        if (isAttacking && !hasWeapon && currentWeapon != null && !currentWeapon.IsFlying)
+            return;
+        
         if (direction.magnitude > 0.01f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
@@ -49,22 +47,10 @@ public partial class CharacterBase
     {
         if (animator == null) return;
 
-        float speed = 0f;
+        // Blend Idle ↔ Move
         if (AgentValid)
-        {
-            speed = agent.velocity.magnitude;
-        }
-        else
-        {
-            Vector3 delta = (transform.position - lastPosition);
-            delta.y = 0f;
-            speed = (Time.deltaTime > 0f) ? (delta.magnitude / Time.deltaTime) : 0f;
-        }
-
-        animator.SetFloat("Speed", speed);
-
-        bool attackingNow = IsOwner ? isAttacking : NetIsAttacking.Value;
-        animator.SetBool("IsAttacking", attackingNow);
+            animator.SetFloat("Speed", agent.velocity.magnitude);
+        animator.SetBool("IsAttacking", isAttacking);
 
         lastPosition = transform.position;
     }

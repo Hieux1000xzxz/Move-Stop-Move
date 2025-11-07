@@ -19,10 +19,10 @@ public partial class CharacterBase
         
         SetupScoreSync();
         
-        NetState.OnValueChanged += (oldVal, newVal) =>
+        /*NetState.OnValueChanged += (oldVal, newVal) =>
         {
             currentState = newVal; // sync local state with server
-        };
+        };*/
         
         SessionCoin.OnValueChanged += (oldVal, newVal) =>
         {

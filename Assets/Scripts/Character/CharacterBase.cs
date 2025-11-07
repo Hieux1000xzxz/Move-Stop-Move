@@ -91,15 +91,6 @@ public abstract partial class CharacterBase : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
     
-    public NetworkVariable<CharacterState> NetState = new NetworkVariable<CharacterState>(
-        CharacterState.Idle,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server);
-
-    public NetworkVariable<bool> NetIsAttacking = new NetworkVariable<bool>(
-        false,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server);
     public NetworkVariable<int> SessionCoin = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
@@ -144,11 +135,6 @@ public abstract partial class CharacterBase : NetworkBehaviour
 
         if (isDead || health.IsDead)
             return;
-        
-        Vector3 input = GetMovementInput();
-        
-        if (currentState == CharacterState.Attack && isAttacking && input.magnitude > 0.01f)
-            EndAttack(true);
         
         if (agent == null || !agent.isActiveAndEnabled)
             return;
