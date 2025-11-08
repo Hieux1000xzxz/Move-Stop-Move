@@ -5,6 +5,7 @@ using System.Collections;
 public partial class CharacterBase
 {
     #region Attack Animation Event
+
     [ServerRpc]
     private void RequestLaunchServerRpc(ServerRpcParams rpcParams = default)
     {
@@ -12,7 +13,7 @@ public partial class CharacterBase
         {
             return;
         }
-        
+
         if (currentState != CharacterState.Attack) return;
         Vector3 dir = (attackTarget.position - weaponSpawnPoint.position).normalized;
         Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(weaponRotationOffset);
@@ -29,23 +30,20 @@ public partial class CharacterBase
         if (!isActiveAndEnabled) return;
         StartCoroutine(WaitUntilWeaponReady(dir, rot));
     }
+
     private IEnumerator WaitUntilWeaponReady(Vector3 dir, Quaternion rot)
     {
         currentWeapon.transform.rotation = rot;
-        
+
         //shoot real weapon
         currentWeapon.Launch(dir, this.gameObject);
         yield return new WaitUntil(() => currentWeapon != null);
     }
+
     [ServerRpc]
     public void RequestChangeWeaponServerRpc(WeaponType newWeaponType)
     {
         ChangeWeapon(newWeaponType);
-    }
-    [ClientRpc]
-    private void PlayDeathAnimationClientRpc()
-    {
-        HandleDeathAnimationLocal();
     }
 
     #endregion

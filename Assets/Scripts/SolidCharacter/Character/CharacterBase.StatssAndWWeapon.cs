@@ -3,7 +3,8 @@ using Unity.Netcode;
 
 public partial class CharacterBase
 {
-     #region  Score & Stats
+    #region Score & Stats
+
     private void OnScoreChanged(int oldValue, int newValue)
     {
         if (scoreDisplay != null)
@@ -12,13 +13,14 @@ public partial class CharacterBase
             UpdateCharacterStats();
         }
     }
-    
+
     //sync Score
     public void AddScore(int value)
     {
         if (!IsServer) return;
         Score.Value += value;
     }
+
     private void UpdateCharacterStats()
     {
         if (scoreDisplay == null) return;
@@ -27,6 +29,7 @@ public partial class CharacterBase
         UpdateAttackRange();
         UpdateMoveSpeed();
     }
+
     private void UpdateScale()
     {
         float newScale = Mathf.Min(1f + scoreDisplay.CurrentScore * sizePerScore, maxScale);
@@ -37,10 +40,12 @@ public partial class CharacterBase
             currentWeapon.ApplyScale(newScale);
         }
     }
+
     private void UpdateAttackRange()
     {
         attackRange += scoreDisplay.CurrentScore * rangePerScore;
     }
+
     private void UpdateMoveSpeed()
     {
         moveSpeed += moveSpeedPerScore;
@@ -50,7 +55,7 @@ public partial class CharacterBase
             agent.speed = moveSpeed;
         }
     }
-    
+
     public void ResetState()
     {
         ResetCoreState();
@@ -59,10 +64,10 @@ public partial class CharacterBase
         ResetWeapon();
         ResetAnimator();
         ResetAgent();
-        
-        //hasSpawnedBefore = true;
+
         hasDied = false;
     }
+
     private void ResetCoreState()
     {
         currentState = CharacterState.Idle;
@@ -72,8 +77,8 @@ public partial class CharacterBase
         isDead = false;
         hasWeapon = true;
         scoreDisplay.gameObject.SetActive(true);
-
     }
+
     private void ResetHealth()
     {
         if (IsServer && health != null)
@@ -81,12 +86,14 @@ public partial class CharacterBase
             health.CurrentHealth.Value = health.MaxHealth;
         }
     }
+
     private void ResetUIAndCollider()
     {
         scoreDisplay.gameObject.SetActive(true);
         gameObject.layer = LayerMask.NameToLayer("Player");
         characterCollider.enabled = true;
     }
+
     private void ResetWeapon()
     {
         if (IsServer)
@@ -94,12 +101,15 @@ public partial class CharacterBase
             ChangeWeapon(weaponType);
         }
     }
+
     private void ResetAnimator()
     {
         if (animator != null)
         {
             animator.SetBool("IsMoving", false);
-            SetAttackAnim(false);
+
+            if (IsOwner)
+                SetAttackAnimation(false);
         }
 
         if (attackRoutine != null)
@@ -108,13 +118,16 @@ public partial class CharacterBase
             attackRoutine = null;
         }
     }
+
     private void ResetAgent()
     {
         agent.enabled = true;
     }
+
     #endregion
 
     #region Weapons Handling
+
     public void ChangeWeapon(WeaponType newWeaponType)
     {
         if (!IsServer) return;

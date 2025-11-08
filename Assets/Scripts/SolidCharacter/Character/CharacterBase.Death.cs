@@ -1,8 +1,10 @@
 using UnityEngine;
 using System.Collections;
+
 public partial class CharacterBase
 {
-      #region Death
+    #region Death
+
     protected void CheckForDead()
     {
         if (health.IsDead && !hasDied)
@@ -54,32 +56,19 @@ public partial class CharacterBase
         }
     }
 
-    private void HandleDeathAnimationLocal()
-    {
-        if (animator != null)
-        {
-            animator.SetFloat("Speed", 0f);
-            SetAttackAnim(false);
-            animator.CrossFade("Death", 0.1f);
-        }
-    }
-
     private void HandleDeathAnimation()
     {
-        HandleDeathAnimationLocal(); 
+        TriggerDeathAnimation();
         if (IsServer)
-        {
             DisableColliderClientRpc();
-            PlayDeathAnimationClientRpc();
-        }
     }
 
     private void ReleaseWeaponOnDeath()
     {
         if (currentWeapon == null) return;
-        
+
         HideOrReleaseWeapon();
-        
+
         if (IsServer)
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
         else

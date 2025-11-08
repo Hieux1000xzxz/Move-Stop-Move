@@ -1,20 +1,17 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.AI;
+
 public partial class CharacterBase
 {
-    protected bool IsMovingNow()
+    protected virtual bool IsMovingNow()
     {
         if (this is Player player)
         {
             if (player.IsOwner)
                 return player.isMovingInput;
-            if (player.NetIsMoving.Value)
-                return true;
 
-            if (player.NetSpeed.Value > 0.1f)
-                return true;
-
+            // Non-owner: dựa vào agent velocity
             if (AgentValid)
                 return agent.velocity.magnitude > 0.05f;
 
@@ -27,7 +24,7 @@ public partial class CharacterBase
 
         return false;
     }
-    
+
     protected virtual void Move(Vector3 direction)
     {
         if (agent == null || !agent.isActiveAndEnabled) return;
@@ -44,30 +41,32 @@ public partial class CharacterBase
             agent.ResetPath();
         }
     }
-    
+
     protected virtual void UpdateAnimator()
     {
         if (animator == null) return;
 
-        float speed = 0f;
-        if (AgentValid)
+        float speed = CalculateAnimationSpeed();
+
+        if (IsOwner)
         {
-            speed = agent.velocity.magnitude;
+            SetAnimationSpeed(speed);
+            SetAttackAnimation(isAttacking);
         }
-        else
-        {
-            Vector3 delta = (transform.position - lastPosition);
-            delta.y = 0f;
-            speed = (Time.deltaTime > 0f) ? (delta.magnitude / Time.deltaTime) : 0f;
-        }
-
-        animator.SetFloat("Speed", speed);
-
-        bool attackingNow = IsOwner ? isAttacking : NetIsAttacking.Value;
-        animator.SetBool("IsAttacking", attackingNow);
-
-        lastPosition = transform.position;
     }
-    
+
+    private float CalculateAnimationSpeed()
+    {
+        if (AgentValid)
+            return agent.velocity.magnitude;
+
+        Vector3 delta = transform.position - lastPosition;
+        delta.y = 0f;
+        float speed = (Time.deltaTime > 0f) ? (delta.magnitude / Time.deltaTime) : 0f;
+        lastPosition = transform.position;
+
+        return speed;
+    }
+
     public abstract Vector3 GetMovementInput();
 }

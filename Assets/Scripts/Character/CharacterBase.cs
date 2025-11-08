@@ -5,45 +5,56 @@ using UnityEngine;
 using UnityEngine.AI;
 using Unity.Netcode.Components;
 
-public enum CharacterState { Idle, Move, Attack }
+public enum CharacterState
+{
+    Idle,
+    Move,
+    Attack
+}
 
 public abstract partial class CharacterBase : NetworkBehaviour
 {
-    public enum OwnerType { Player, AI }
+    public enum OwnerType
+    {
+        Player,
+        AI
+    }
 
-    [Header("Character Settings")]
-    [SerializeField] private float moveSpeed = 5f;
+    [Header("Character Settings")] [SerializeField]
+    private float moveSpeed = 5f;
+
     [SerializeField] private NavMeshAgent agent;
     [SerializeField] protected Animator animator;
+    [SerializeField] private NetworkAnimator networkAnimator;
     [SerializeField] private Health health;
     [SerializeField] protected float attackRange = 2f;
     [SerializeField] protected float attackDuration = 0.5f;
     [SerializeField] private Collider characterCollider;
     [SerializeField] protected NetworkObject networkObject;
 
-    [Header("Weapon Settings")]
-    [SerializeField] private Transform weaponSpawnPoint;
+    [Header("Weapon Settings")] [SerializeField]
+    private Transform weaponSpawnPoint;
+
     [SerializeField] protected Vector3 weaponRotationOffset = Vector3.zero;
     [SerializeField] protected float attackDelay = 0.5f;
     [SerializeField] private WeaponType weaponType;
     protected WeaponBase currentWeapon;
 
-    [Header("Score Settings")]
-    [SerializeField] protected KillScoreDisplay scoreDisplay;
+    [Header("Score Settings")] [SerializeField]
+    protected KillScoreDisplay scoreDisplay;
+
     [SerializeField] private float sizePerScore = 0.05f;
     [SerializeField] private float rangePerScore = 0.1f;
     [SerializeField] private float moveSpeedPerScore = 0.1f;
     [SerializeField] private float maxScale = 3f;
 
-    [Header("Default Weapon")]
-    [SerializeField] private WeaponType defaultWeapon;
+    [Header("Default Weapon")] [SerializeField]
+    private WeaponType defaultWeapon;
 
-    [Header("Character Owner")]
-    public OwnerType ownerType = OwnerType.Player;
+    [Header("Character Owner")] public OwnerType ownerType = OwnerType.Player;
 
     [Header("Attack Settings")] [SerializeField]
     private float detectAttackDelay = 0.5f;
-    [SerializeField] private NetworkAnimator netAnimator;
 
     protected CharacterState currentState = CharacterState.Idle;
     protected Transform attackTarget;
@@ -60,7 +71,7 @@ public abstract partial class CharacterBase : NetworkBehaviour
     private bool isSpeedBoostActive = false;
     private bool isWeaponGrowActive = false;
     private bool hasDied = false;
-    
+
     private float baseMoveSpeed;
 
     public float currentAttackRange => attackRange;
@@ -75,46 +86,32 @@ public abstract partial class CharacterBase : NetworkBehaviour
     public Collider CharacterCollider => characterCollider;
 
     public NetworkVariable<int> Score = new NetworkVariable<int>(
-    0, NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server);
+        0, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
 
-    public NetworkVariable<bool> NetIsMoving = new NetworkVariable<bool>(
-    false,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Owner);
 
     public NetworkVariable<FixedString32Bytes> PlayerName = new NetworkVariable<FixedString32Bytes>(
-    "Player",
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server);
-
-    public NetworkVariable<NetworkObjectReference> NetCurrentWeapon =
-    new NetworkVariable<NetworkObjectReference>(default,
+        "Player",
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
-    
+
+    public NetworkVariable<NetworkObjectReference> NetCurrentWeapon =
+        new NetworkVariable<NetworkObjectReference>(default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server);
+
     public NetworkVariable<CharacterState> NetState = new NetworkVariable<CharacterState>(
         CharacterState.Idle,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
-    public NetworkVariable<bool> NetIsAttacking = new NetworkVariable<bool>(
-        false,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server);
     public NetworkVariable<int> SessionCoin = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
-
     #region Unity Lifecycle
 
     protected bool AgentValid => agent != null && agent.isActiveAndEnabled;
-
-    protected void SetAttackAnim(bool active)
-    {
-        animator.SetBool("IsAttacking", active);
-    }
 
     protected float DistanceTo(Transform t) => Vector3.Distance(transform.position, t.position);
 
@@ -127,13 +124,13 @@ public abstract partial class CharacterBase : NetworkBehaviour
     protected virtual void Start()
     {
         baseMoveSpeed = moveSpeed;
-        
+
         if (agent != null)
         {
             agent.speed = moveSpeed;
             lastPosition = transform.position;
         }
-        
+
         OnWeaponReturned();
     }
 
@@ -146,19 +143,19 @@ public abstract partial class CharacterBase : NetworkBehaviour
 
         if (isDead || health.IsDead)
             return;
-        
+
         Vector3 input = GetMovementInput();
-        
+
         if (currentState == CharacterState.Attack && isAttacking && input.magnitude > 0.01f)
             EndAttack(true);
-        
+
         if (agent == null || !agent.isActiveAndEnabled)
             return;
 
-        if (!IsMovingNow()) 
+        if (!IsMovingNow())
             UpdateRadar();
         else
-            detectedTarget = null;  
+            detectedTarget = null;
 
         switch (currentState)
         {
@@ -181,7 +178,6 @@ public abstract partial class CharacterBase : NetworkBehaviour
         attackTarget = null;
         detectedTarget = null;
     }
-    
-    #endregion
 
+    #endregion
 }

@@ -5,8 +5,7 @@ using Unity.Collections;
 
 public partial class CharacterBase
 {
-     #region Network Methods
-    
+    #region Network Methods
 
     public override void OnNetworkSpawn()
     {
@@ -16,14 +15,14 @@ public partial class CharacterBase
         SetupInitialWeapon();
         SetupPlayerInfo();
         SetupScoreDisplay();
-        
+
         SetupScoreSync();
-        
+
         NetState.OnValueChanged += (oldVal, newVal) =>
         {
             currentState = newVal; // sync local state with server
         };
-        
+
         SessionCoin.OnValueChanged += (oldVal, newVal) =>
         {
             if (IsOwner && CoinManager.Instance != null)
@@ -31,8 +30,8 @@ public partial class CharacterBase
                 CoinManager.Instance.UpdateCoinUIFromSession(newVal);
             }
         };
-
     }
+
     private void SetupWeaponSync()
     {
         NetCurrentWeapon.OnValueChanged += (oldVal, newVal) =>
@@ -85,10 +84,7 @@ public partial class CharacterBase
         {
             scoreDisplay.SetScore(Score.Value);
 
-            PlayerName.OnValueChanged += (oldName, newName) =>
-            {
-                scoreDisplay.SetPlayerName(newName.ToString());
-            };
+            PlayerName.OnValueChanged += (oldName, newName) => { scoreDisplay.SetPlayerName(newName.ToString()); };
 
             scoreDisplay.SetPlayerName(PlayerName.Value.ToString());
         }
@@ -97,7 +93,7 @@ public partial class CharacterBase
     private void SetupScoreSync()
     {
         Score.OnValueChanged += OnScoreChanged;
-        
+
         if (scoreDisplay != null)
         {
             scoreDisplay.SetScore(Score.Value);
@@ -129,30 +125,31 @@ public partial class CharacterBase
             t += Time.unscaledDeltaTime;
             yield return null;
         }
-        
+
         if (IsServer && currentWeapon == null)
         {
             ChangeWeapon(weaponType);
         }
     }
+
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
-        
+
         Score.OnValueChanged -= OnScoreChanged;
-        
+
         if (IsServer && currentWeapon != null)
         {
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
             currentWeapon.ClearOwner();
-   
         }
-        
+
         if (IsOwner && ownerType == OwnerType.Player)
         {
             string localName = PlayerPrefs.GetString("PlayerName", "Player");
             SubmitPlayerNameServerRpc(localName);
         }
+
         Score.OnValueChanged -= (oldValue, newValue) =>
         {
             Debug.Log($"[CLIENT] {gameObject.name} Score synced {oldValue} -> {newValue}");
@@ -160,6 +157,7 @@ public partial class CharacterBase
             UpdateCharacterStats();
         };
     }
+
     [ServerRpc]
     private void SubmitPlayerNameServerRpc(string newName)
     {
@@ -198,5 +196,6 @@ public partial class CharacterBase
             characterCollider.enabled = false;
         }
     }
+
     #endregion
 }

@@ -1,15 +1,17 @@
 using UnityEngine;
 using System.Collections;
+
 public partial class CharacterBase
 {
-     #region State Handling
+    #region State Handling
+
     protected void ChangeState(CharacterState newState)
     {
         if (currentState == newState) return;
         currentState = newState;
         if (IsServer)
         {
-            NetState.Value = newState; 
+            NetState.Value = newState;
         }
 
         if (IsServer && newState == CharacterState.Attack)
@@ -23,7 +25,7 @@ public partial class CharacterBase
         }
     }
 
-    protected  void HandleIdle()
+    protected void HandleIdle()
     {
         Vector3 input = GetMovementInput();
         if (input.magnitude > 0.01f)
@@ -56,11 +58,12 @@ public partial class CharacterBase
                 EndAttack();
                 ChangeState(CharacterState.Idle);
             }
+
             return;
         }
-        
+
         FaceTarget(attackTarget.position);
-        
+
         if (!isAttacking)
             PerformAttack();
 
@@ -71,14 +74,18 @@ public partial class CharacterBase
             agent.velocity = Vector3.zero;
         }
     }
+
     #endregion
-    
+
     #region Attack
+
     protected void FinishAttack(bool resetState = true)
     {
         isAttacking = false;
         hasWeapon = true;
-        SetAttackAnim(false);
+
+        if (IsOwner)
+            SetAttackAnimation(false);
 
         if (attackRoutine != null)
         {
@@ -88,7 +95,6 @@ public partial class CharacterBase
 
         if (IsServer)
         {
-            NetIsAttacking.Value = false;
             nextAttackTime = Time.time;
             if (resetState)
                 ChangeState(IsMovingNow() ? CharacterState.Move : CharacterState.Idle);
@@ -110,7 +116,7 @@ public partial class CharacterBase
 
         if (this is Player player)
         {
-            if (player.isMovingInput && player.NetIsMoving.Value)
+            if (player.isMovingInput)
                 return true;
         }
 
@@ -119,7 +125,7 @@ public partial class CharacterBase
 
     private void HandleCurrentAttackTarget()
     {
-        if (attackTarget == null || attackTarget == detectedTarget) 
+        if (attackTarget == null || attackTarget == detectedTarget)
             return;
 
         float distance = Vector3.Distance(transform.position, attackTarget.position);
@@ -133,7 +139,7 @@ public partial class CharacterBase
 
     private void HandleNewDetectedTarget()
     {
-        if (detectedTarget == null) 
+        if (detectedTarget == null)
             return;
 
         float distance = Vector3.Distance(transform.position, detectedTarget.position);
@@ -190,13 +196,11 @@ public partial class CharacterBase
     private void BeginAttack()
     {
         isAttacking = true;
-        if (IsServer) 
-            NetIsAttacking.Value = true;
-
         hasWeapon = false;
         nextAttackTime = Time.time + attackDelay;
 
-        SetAttackAnim(true);
+        if (IsOwner)
+            SetAttackAnimation(true);
 
         if (attackRoutine != null)
             StopCoroutine(attackRoutine);
@@ -207,44 +211,41 @@ public partial class CharacterBase
     private IEnumerator WaitWeaponAndAttack()
     {
         yield return new WaitUntil(() => currentWeapon != null);
-        BeginAttack(); 
+        BeginAttack();
     }
-  
+
     private IEnumerator AttackRoutine()
     {
         yield return new WaitForSeconds(attackDelay);
-        
-        
+
+
         if (currentState != CharacterState.Attack || isDead || IsMovingNow())
         {
             EndAttack(true);
             yield break;
         }
-        
+
         if (currentWeapon == null || currentWeapon.IsFlying)
         {
             EndAttack(true);
             yield break;
         }
-        
-        if (IsOwner)
-        {
-            RequestLaunchServerRpc();
-        }
 
-        yield return new WaitForSeconds(attackDuration);
+        if (IsOwner)
+            RequestLaunchServerRpc();
 
         EndAttack();
     }
+
     public void OnWeaponReturned()
     {
         FinishAttack();
     }
-    
+
     protected void EndAttack(bool cancelByMove = false)
     {
         FinishAttack();
     }
-    
+
     #endregion
 }

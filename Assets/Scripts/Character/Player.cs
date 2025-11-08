@@ -5,31 +5,29 @@ using Unity.Netcode.Components;
 using UnityEngine;
 
 [RequireComponent(typeof(ClientNetworkTransform))]
-
 public class Player : CharacterBase
 {
     [SerializeField] private FloatingJoystick joystick;
     public FloatingJoystick Joystick => joystick;
     public bool isMovingInput;
-    
+
     private float lastMoveInputTime = 0f;
     private float smoothSpeed = 0f;
-    
-    [SerializeField] private float minIdleDelay = 0.08f; 
-    
-    public NetworkVariable<float> NetSpeed = new NetworkVariable<float>(
-        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
+    [SerializeField] private float minIdleDelay = 0.08f;
+
     public static Player Local { get; private set; }
 
     protected override void Start()
     {
         base.Start();
 
-        if (IsOwner) 
+        if (IsOwner)
         {
             GameManager.Instance.BindCameraToPlayer(transform);
         }
     }
+
     protected override void Update()
     {
         base.Update();
@@ -38,22 +36,43 @@ public class Player : CharacterBase
 
         Vector3 input = GetMovementInput();
         isMovingInput = input.magnitude > 0.01f;
-        
+
         if (isMovingInput)
         {
             lastMoveInputTime = Time.time;
         }
-        
-        NetSpeed.Value = input.magnitude * MoveSpeed;
-        
-        if (NetIsMoving.Value != isMovingInput)
-            NetIsMoving.Value = isMovingInput;
 
         if (isMovingInput && currentState == CharacterState.Attack)
         {
             RequestEndAttackServerRpc();
         }
 
+        UpdateAnimator();
+    }
+
+    protected override void UpdateAnimator()
+    {
+        if (animator == null) return;
+
+        if (!IsOwner) return;
+
+        float targetSpeed;
+        bool effectiveMoving = isMovingInput || (Time.time - lastMoveInputTime < minIdleDelay);
+        targetSpeed = effectiveMoving ? MoveSpeed : 0f;
+
+        smoothSpeed = Mathf.Lerp(smoothSpeed, targetSpeed, Time.deltaTime * 25f);
+
+        SetAnimationSpeed(smoothSpeed);
+        SetAttackAnimation(isAttacking);
+    }
+
+    protected override bool IsMovingNow()
+    {
+        if (IsOwner)
+            return isMovingInput;
+
+        // Non-owner: dựa vào agent
+        return AgentValid && Agent.velocity.magnitude > 0.05f;
     }
 
 
@@ -62,31 +81,7 @@ public class Player : CharacterBase
     {
         EndAttack(true);
     }
-    
-    protected override void UpdateAnimator()
-    {
-        if (animator == null) return;
 
-        float targetSpeed;
-
-        if (IsOwner)
-        {
-            bool effectiveMoving = isMovingInput || (Time.time - lastMoveInputTime < minIdleDelay);
-            targetSpeed = effectiveMoving ? MoveSpeed : 0f;
-        }
-        else
-        {
-            targetSpeed = NetSpeed.Value;                 
-        }
-        
-        smoothSpeed = Mathf.Lerp(smoothSpeed, targetSpeed, Time.deltaTime * 25f);
-
-        animator.SetFloat("Speed", smoothSpeed);         
-        
-        bool attackingNow = IsOwner ? isAttacking : NetIsAttacking.Value;
-        animator.SetBool("IsAttacking", attackingNow);
-    }
-    
     public override Vector3 GetMovementInput()
     {
         return new Vector3(joystick.Horizontal, 0f, joystick.Vertical);
@@ -98,7 +93,7 @@ public class Player : CharacterBase
         if (IsOwner)
         {
             Local = this;
-            
+
             GameManager.Instance.BindCameraToPlayer(transform);
             GameManager.Instance.BindJoystick(this);
             GameManager.Instance.BindKillScoreDisplay(scoreDisplay);
@@ -108,15 +103,15 @@ public class Player : CharacterBase
         {
             StartCoroutine(DeferredRegister());
         }
-        
     }
 
     private IEnumerator DeferredRegister()
     {
-        yield return null; 
+        yield return null;
         GameManager.Instance.RegisterPlayerInGame(this.networkObject);
         GameManager.Instance.RegisterKillScore(this.networkObject, scoreDisplay);
     }
+
     protected override void Move(Vector3 direction)
     {
         if (isDead) return;
@@ -134,8 +129,8 @@ public class Player : CharacterBase
     {
         joystick = js;
     }
-    
-    private new void  OnDisable()
+
+    private new void OnDisable()
     {
         if (IsServer)
         {
