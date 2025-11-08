@@ -7,7 +7,6 @@ public partial class ConnectionCanvas : BaseCanvas
 {
     #region Player Profile (Single Responsibility)
 
-    // 🧩 1. Lấy hoặc tạo PlayerId (chung cho Single và Multi)
     private string GetOrCreatePlayerId()
     {
         string id = PlayerPrefs.GetString("PlayerId", "");
@@ -16,20 +15,17 @@ public partial class ConnectionCanvas : BaseCanvas
             id = Guid.NewGuid().ToString();
             PlayerPrefs.SetString("PlayerId", id);
             PlayerPrefs.Save();
-            Debug.Log($"🆔 Created new PlayerId: {id}");
         }
+
         return id;
     }
 
-    // 🧩 2. Tải tên người chơi
     private string LoadPlayerName()
     {
         string name = PlayerPrefs.GetString("PlayerName", DEFAULT_PLAYER_NAME);
-        Debug.Log($"👤 Loaded PlayerName: {name}");
         return name;
     }
 
-    // 🧩 3. Lưu tên người chơi
     private void SavePlayerName(string newName)
     {
         if (string.IsNullOrWhiteSpace(newName))
@@ -38,26 +34,20 @@ public partial class ConnectionCanvas : BaseCanvas
         PlayerPrefs.SetString("PlayerName", newName);
         PlayerPrefs.Save();
         localUserName = newName;
-        Debug.Log($"💾 Saved PlayerName: {newName}");
     }
 
-    // 🧩 4. Tải avatar đã chọn
     private int LoadAvatarIndex()
     {
         int index = PlayerPrefs.GetInt("PlayerAvatar", 0);
-        Debug.Log($"🎨 Loaded Avatar Index: {index}");
         return index;
     }
 
-    // 🧩 5. Lưu avatar đã chọn
     private void SaveAvatarIndex(int index)
     {
         PlayerPrefs.SetInt("PlayerAvatar", index);
         PlayerPrefs.Save();
-        Debug.Log($"💾 Saved Avatar Index: {index}");
     }
 
-    // 🧩 6. Khởi tạo thông tin người chơi khi vào game
     private void InitializePlayerProfile()
     {
         localUserName = LoadPlayerName();
@@ -105,7 +95,6 @@ public partial class ConnectionCanvas : BaseCanvas
         SaveAvatarIndex(selectedAvatarIndex);
         HidePlayerInfoPanel();
 
-        // Nếu đang trong lobby online, gửi thông tin cập nhật lên server
         if (!string.IsNullOrEmpty(currentLobbyId) && networkManager.IsClient)
             StartCoroutine(UpdatePlayerInfoInLobby());
     }

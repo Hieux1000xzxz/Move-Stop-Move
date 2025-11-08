@@ -3,6 +3,7 @@ using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
+using Unity.Netcode.Components;
 
 public enum CharacterState { Idle, Move, Attack }
 
@@ -42,7 +43,8 @@ public abstract partial class CharacterBase : NetworkBehaviour
 
     [Header("Attack Settings")] [SerializeField]
     private float detectAttackDelay = 0.5f;
-        
+    [SerializeField] private NetworkAnimator netAnimator;
+
     protected CharacterState currentState = CharacterState.Idle;
     protected Transform attackTarget;
     protected Transform detectedTarget;

@@ -15,35 +15,28 @@ public class NotificationCanvas : BaseCanvas
     [SerializeField] private TextMeshProUGUI toastText;
     [SerializeField] private float toastDuration = 0.5f;
     [SerializeField] private float toastFadeTime = 0.25f;
-    [Header("Countdown Toast")]
-    [SerializeField] private TextMeshProUGUI countdownToastText;
+
+    [Header("Countdown Toast")] [SerializeField]
+    private TextMeshProUGUI countdownToastText;
 
     private Action<bool> onDecision;
     private Tween currentToastTween;
     private Vector3 originalToastPos;
 
-    void Start()
+    private void Start()
     {
         if (toastText != null)
             originalToastPos = toastText.rectTransform.anchoredPosition;
 
-        closeButton.onClick.AddListener(() =>
-        {
-            onDecision.Invoke(false);
-            CloseNotificationCanvas();
-        });
+        closeButton.onClick.AddListener(() => HandleDecision(false));
+        cancelButton.onClick.AddListener(() => HandleDecision(false));
+        confirmButton.onClick.AddListener(() => HandleDecision(true));
+    }
 
-        cancelButton.onClick.AddListener(() =>
-        {
-            onDecision.Invoke(false);
-            CloseNotificationCanvas();
-        });
-
-        confirmButton.onClick.AddListener(() =>
-        {
-            onDecision.Invoke(true);
-            CloseNotificationCanvas();
-        });
+    private void HandleDecision(bool decision)
+    {
+        onDecision?.Invoke(decision);
+        CloseNotificationCanvas();
     }
 
     private void OnEnable()
@@ -55,7 +48,7 @@ public class NotificationCanvas : BaseCanvas
         }
     }
 
-    
+
     public void SetText(string message)
     {
         if (messageText != null)
@@ -103,10 +96,10 @@ public class NotificationCanvas : BaseCanvas
         panel.SetActive(false);
         currentToastTween.Kill();
 
-        toastText.rectTransform.anchorMin = new Vector2(0.5f, 0f);   
+        toastText.rectTransform.anchorMin = new Vector2(0.5f, 0f);
         toastText.rectTransform.anchorMax = new Vector2(0.5f, 0f);
         toastText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        toastText.rectTransform.anchoredPosition = new Vector2(0f, 150f); 
+        toastText.rectTransform.anchoredPosition = new Vector2(0f, 150f);
         toastText.gameObject.SetActive(true);
         toastText.text = message;
 
@@ -122,12 +115,8 @@ public class NotificationCanvas : BaseCanvas
         seq.AppendInterval(toastDuration);
         seq.Append(toastText.DOFade(0f, toastFadeTime));
         seq.Join(toastText.rectTransform.DOAnchorPosY(250f, toastFadeTime).SetEase(Ease.InBack));
-        seq.OnComplete(() =>
-        {
-            toastText.gameObject.SetActive(false);
-        });
+        seq.OnComplete(() => { toastText.gameObject.SetActive(false); });
 
         currentToastTween = seq;
     }
-
 }

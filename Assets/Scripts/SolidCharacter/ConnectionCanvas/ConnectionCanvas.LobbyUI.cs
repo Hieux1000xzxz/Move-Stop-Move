@@ -2,65 +2,90 @@ using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using System.Collections.Generic;
 
 public partial class ConnectionCanvas
 {
-     #region Lobby UI
+    #region Lobby UI
+
     private void ShowLobbyUI(RelayLobbyInfo lobby)
     {
         if (joinByIdPanel != null && joinByIdPanel.activeSelf)
             joinByIdPanel.SetActive(false);
-        
+
+        SetupLobbyUI(lobby);
+
+        if (networkManager.IsHost)
+            SetupHostUI();
+        else
+            SetupClientUI(lobby);
+    }
+
+    private void SetupLobbyUI(RelayLobbyInfo lobby)
+    {
         currentLobbyInfo = lobby;
         lobbyPanel.SetActive(true);
         lobbyId.text = $"Lobby ID: {lobby.lobbyId}";
+
         UpdatePlayerList(lobby);
         UpdateReadyButtonStatus();
-
-        if (networkManager.IsHost)
-        {
-            startGameButton.gameObject.SetActive(true);
-            readyButton.gameObject.SetActive(false);
-            settingButton.gameObject.SetActive(true);
-            isReady = true;
-            StartCoroutine(DelayedHostReady());
-        }
-        else
-        {
-            startGameButton.gameObject.SetActive(false);
-            readyButton.gameObject.SetActive(true);
-            settingButton.gameObject.SetActive(false);
-            isReady = false;
-            string playerId = PlayerPrefs.GetString("PlayerId", "");
-            var localUser = lobby.users.Find(u => u.userId == playerId);
-            if (localUser != null)
-            {
-                isReady = localUser.isReady;
-            }
-        }
     }
+
+    private void SetupHostUI()
+    {
+        startGameButton.gameObject.SetActive(true);
+        readyButton.gameObject.SetActive(false);
+        settingButton.gameObject.SetActive(true);
+        isReady = true;
+        StartCoroutine(DelayedHostReady());
+    }
+
+    private void SetupClientUI(RelayLobbyInfo lobby)
+    {
+        startGameButton.gameObject.SetActive(false);
+        readyButton.gameObject.SetActive(true);
+        settingButton.gameObject.SetActive(false);
+        isReady = false;
+        string playerId = PlayerPrefs.GetString("PlayerId", "");
+        var localUser = lobby.users.Find(u => u.userId == playerId);
+        if (localUser != null)
+            isReady = localUser.isReady;
+    }
+
     private void UpdatePlayerList(RelayLobbyInfo lobby)
     {
         ClearContainerCache(cachedPlayerItems);
 
         if (lobby?.users == null) return;
 
-        for (int i = 0; i < lobby.users.Count; i++)
+        PopulatePlayerItems(lobby.users);
+
+        UpdateStartButtonState(lobby);
+    }
+
+    private void PopulatePlayerItems(List<UserInfo> users)
+    {
+        for (int i = 0; i < users.Count; i++)
         {
-            var user = lobby.users[i];
+            var user = users[i];
             var playerItem = GetOrCreateCachedItem(cachedPlayerItems, playerItemPrefab, playerListContainer, i);
 
             if (playerItem != null)
             {
                 playerItem.gameObject.SetActive(true);
+
                 bool canKick = networkManager.IsHost && user.userId != PlayerPrefs.GetString("PlayerId", "");
                 Sprite avatar = user.avatarIndex >= 0 && user.avatarIndex < availableAvatars.Length
-                    ? availableAvatars[user.avatarIndex] : null;
+                    ? availableAvatars[user.avatarIndex]
+                    : null;
 
                 playerItem.Setup(user.userName, user.userId, user.clientId, this, canKick, avatar, user.isReady);
             }
         }
+    }
 
+    private void UpdateStartButtonState(RelayLobbyInfo lobby)
+    {
         if (networkManager.IsHost)
         {
             bool allReady = AreAllPlayersReady(lobby);
@@ -77,17 +102,17 @@ public partial class ConnectionCanvas
     {
         if (lobby?.users == null || lobby.users.Count == 0) return false;
         foreach (var user in lobby.users)
-            if (!user.isReady) return false;
+            if (!user.isReady)
+                return false;
         return true;
     }
-    
+
     private void OnReadyClicked()
     {
         if (!canToggleReady)
         {
             SendNotification("Please wait!!!", 4);
             return;
-
         }
 
         isReady = !isReady;
@@ -120,11 +145,12 @@ public partial class ConnectionCanvas
             yield return www.SendWebRequest();
         }
     }
-    
+
     private IEnumerator DelayedHostReady()
     {
         yield return new WaitForSeconds(0.3f);
         StartCoroutine(UpdateReadyStatus(true));
     }
+
     #endregion
 }

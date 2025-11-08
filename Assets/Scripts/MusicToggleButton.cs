@@ -3,47 +3,43 @@ using UnityEngine.UI;
 
 public class MusicToggleButton : MonoBehaviour
 {
-    [Header("Sprites")]
-    [SerializeField] private Sprite musicOnSprite;
+    [Header("Sprites")] [SerializeField] private Sprite musicOnSprite;
     [SerializeField] private Sprite musicOffSprite;
 
-    [Header("Refs")]
-    [SerializeField] private Image buttonImage;
+    [Header("Refs")] [SerializeField] private Image buttonImage;
     [SerializeField] private Button button;
 
-    private bool isMusicOn = true;
+    private bool isMusicOn;
+    private const string MusicPrefKey = "MusicState";
 
     private void Start()
     {
         if (button == null) button = GetComponent<Button>();
         if (buttonImage == null) buttonImage = GetComponent<Image>();
 
-        button.onClick.AddListener(ToggleMusic);
+        isMusicOn = PlayerPrefs.GetInt(MusicPrefKey, 1) == 1;
+        ApplyMusicState();
 
-        UpdateButtonSprite();
+        button.onClick.AddListener(ToggleMusic);
     }
 
     private void ToggleMusic()
     {
         isMusicOn = !isMusicOn;
+        ApplyMusicState();
 
-        if (isMusicOn)
-        {
-            SoundManager.Instance.PlayBGM();
-        }
-        else
-        {
-            SoundManager.Instance.StopBGM();
-        }
-
-        UpdateButtonSprite();
+        PlayerPrefs.SetInt(MusicPrefKey, isMusicOn ? 1 : 0);
+        PlayerPrefs.Save();
     }
 
-    private void UpdateButtonSprite()
+    private void ApplyMusicState()
     {
         if (buttonImage != null)
-        {
             buttonImage.sprite = isMusicOn ? musicOnSprite : musicOffSprite;
-        }
+
+        if (isMusicOn)
+            SoundManager.Instance.PlayBGM();
+        else
+            SoundManager.Instance.StopBGM();
     }
 }
