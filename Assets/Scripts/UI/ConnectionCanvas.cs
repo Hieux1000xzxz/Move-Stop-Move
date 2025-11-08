@@ -9,28 +9,30 @@ using UnityEngine.UI;
 
 public partial class ConnectionCanvas : BaseCanvas
 {
-    [Header("UI Panels")]
-    [SerializeField] private GameObject modePanel;
+    [Header("UI Panels")] [SerializeField] private GameObject modePanel;
     [SerializeField] private GameObject lobbyPanel;
     [SerializeField] private GameObject mainPanel;
     [SerializeField] private GameObject playerInfoPanel;
     [SerializeField] private GamePlayCanvas gameplayCanvas;
 
-    [Header("Mode Panel")]
-    [SerializeField] private Button singleButton;
+    [Header("Mode Panel")] [SerializeField]
+    private Button singleButton;
+
     [SerializeField] private Button onlineButton;
     [SerializeField] private Button backToMenuButton;
 
-    [Header("Main Panel")]
-    [SerializeField] private Button startHostButton;
+    [Header("Main Panel")] [SerializeField]
+    private Button startHostButton;
+
     [SerializeField] private Button backButton;
     [SerializeField] private Button joinByIdButton;
     [SerializeField] private Button editProfileButton;
     [SerializeField] private Transform lobbyListContainer;
     [SerializeField] private LobbyItem lobbyItemPrefab;
 
-    [Header("Lobby Panel")]
-    [SerializeField] private Transform playerListContainer;
+    [Header("Lobby Panel")] [SerializeField]
+    private Transform playerListContainer;
+
     [SerializeField] private TextMeshProUGUI lobbyId;
     [SerializeField] private PlayerItem playerItemPrefab;
     [SerializeField] private Button startGameButton;
@@ -41,41 +43,43 @@ public partial class ConnectionCanvas : BaseCanvas
     [SerializeField] private Sprite readySprite;
     [SerializeField] private Sprite unReadySprite;
 
-    [Header("Join by ID Panel")]
-    [SerializeField] private GameObject joinByIdPanel;
+    [Header("Join by ID Panel")] [SerializeField]
+    private GameObject joinByIdPanel;
+
     [SerializeField] private TMP_InputField lobbyIdInputField;
     [SerializeField] private Button confirmJoinButton;
     [SerializeField] private Button cancelJoinButton;
 
-    [Header("Player Info Panel")]
-    [SerializeField] private TMP_InputField playerNameInputField;
+    [Header("Player Info Panel")] [SerializeField]
+    private TMP_InputField playerNameInputField;
+
     [SerializeField] private Transform avatarSelectionContainer;
     [SerializeField] private AvatarItem avatarItemPrefab;
     [SerializeField] private Button confirmPlayerInfoButton;
     [SerializeField] private Button cancelPlayerInfoButton;
     [SerializeField] private TextMeshProUGUI playerInfoTitle;
 
-    [Header("Setting Panel")]
-    [SerializeField] private GameObject settingPanel;
+    [Header("Setting Panel")] [SerializeField]
+    private GameObject settingPanel;
+
     [SerializeField] private TMP_InputField roomNameInputField;
     [SerializeField] private Button confirmRoomNameButton;
     [SerializeField] private Button closeSettingButton;
 
-    [Header("Network")]
-    [SerializeField] private NetworkManager networkManager;
+    [Header("Network")] [SerializeField] private NetworkManager networkManager;
     [SerializeField] private UnityTransport transport;
 
     [SerializeField] private GameObject playerPreview;
     [SerializeField] private CinemachineCamera mainCamera;
     [SerializeField] private Sprite[] availableAvatars;
 
-    [Header("Cache Lists")]
-    [SerializeField] private List<AvatarItem> cachedAvatarItems = new List<AvatarItem>();
+    [Header("Cache Lists")] [SerializeField]
+    private List<AvatarItem> cachedAvatarItems = new List<AvatarItem>();
+
     [SerializeField] private List<PlayerItem> cachedPlayerItems = new List<PlayerItem>();
     [SerializeField] private List<LobbyItem> cachedLobbyItems = new List<LobbyItem>();
 
-    [Header("Status Flags")]
-    private bool isCreatingRoom = false;
+    [Header("Status Flags")] private bool isCreatingRoom = false;
     private bool isJoiningRoom = false;
 
     private const string SERVER_URL = "https://mini-server-v6.onrender.com/api/lobby";
@@ -101,21 +105,22 @@ public partial class ConnectionCanvas : BaseCanvas
     private Coroutine joinLobbyCoroutine;
 
     #region Unity Lifecycle
+
     private async void Start()
     {
         InitializeButtons();
         InitializeNetworkCallbacks();
-        SetInitialUIState();
-        LoadPlayerPrefs();
+        SetUIState(true);
 
         await InitializeUnityServices();
         UpdateReadyButtonStatus();
         RefreshLobbyList();
         InitializeAvatarSelection();
+        InitializePlayerProfile();
         InitializeInputValidation();
         autoRefreshLobbyRoutine = StartCoroutine(AutoRefreshLobbyList());
-       
     }
+
     private void OnDestroy()
     {
         StopAllCoroutines();
@@ -128,9 +133,9 @@ public partial class ConnectionCanvas : BaseCanvas
         {
             networkManager.OnClientConnectedCallback -= OnClientConnected;
             networkManager.OnClientDisconnectCallback -= OnClientDisconnected;
-            networkManager.OnServerStarted -= OnServerStarted;
         }
     }
+
     private void OnApplicationQuit()
     {
         Debug.Log("Application quitting - cleaning up network...");
@@ -142,11 +147,13 @@ public partial class ConnectionCanvas : BaseCanvas
                 StopCoroutine(heartbeatRoutine);
                 heartbeatRoutine = null;
             }
+
             if (pollLobbyRoutine != null)
             {
                 StopCoroutine(pollLobbyRoutine);
                 pollLobbyRoutine = null;
             }
+
             if (clientHeartbeatRoutine != null)
             {
                 clientHeartbeatRoutine = null;
@@ -165,7 +172,9 @@ public partial class ConnectionCanvas : BaseCanvas
                 {
                     if (!string.IsNullOrEmpty(currentLobbyId) && !string.IsNullOrEmpty(localUserName))
                     {
-                        string playerId = PlayerPrefs.GetString("PlayerId", "");
+                        //string playerId = PlayerPrefs.GetString("PlayerId", "");
+                        string playerId = GetOrCreatePlayerId();
+
                         if (!string.IsNullOrEmpty(playerId))
                         {
                             var user = new UserInfo { userId = playerId, userName = localUserName };
@@ -187,32 +196,35 @@ public partial class ConnectionCanvas : BaseCanvas
             Debug.LogWarning($"Error during OnApplicationQuit cleanup: {e.Message}");
         }
     }
+
     #endregion
 }
 
 #region UpdateRequest
-    [Serializable]
-    public class UpdateReadyRequest
-    {
-        public string UserId;
-        public bool IsReady;
-    }
 
-    [Serializable]
-    public class UpdateLobbyNameRequest
-    {
-        public string lobbyId;
-        public string lobbyName;
-        public string requestingUserId;
-    }
+[Serializable]
+public class UpdateReadyRequest
+{
+    public string UserId;
+    public bool IsReady;
+}
 
-    [Serializable]
-    public class ClientHeartbeatRequest
-    {
-        public string UserId;
-    }
+[Serializable]
+public class UpdateLobbyNameRequest
+{
+    public string lobbyId;
+    public string lobbyName;
+    public string requestingUserId;
+}
 
-    #endregion
+[Serializable]
+public class ClientHeartbeatRequest
+{
+    public string UserId;
+}
+
+#endregion
+
 [Serializable]
 public class RelayLobbyInfo
 {
@@ -264,6 +276,4 @@ public static class JsonHelper
         public T[] array;
 #pragma warning restore 0649
     }
-    
-    
 }

@@ -85,11 +85,10 @@ public partial class ConnectionCanvas
     {
         if (!canToggleReady)
         {
-            UIManager.Instance.SendNotification("Please wait!!!", 4);
+            SendNotification("Please wait!!!", 4);
             return;
 
         }
-
 
         isReady = !isReady;
         UpdateReadyButtonStatus();
@@ -111,13 +110,11 @@ public partial class ConnectionCanvas
 
     private IEnumerator UpdateReadyStatus(bool ready)
     {
-        string playerId = PlayerPrefs.GetString("PlayerId", "");
+        string playerId = GetOrCreatePlayerId();
         if (string.IsNullOrEmpty(playerId) || string.IsNullOrEmpty(currentLobbyId))
             yield break;
 
         var payload = new UpdateReadyRequest { UserId = playerId, IsReady = ready };
-        string json = JsonUtility.ToJson(payload);
-
         using (var www = CreatePostRequest($"{SERVER_URL}/{currentLobbyId}/ready", payload))
         {
             yield return www.SendWebRequest();

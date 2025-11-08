@@ -16,7 +16,7 @@ public partial class ConnectionCanvas
     private IEnumerator CheckNetworkAndShowMainPanel()
     {
         bool serverAvailable = false;
-        yield return StartCoroutine(CheckServerAvailabilityCoroutine((result) => serverAvailable = result));
+        yield return StartCoroutine(EnsureServerAvailable(result => serverAvailable = result));
 
         if (serverAvailable && isUnityServicesInitialized)
         {

@@ -12,34 +12,35 @@ public partial class ConnectionCanvas
 
     private IEnumerator RefreshLobbyListRoutine()
     {
-        using (var www = UnityWebRequest.Get($"{SERVER_URL}/list"))
-        {
-            www.timeout = 10;
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
+        yield return StartCoroutine(GetRequest("list", (json) =>
             {
-                string json = www.downloadHandler.text;
                 RelayLobbyInfo[] lobbies = JsonHelper.FromJson<RelayLobbyInfo>(json);
                 ClearContainerCache(cachedLobbyItems);
-
-                for (int i = 0; i < lobbies.Length; i++)
-                {
-                    var lobbyItem = GetOrCreateCachedItem(cachedLobbyItems, lobbyItemPrefab, lobbyListContainer, i);
-                    if (lobbyItem != null)
-                        lobbyItem.Setup(lobbies[i], this);
-                }
-            }
+                UpdateLobbyListUI(lobbies);
+            },
+            (error) =>
+            {
+                SendNotification($"Failed to refresh lobby list: {error}", 1);
+            }));
+    }
+    
+    private void UpdateLobbyListUI(RelayLobbyInfo[] lobbies)
+    {
+        ClearContainerCache(cachedLobbyItems);
+        for (int i = 0; i < lobbies.Length; i++)
+        {
+            var item = GetOrCreateCachedItem(cachedLobbyItems, lobbyItemPrefab, lobbyListContainer, i);
+            if (item != null)
+                item.Setup(lobbies[i], this);
         }
     }
+
     private IEnumerator AutoRefreshLobbyList()
     {
         while (true)
         {
             if (mainPanel.activeInHierarchy)
-            {
-                RefreshLobbyList();
-            }
+                SafeRefreshLobby();
             yield return new WaitForSeconds(3f);
         }
     }

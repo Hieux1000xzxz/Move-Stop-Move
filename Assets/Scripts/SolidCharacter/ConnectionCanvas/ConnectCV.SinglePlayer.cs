@@ -6,18 +6,22 @@ public partial class ConnectionCanvas
     #region SinglePlayerMode
     private void OnSinglePlayerClicked()
     {
+        PrepareSinglePlayerData();
+        SetupLocalHost();
+        StartCoroutine(StartSinglePlayerGame());
+        modePanel.SetActive(false);
+    }
+    private void PrepareSinglePlayerData()
+    {
         isSinglePlayerMode = true;
         localUserName = PlayerPrefs.GetString("PlayerName", DEFAULT_PLAYER_NAME);
         currentLobbyId = "SINGLE";
-
-        if (networkManager != null)
-        {
-            transport.SetConnectionData("127.0.0.1", 7777);
-            networkManager.StartHost();
-        }
-
-        StartCoroutine(StartSinglePlayerGame());
-        modePanel.SetActive(false);
+    }
+    private void SetupLocalHost()
+    {
+        if (networkManager == null) return;
+        transport.SetConnectionData("127.0.0.1", 7777);
+        networkManager.StartHost();
     }
     private IEnumerator StartSinglePlayerGame()
     {

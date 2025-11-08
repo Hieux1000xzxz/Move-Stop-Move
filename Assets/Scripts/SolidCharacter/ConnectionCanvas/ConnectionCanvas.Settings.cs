@@ -43,22 +43,16 @@ public partial class ConnectionCanvas
             {
                 lobbyId = lobbyId,
                 lobbyName = newName,
-                requestingUserId = PlayerPrefs.GetString("PlayerId", "")
+                requestingUserId = GetOrCreatePlayerId()
             };
     
             string json = JsonUtility.ToJson(reqObj);
             string url = $"{SERVER_URL}/{lobbyId}/rename";
     
-            using (var www = new UnityWebRequest(url, "POST"))
+            using (var www = CreatePostRequest(url, reqObj))
             {
-                byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-                www.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                www.downloadHandler = new DownloadHandlerBuffer();
-                www.SetRequestHeader("Content-Type", "application/json");
-                www.timeout = 10;
-    
                 yield return www.SendWebRequest();
-    
+
                 if (www.result == UnityWebRequest.Result.Success)
                 {
                     SendNotification("Room name updated successfully", 4);
@@ -69,6 +63,7 @@ public partial class ConnectionCanvas
                     SendNotification("Failed to update room name. Please try again.", 1);
                 }
             }
+
         }
         private IEnumerator RefreshCurrentLobbyInfo()
         {

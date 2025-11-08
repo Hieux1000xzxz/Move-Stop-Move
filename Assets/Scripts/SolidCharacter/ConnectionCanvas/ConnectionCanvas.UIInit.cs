@@ -38,18 +38,9 @@ public partial class ConnectionCanvas
         {
             networkManager.OnClientConnectedCallback += OnClientConnected;
             networkManager.OnClientDisconnectCallback += OnClientDisconnected;
-            networkManager.OnServerStarted += OnServerStarted;
         }
     }
-    private void SetInitialUIState()
-    {
-        modePanel.SetActive(true);
-        lobbyPanel.SetActive(false);
-        mainPanel.SetActive(false);
-        if (joinByIdPanel != null) joinByIdPanel.SetActive(false);
-        if (playerInfoPanel != null) playerInfoPanel.SetActive(false);
-        if (settingPanel != null) settingPanel.SetActive(false);
-    }
+    
     private void InitializeInputValidation()
     {
         if (playerNameInputField != null && confirmPlayerInfoButton != null)
@@ -94,11 +85,9 @@ public partial class ConnectionCanvas
             }
 
             isUnityServicesInitialized = true;
-            Debug.Log($"Unity Services initialized. Player ID: {AuthenticationService.Instance.PlayerId}");
         }
         catch (Exception e)
         {
-            Debug.LogError($"Failed to initialize Unity Services: {e.Message}");
             isUnityServicesInitialized = false;
         }
     }
@@ -106,13 +95,11 @@ public partial class ConnectionCanvas
     {
         if (avatarSelectionContainer == null || avatarItemPrefab == null)
         {
-            Debug.LogError("Avatar components not assigned!");
             return;
         }
 
         if (availableAvatars == null || availableAvatars.Length == 0)
         {
-            Debug.LogWarning("No available avatars assigned.");
             return;
         }
 
@@ -140,34 +127,14 @@ public partial class ConnectionCanvas
                 cachedAvatarItems[i].SetHighlight(i == index);
         }
     }
-    private void LoadPlayerPrefs()
+    private void SetUIState(bool isInMainMenu)
     {
-        localUserName = PlayerPrefs.GetString("PlayerName", DEFAULT_PLAYER_NAME);
-        selectedAvatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0);
-
-        string playerId = PlayerPrefs.GetString("PlayerId", "");
-        if (string.IsNullOrEmpty(playerId))
-        {
-            playerId = System.Guid.NewGuid().ToString();
-            PlayerPrefs.SetString("PlayerId", playerId);
-            PlayerPrefs.Save();
-        }
-
-        SelectAvatar(selectedAvatarIndex);
+        modePanel.SetActive(isInMainMenu);
+        mainPanel.SetActive(!isInMainMenu);
+        lobbyPanel.SetActive(false);
+        joinByIdPanel?.SetActive(false);
+        playerInfoPanel?.SetActive(false);
+        settingPanel?.SetActive(false);
     }
-    private void SavePlayerPrefs(string playerName)
-    {
-        string playerId = PlayerPrefs.GetString("PlayerId", "");
-        if (string.IsNullOrEmpty(playerId))
-        {
-            playerId = System.Guid.NewGuid().ToString();
-            PlayerPrefs.SetString("PlayerId", playerId);
-        }
-
-        PlayerPrefs.SetString("PlayerName", playerName);
-        PlayerPrefs.SetInt("PlayerAvatar", selectedAvatarIndex);
-        PlayerPrefs.Save();
-    }
-
     #endregion
 }

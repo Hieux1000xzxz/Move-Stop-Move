@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using System.Text.RegularExpressions;
+using System.Text;
 
 public partial class ConnectionCanvas
 {
@@ -16,20 +17,14 @@ public partial class ConnectionCanvas
             itemCache[index].gameObject.SetActive(true);
             return itemCache[index];
         }
+        
+        var newItem = Instantiate(prefab, parent);
+        if (index >= itemCache.Count) itemCache.Add(newItem);
         else
         {
-            var newItem = Instantiate(prefab, parent);
-            if (index >= itemCache.Count)
-            {
-                itemCache.Add(newItem);
-            }
-            else
-            {
                 itemCache[index] = newItem;
-            }
-
-            return newItem;
         }
+        return newItem;
     }
     private void ClearContainerCache<T>(List<T> itemCache) where T : Component
     {
@@ -84,8 +79,8 @@ public partial class ConnectionCanvas
             }
         }
         ResetState();
-        ResetUIState();
-        RefreshLobbyList();
+        SetUIState(true);
+        SafeRefreshLobby();
     }
     private void OnBackToMenu()
     {
@@ -106,13 +101,10 @@ public partial class ConnectionCanvas
     {
         if (string.IsNullOrEmpty(currentLobbyId)) yield break;
 
-        using (var www = new UnityWebRequest($"{SERVER_URL}/{currentLobbyId}/start", "POST"))
-        {
-            www.uploadHandler = new UploadHandlerRaw(new byte[0]);
-            www.downloadHandler = new DownloadHandlerBuffer();
-            www.SetRequestHeader("Content-Type", "application/json");
-            www.timeout = 10;
+        var emptyPayload = new { };
 
+        using (var www = CreatePostRequest($"{SERVER_URL}/{currentLobbyId}/start", emptyPayload))
+        {
             yield return www.SendWebRequest();
         }
     }
@@ -126,14 +118,10 @@ public partial class ConnectionCanvas
         if (networkManager == null) return;
 
         if (networkManager.IsListening)
-        {
             networkManager.Shutdown();
-        }
 
         if (transport != null)
-        {
             transport.SetConnectionData("127.0.0.1", 7777);
-        }
 
         StartCoroutine(ResetNetworkManagerCoroutine());
     }
@@ -168,7 +156,6 @@ public partial class ConnectionCanvas
     {
         if (isJoiningRoom)
         {
-            Debug.LogWarning("Join process cancelled because player opened Join by ID panel.");
             isJoiningRoom = false;
             if (joinLobbyCoroutine != null)
             {
@@ -196,5 +183,23 @@ public partial class ConnectionCanvas
         return true;
     }
 
+    private IEnumerator EnsureServerAvailable(Action<bool> onChecked)
+    {
+        bool available = false;
+        yield return StartCoroutine(CheckServerAvailabilityCoroutine(result => available = result));
+        if (!available)
+            SendNotification("Server unavailable. Please try again later.", 1);
+        onChecked?.Invoke(available);
+    }
+    private IEnumerator CheckServerAvailabilityCoroutine(System.Action<bool> callback)
+    {
+        yield return StartCoroutine(GetRequest("ping", (text) => callback(true), (err) => callback(false)));
+    }
+    private void SafeRefreshLobby()
+    {
+        if (this != null && !isCreatingRoom && !isJoiningRoom)
+            RefreshLobbyList();
+    }
+   
     #endregion
 }

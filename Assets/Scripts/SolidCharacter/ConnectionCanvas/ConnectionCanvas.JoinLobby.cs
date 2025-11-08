@@ -11,188 +11,203 @@ using UnityEngine.Networking;
 
 public partial class ConnectionCanvas
 {
-     #region Join
+    #region Join
+
     public void ShowJoinByIdPanel()
     {
         if (isCreatingRoom || (lobbyPanel != null && lobbyPanel.activeSelf))
             return;
-        
+
         CancelJoinProcess();
-        
+
         if (joinByIdPanel != null)
         {
             joinByIdPanel.SetActive(true);
             lobbyIdInputField.text = string.Empty;
             DisableMainPanelButton();
-            
+
             DisableAllJoinButtons();
-            
+
             UIManager.Instance.CloseNotification();
         }
     }
+
     private void OnConfirmJoinById()
     {
         if (isCreatingRoom || isJoiningRoom) return;
-        
+
         string lobbyId = lobbyIdInputField != null ? lobbyIdInputField.text.Trim() : "";
-        
         if (!IsValidString(lobbyId, "Lobby ID"))
             return;
-        if (joinByIdPanel != null) 
+        if (joinByIdPanel != null)
             joinByIdPanel.SetActive(false);
-        DisableMainPanelButton();
-        DisableAllJoinButtons();
 
-        UIManager.Instance.CloseNotification();
-        
-        isJoiningRoom = true;
-        
+        SetJoinState(true);
         joinLobbyCoroutine = StartCoroutine(JoinLobbyRoutine(lobbyId, localUserName));
     }
+
     public void JoinLobbyDirect(RelayLobbyInfo lobby)
     {
         if (isJoiningRoom || isCreatingRoom) return;
         if (lobby == null) return;
-        
-        isJoiningRoom = true;
-        DisableMainPanelButton(); 
-        DisableAllJoinButtons();
-            
+
+        SetJoinState(true);
         ResetNetworkManager();
+
         joinLobbyCoroutine = StartCoroutine(JoinLobbyRoutine(lobby.lobbyId, localUserName));
     }
+
     private IEnumerator JoinLobbyRoutine(string lobbyId, string playerName)
     {
-        isJoiningRoom = true;
         try
         {
-            using (var checkWww = UnityWebRequest.Get($"{SERVER_URL}/find/{lobbyId}"))
-            {
-                checkWww.timeout = 10;
-                yield return checkWww.SendWebRequest();
+            bool validLobby = false;
+            yield return CheckLobbyAvailability(lobbyId, result => validLobby = result);
+            if (!validLobby) yield break;
 
-                if (checkWww.result != UnityWebRequest.Result.Success)
-                {
-                    SendNotification("Failed to join lobby. Please try again.", 1);
-                    HandleExitLogic();
-                    yield break;
-                }
-
-                RelayLobbyInfo lobbyCheck = JsonUtility.FromJson<RelayLobbyInfo>(checkWww.downloadHandler.text);
-                if (lobbyCheck == null || lobbyCheck.isGameStarted)
-                {
-                    SendNotification("Lobby not found or game already started.", 1);
-                    yield break;
-                }
-            }
-
-            string playerId = PlayerPrefs.GetString("PlayerId", "");
-            if (string.IsNullOrEmpty(playerId))
-            {
-                playerId = System.Guid.NewGuid().ToString();
-                PlayerPrefs.SetString("PlayerId", playerId);
-            }
-
-            var user = new UserInfo
-            {
-                userId = playerId,
-                userName = playerName,
-                avatarIndex = selectedAvatarIndex
-            };
-            string json = JsonUtility.ToJson(user);
-
-            using (var www = new UnityWebRequest($"{SERVER_URL}/{lobbyId}/join", "POST"))
-            {
-                www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
-                www.downloadHandler = new DownloadHandlerBuffer();
-                www.SetRequestHeader("Content-Type", "application/json");
-                www.timeout = 10;
-
-                yield return www.SendWebRequest();
-
-                if (www.result == UnityWebRequest.Result.Success)
-                {
-                    RelayLobbyInfo lobby = JsonUtility.FromJson<RelayLobbyInfo>(www.downloadHandler.text);
-                    currentLobbyId = lobbyId;
-                    localUserName = playerName;
-
-                    yield return StartCoroutine(JoinRelayLobbyCoroutine(lobby.relayJoinCode));
-
-                    if (!networkManager.IsHost)
-                    {
-                        if (clientHeartbeatRoutine != null) StopCoroutine(clientHeartbeatRoutine);
-                        clientHeartbeatRoutine = StartCoroutine(SendClientHeartbeatRoutine());
-                    }
-                    ShowLobbyUI(lobby);
-                    RefreshLobbyList();
-                }
-                else
-                {
-                    SendNotification("Failed to join the lobby. It might be full or no longer available.", 1);
-                }
-            }
+            yield return ProcessLobbyJoin(lobbyId, playerName);
         }
         finally
         {
-            isJoiningRoom = false;
-            isCreatingRoom = false;
-            EnableAllJoinButtons();
-            EnableMainPanelButton();
+            SetJoinState(false);
         }
     }
-    private IEnumerator JoinRelayLobbyCoroutine(string joinCode)
-    {
-        
-        if (joinByIdPanel != null && joinByIdPanel.activeSelf)
-            joinByIdPanel.SetActive(false);
 
-        if (!isJoiningRoom)
-            yield break;
-        
+    private void HandleJoinFail(string message)
+    {
+        SetJoinState(false);
+        SendNotification(message, 1);
+        HandleExitLogic();
+    }
+
+    private IEnumerator JoinRelayAndSetupClient(RelayLobbyInfo lobby)
+    {
+        yield return ConnectToRelay(lobby.relayJoinCode);
+        yield return SetupClientAfterRelay(lobby);
+    }
+
+    private IEnumerator ConnectToRelay(string joinCode)
+    {
+        PrepareJoinRelayUI();
         SendNotification("Connecting to the lobby...", 2);
 
-        bool joinSuccess = false;
-        yield return StartCoroutine(JoinRelayCoroutineWrapper(joinCode, (success) => joinSuccess = success));
+        bool success = false;
+        yield return ExecuteAsync(async () => success = await JoinRelayAllocation(joinCode));
 
-        if (joinSuccess)
+        if (!success)
         {
-            bool clientStarted = networkManager.StartClient();
-            if (clientStarted)
+            HandleJoinFail("Failed to connect to the lobby. Please check the Lobby ID and try again.");
+            yield break;
+        }
+    }
+
+    private IEnumerator SetupClientAfterRelay(RelayLobbyInfo lobby)
+    {
+        bool clientStarted = networkManager.StartClient();
+        if (!clientStarted)
+        {
+            HandleJoinFail("Failed to start client. Please try again.");
+            yield break;
+        }
+
+        mainPanel.SetActive(false);
+        StartCoroutine(CloseNotificationAfterDelay(2f));
+
+        if (clientHeartbeatRoutine != null)
+            StopCoroutine(clientHeartbeatRoutine);
+
+        clientHeartbeatRoutine = StartCoroutine(SendClientHeartbeatRoutine());
+
+        ShowLobbyUI(lobby);
+        SafeRefreshLobby();
+    }
+
+    private IEnumerator ProcessLobbyJoin(string lobbyId, string playerName)
+    {
+        string playerId = GetOrCreatePlayerId();
+
+        var user = new UserInfo
+        {
+            userId = playerId,
+            userName = playerName,
+            avatarIndex = selectedAvatarIndex
+        };
+
+        using (var www = CreatePostRequest($"{SERVER_URL}/{lobbyId}/join", user))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
             {
-                mainPanel.SetActive(false);
-                yield return new WaitForSeconds(2f);
-                UIManager.Instance.CloseNotification();
+                SendNotification("Failed to join the lobby. It might be full or no longer available.", 1);
+                yield break;
             }
-            else
+
+            RelayLobbyInfo lobby = JsonUtility.FromJson<RelayLobbyInfo>(www.downloadHandler.text);
+            currentLobbyId = lobbyId;
+            localUserName = playerName;
+
+            yield return JoinRelayAndSetupClient(lobby);
+        }
+    }
+
+    private IEnumerator CheckLobbyAvailability(string lobbyId, Action<bool> callback)
+    {
+        using (var checkWww = UnityWebRequest.Get($"{SERVER_URL}/find/{lobbyId}"))
+        {
+            checkWww.timeout = 10;
+            yield return checkWww.SendWebRequest();
+
+            if (checkWww.result != UnityWebRequest.Result.Success)
             {
-                isJoiningRoom = false;
-                SendNotification("Failed to start client. Please try again.", 1);
-                HandleExitLogic();
-                ResetUIState();
+                SendNotification("Failed to join lobby. Please try again.", 1);
+                //HandleExitLogic();
+                callback(false);
+                yield break;
             }
+
+            RelayLobbyInfo lobbyCheck = JsonUtility.FromJson<RelayLobbyInfo>(checkWww.downloadHandler.text);
+            if (lobbyCheck == null || lobbyCheck.isGameStarted)
+            {
+                SendNotification("Lobby not found or game already started.", 1);
+                callback(false);
+                yield break;
+            }
+
+            callback(true);
+        }
+    }
+
+    private void SetJoinState(bool active)
+    {
+        isJoiningRoom = active;
+        isCreatingRoom = false;
+
+        if (active)
+        {
+            DisableMainPanelButton();
+            DisableAllJoinButtons();
+            UIManager.Instance.CloseNotification();
         }
         else
         {
-            isJoiningRoom = false;
-            SendNotification("Failed to connect to the lobby. Please check the Lobby ID and try again.", 1);
-            HandleExitLogic();
-            ResetUIState();
+            EnableMainPanelButton();
+            EnableAllJoinButtons();
         }
     }
-    private IEnumerator JoinRelayCoroutineWrapper(string joinCode, Action<bool> callback)
+
+    private void PrepareJoinRelayUI()
     {
-        bool completed = false;
-        bool result = false;
-
-        StartCoroutine(ExecuteAsync(async () =>
-        {
-            result = await JoinRelayAllocation(joinCode);
-            completed = true;
-        }));
-
-        yield return new WaitUntil(() => completed);
-        callback(result);
+        if (joinByIdPanel != null && joinByIdPanel.activeSelf)
+            joinByIdPanel.SetActive(false);
     }
+
+    private IEnumerator CloseNotificationAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        UIManager.Instance.CloseNotification();
+    }
+
     private async Task<bool> JoinRelayAllocation(string joinCode)
     {
         if (!isUnityServicesInitialized) return false;
@@ -210,5 +225,6 @@ public partial class ConnectionCanvas
             return false;
         }
     }
+
     #endregion
 }

@@ -6,6 +6,7 @@ using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.Networking;
+using System;
 
 public partial class ConnectionCanvas
 {
@@ -18,41 +19,70 @@ public partial class ConnectionCanvas
         StartHost();
     }
 
-    private async void StartHost()
+   private async void StartHost()
     {
-        if (!isUnityServicesInitialized)
-        {
-            SendNotification("Online services are not ready. Please try again.", 1);
-            return;
-        }
-        isCreatingRoom = true;
-        SendNotification("Creating lobby...", 2);
+        if (!CheckUnityServicesReady()) return;
 
-        string hostUserId = PlayerPrefs.GetString("PlayerId", "");
-        if (string.IsNullOrEmpty(hostUserId))
-        {
-            hostUserId = System.Guid.NewGuid().ToString();
-            PlayerPrefs.SetString("PlayerId", hostUserId);
-            PlayerPrefs.Save();
-        }
+        PrepareForLobbyCreation();
 
-        string joinCode = await CreateRelayAllocation(6);
+        string hostUserId = GetOrCreatePlayerId();
+        string joinCode = await TryCreateRelayJoinCode();
+
         if (string.IsNullOrEmpty(joinCode))
         {
-            SendNotification("Failed to create lobby. Please try again.", 1);
-            EnableMainPanelButton();
-            isCreatingRoom = false;
+            HandleRelayFailure();
             return;
         }
 
-        if (!networkManager.StartHost())
+        if (!TryStartHostNetwork())
         {
-            EnableMainPanelButton();
-            isCreatingRoom = false;
-            SendNotification("Failed to start host. Please try again.", 1);
+            HandleHostStartFailure();
             return;
         }
 
+        BeginHostLobbyRegistration(hostUserId, joinCode);
+    }
+
+    private bool CheckUnityServicesReady()
+    {
+        if (isUnityServicesInitialized) return true;
+
+        SendNotification("Online services are not ready. Please try again.", 1);
+        return false;
+    }
+
+    private void PrepareForLobbyCreation()
+    {
+        isCreatingRoom = true;
+        SendNotification("Creating lobby...", 2);
+        DisableMainPanelButton();
+    }
+
+    private async Task<string> TryCreateRelayJoinCode()
+    {
+        return await CreateRelayAllocation(6);
+    }
+
+    private void HandleRelayFailure()
+    {
+        SendNotification("Failed to create lobby. Please try again.", 1);
+        EnableMainPanelButton();
+        isCreatingRoom = false;
+    }
+
+    private bool TryStartHostNetwork()
+    {
+        return networkManager != null && networkManager.StartHost();
+    }
+
+    private void HandleHostStartFailure()
+    {
+        EnableMainPanelButton();
+        isCreatingRoom = false;
+        SendNotification("Failed to start host. Please try again.", 1);
+    }
+    private void BeginHostLobbyRegistration(string hostUserId, string joinCode)
+    {
         string lobbyName = GenerateRandomLobbyName();
         StartCoroutine(StartHostRoutineCoroutine(localUserName, lobbyName, joinCode, hostUserId));
     }
@@ -65,65 +95,85 @@ public partial class ConnectionCanvas
     }
     private IEnumerator StartHostRoutineCoroutine(string hostName, string lobbyName, string joinCode, string hostUserId)
     {
-        var request = new RelayLobbyRegistrationRequest
+        var request = BuildRelayLobbyRequest(hostName, lobbyName, joinCode, hostUserId);
+
+        yield return VerifyServerAndRegisterLobby(request);
+    }
+    private RelayLobbyRegistrationRequest BuildRelayLobbyRequest(string hostName, string lobbyName, string joinCode, string hostUserId)
+    {
+        return new RelayLobbyRegistrationRequest
         {
             lobbyName = lobbyName,
             relayJoinCode = joinCode,
             maxPlayers = 6,
             hostName = hostName,
-            AvatarIndex = PlayerPrefs.GetInt("PlayerAvatar", 0),
+            AvatarIndex = LoadAvatarIndex(),
             HostUserId = hostUserId
         };
-
-        bool serverAvailable = false;
-        yield return StartCoroutine(CheckServerAvailabilityCoroutine((result) => serverAvailable = result));
-
-        if (serverAvailable)
-        {
-            yield return StartCoroutine(RegisterRelayLobbyOnServer(request));
-        }
     }
-
-    private IEnumerator CheckServerAvailabilityCoroutine(System.Action<bool> callback)
+    private IEnumerator VerifyServerAndRegisterLobby(RelayLobbyRegistrationRequest request)
     {
-        using (var www = UnityWebRequest.Get($"{SERVER_URL}/ping"))
-        {
-            www.timeout = 10;
-            yield return www.SendWebRequest();
-            callback(www.result == UnityWebRequest.Result.Success);
-        }
-    }
+        bool serverAvailable = false;
+        yield return EnsureServerAvailable(result => serverAvailable = result);
 
+        if (!serverAvailable)
+        {
+            HandleServerUnavailable();
+            yield break;
+        }
+
+        yield return RegisterRelayLobbyOnServer(request);
+    }
+    private void HandleServerUnavailable()
+    {
+        SendNotification("Server unavailable. Please try again later.", 1);
+        EnableMainPanelButton();
+        isCreatingRoom = false;
+    }
     private IEnumerator RegisterRelayLobbyOnServer(RelayLobbyRegistrationRequest request)
     {
         using (var www = CreatePostRequest($"{SERVER_URL}/register", request))
         {
             yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                var lobby = JsonUtility.FromJson<RelayLobbyInfo>(www.downloadHandler.text);
-                currentLobbyId = lobby.lobbyId;
-
-                SendNotification("Lobby created successfully!", 4);
-                ShowLobbyUI(lobby);
-                mainPanel.SetActive(false);
-                
-                heartbeatRoutine = StartCoroutine(SendHeartbeatRoutine());
-                pollLobbyRoutine = StartCoroutine(PollLobbyInfo());
-            }
-            else
-            {
-                SendNotification("Failed to create lobby. Please try again.", 1);
-                Debug.LogWarning("Could not reach lobby server");
-
-                if (networkManager.IsHost)
-                {
-                    networkManager.Shutdown();
-                }
-            }
-            isCreatingRoom = false;
+            HandleLobbyRegisterResponse(www);
         }
+        isCreatingRoom = false;
+    }
+    private void HandleLobbyRegisterResponse(UnityWebRequest www)
+    {
+        if (www.result == UnityWebRequest.Result.Success)
+            OnLobbyRegisterSuccess(www.downloadHandler.text);
+        else
+            OnLobbyRegisterFail(www.error);
+    }
+    private void OnLobbyRegisterSuccess(string json)
+    {
+        var lobby = JsonUtility.FromJson<RelayLobbyInfo>(json);
+        currentLobbyId = lobby.lobbyId;
+
+        SendNotification("Lobby created successfully!", 4);
+        ShowLobbyUI(lobby);
+        mainPanel.SetActive(false);
+
+        StartLobbyBackgroundRoutines();
+    }
+    private void StartLobbyBackgroundRoutines()
+    {
+        if (heartbeatRoutine != null)
+            StopCoroutine(heartbeatRoutine);
+        if (pollLobbyRoutine != null)
+            StopCoroutine(pollLobbyRoutine);
+
+        heartbeatRoutine = StartCoroutine(SendHeartbeatRoutine());
+        pollLobbyRoutine = StartCoroutine(PollLobbyInfo());
+    }
+    private void OnLobbyRegisterFail(string error)
+    {
+        SendNotification("Failed to create lobby. Please try again.", 1);
+
+        if (networkManager != null && networkManager.IsHost)
+            networkManager.Shutdown();
     }
     private async Task<string> CreateRelayAllocation(int maxConnections = 5)
     {
@@ -134,18 +184,35 @@ public partial class ConnectionCanvas
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxConnections);
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 
-            RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
-            transport.SetRelayServerData(relayServerData);
-            currentRelayJoinCode = joinCode;
+            SetupRelayTransport(allocation, joinCode);
 
             UIManager.Instance.CloseNotification();
             return joinCode;
         }
         catch (RelayServiceException e)
         {
-            Debug.LogError($"Failed to create lobby: {e.Message}");
             return null;
         }
     }
+    private void SetupRelayTransport(Allocation allocation, string joinCode)
+    {
+        RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
+        transport.SetRelayServerData(relayServerData);
+        currentRelayJoinCode = joinCode;
+    }
+    private IEnumerator GetRequest(string endpoint, Action<string> onSuccess, Action<string> onFail = null)
+    {
+        using (var www = UnityWebRequest.Get($"{SERVER_URL}/{endpoint}"))
+        {
+            www.timeout = 10;
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+                onSuccess?.Invoke(www.downloadHandler.text);
+            else
+                onFail?.Invoke(www.error);
+        }
+    }
+
     #endregion
 }

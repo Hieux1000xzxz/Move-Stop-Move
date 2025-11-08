@@ -6,108 +6,148 @@ using UnityEngine.Networking;
 
 public partial class ConnectionCanvas
 {
-     #region Networking
-    private void OnServerStarted()
-    {
-        Debug.Log("Server started successfully");
-    }
+    #region Networking
+
     private void OnClientConnected(ulong clientId)
     {
-        Debug.Log($"Client {clientId} connected");
-        if (pollLobbyRoutine != null) StopCoroutine(pollLobbyRoutine);
+        RestartLobbyPolling();
+    }
+
+    private void RestartLobbyPolling()
+    {
+        if (pollLobbyRoutine != null)
+            StopCoroutine(pollLobbyRoutine);
         pollLobbyRoutine = StartCoroutine(PollLobbyInfo());
     }
+
     private void OnClientDisconnected(ulong clientId)
     {
-        Debug.LogWarning($"Client {clientId} disconnected. IsServer={NetworkManager.Singleton.IsServer}");
-
-        if (!isIntentionalDisconnect && GameManager.Instance.IsGameStarted &&
-            !NetworkManager.Singleton.IsServer &&
-            !NetworkManager.Singleton.IsHost &&
-            !NetworkManager.Singleton.ShutdownInProgress)
+        if (IsUnexpectedDisconnection())
         {
-            if (gameplayCanvas != null)
-            {
-                gameplayCanvas.OnExitGame(true);
-            }
-            else
-            {
-                UIManager.Instance.SendNotification("Host has left the room. The game has ended.", 1);
-                UIManager.Instance.OpenNotification();
-                HandleClientDisconnect();
-            }
+            HandleUnexpectedDisconnect();
             return;
         }
 
         if (!NetworkManager.Singleton.ShutdownInProgress)
-        {
             StartCoroutine(PollLobbyInfo());
-        }
-
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
-        {
             CleanupPlayerObjects(clientId);
-        }
         else if (!isIntentionalDisconnect)
+            HandleClientDisconnect();
+    }
+
+    private bool IsUnexpectedDisconnection()
+    {
+        return !isIntentionalDisconnect &&
+               GameManager.Instance.IsGameStarted &&
+               !NetworkManager.Singleton.IsServer &&
+               !NetworkManager.Singleton.IsHost &&
+               !NetworkManager.Singleton.ShutdownInProgress;
+    }
+
+    private void HandleUnexpectedDisconnect()
+    {
+        if (gameplayCanvas != null)
+            gameplayCanvas.OnExitGame(true);
+        else
         {
+            UIManager.Instance.SendNotification("Host has left the room. The game has ended.", 1);
+            UIManager.Instance.OpenNotification();
             HandleClientDisconnect();
         }
     }
+
     private void CleanupPlayerObjects(ulong clientId)
     {
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
-        if (NetworkManager.Singleton.SpawnManager == null) return;
+        if (!CanCleanup()) return;
 
         foreach (var netObj in NetworkManager.Singleton.SpawnManager.SpawnedObjectsList)
         {
             if (netObj != null && netObj.OwnerClientId == clientId)
-            {
                 netObj.Despawn();
-            }
         }
     }
+
+    private bool CanCleanup()
+    {
+        return NetworkManager.Singleton != null &&
+               NetworkManager.Singleton.IsServer &&
+               NetworkManager.Singleton.SpawnManager != null;
+    }
+
     private IEnumerator SendHeartbeatRoutine()
     {
-        while (networkManager != null && networkManager.IsHost && !networkManager.ShutdownInProgress)
+        while (CanSendHostHeartbeat())
         {
-            using (var www = UnityWebRequest.PostWwwForm($"{SERVER_URL}/{currentLobbyId}/heartbeat", ""))
-            {
-                www.timeout = 10;
-                yield return www.SendWebRequest();
-            }
-            yield return new WaitForSeconds(5f);
+            yield return SendHeartbeatToServer();
+            yield return WaitHeartbeatInterval();
         }
     }
+
     private IEnumerator SendClientHeartbeatRoutine()
     {
-        while (networkManager != null && networkManager.IsClient && !networkManager.ShutdownInProgress)
+        while (CanSendClientHeartbeat())
         {
-            if (!string.IsNullOrEmpty(currentLobbyId))
-            {
-                string playerId = PlayerPrefs.GetString("PlayerId", "");
-                if (!string.IsNullOrEmpty(playerId))
-                {
-                    var payload = new ClientHeartbeatRequest { UserId = playerId };
-                    string json = JsonUtility.ToJson(payload);
-
-                    using (var www = new UnityWebRequest($"{SERVER_URL}/{currentLobbyId}/client-heartbeat", "POST"))
-                    {
-                        www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
-                        www.downloadHandler = new DownloadHandlerBuffer();
-                        www.SetRequestHeader("Content-Type", "application/json");
-                        www.timeout = 10;
-
-                        yield return www.SendWebRequest();
-                    }
-                }
-            }
-            yield return new WaitForSeconds(5f);
+            yield return TrySendClientHeartbeat();
+            yield return WaitHeartbeatInterval();
         }
-        
-        
     }
+
+//──────────────────────────────
+// 🔧 Helper Functions
+//──────────────────────────────
+
+    private bool CanSendHostHeartbeat()
+    {
+        return networkManager != null &&
+               networkManager.IsHost &&
+               !networkManager.ShutdownInProgress;
+    }
+
+    private bool CanSendClientHeartbeat()
+    {
+        return networkManager != null &&
+               networkManager.IsClient &&
+               !networkManager.ShutdownInProgress;
+    }
+
+    private IEnumerator SendHeartbeatToServer()
+    {
+        using (var www = UnityWebRequest.PostWwwForm($"{SERVER_URL}/{currentLobbyId}/heartbeat", ""))
+        {
+            www.timeout = 10;
+            yield return www.SendWebRequest();
+        }
+    }
+
+    private IEnumerator TrySendClientHeartbeat()
+    {
+        if (string.IsNullOrEmpty(currentLobbyId)) yield break;
+
+        string playerId = PlayerPrefs.GetString("PlayerId", "");
+        if (string.IsNullOrEmpty(playerId)) yield break;
+
+        var payload = new ClientHeartbeatRequest { UserId = playerId };
+        yield return SendJsonPost($"{SERVER_URL}/{currentLobbyId}/client-heartbeat", payload);
+    }
+
+    private IEnumerator SendJsonPost(string url, object payload)
+    {
+        string json = JsonUtility.ToJson(payload);
+        using (var www = new UnityWebRequest(url, "POST"))
+        {
+            www.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+            www.downloadHandler = new DownloadHandlerBuffer();
+            www.SetRequestHeader("Content-Type", "application/json");
+            www.timeout = 10;
+            yield return www.SendWebRequest();
+        }
+    }
+
+    private WaitForSeconds WaitHeartbeatInterval() => new WaitForSeconds(5f);
+
     #endregion
-    
+
     private UnityWebRequest CreatePostRequest(string url, object payload)
     {
         string json = JsonUtility.ToJson(payload);
@@ -119,4 +159,12 @@ public partial class ConnectionCanvas
         return req;
     }
 
+    private UnityWebRequest CreateGetRequest(string url)
+    {
+        var req = UnityWebRequest.Get(url);
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.timeout = 10;
+        req.SetRequestHeader("Content-Type", "application/json");
+        return req;
+    }
 }
