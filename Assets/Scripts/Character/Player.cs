@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Globalization;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
@@ -22,7 +21,9 @@ public class Player : CharacterBase
     {
         base.Start();
 
-        if (IsOwner)
+        bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+
+        if (!isMultiplayer || IsOwner)
         {
             GameManager.Instance.BindCameraToPlayer(transform);
         }
@@ -30,31 +31,35 @@ public class Player : CharacterBase
 
     protected override void Update()
     {
-        base.Update();
-        //only the player is controlled
-        if (!IsOwner) return;
+        bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (isMultiplayer && !IsOwner) return;
 
         Vector3 input = GetMovementInput();
         isMovingInput = input.magnitude > 0.01f;
 
         if (isMovingInput)
         {
+            detectedTarget = null;
+            attackTarget = null;
+
             lastMoveInputTime = Time.time;
+
+            if (currentState == CharacterState.Attack || isAttacking)
+            {
+                EndAttack(true);
+                if (isMultiplayer) RequestEndAttackServerRpc();
+            }
         }
 
-        if (isMovingInput && currentState == CharacterState.Attack)
-        {
-            RequestEndAttackServerRpc();
-        }
-
-        UpdateAnimator();
+        base.Update();
     }
 
     protected override void UpdateAnimator()
     {
-        if (animator == null) return;
+        if (NetworkAnimator == null || NetworkAnimator.Animator == null) return;
 
-        if (!IsOwner) return;
+        bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (isMultiplayer && !IsOwner) return;
 
         float targetSpeed;
         bool effectiveMoving = isMovingInput || (Time.time - lastMoveInputTime < minIdleDelay);
@@ -68,13 +73,8 @@ public class Player : CharacterBase
 
     protected override bool IsMovingNow()
     {
-        if (IsOwner)
-            return isMovingInput;
-
-        // Non-owner: dựa vào agent
-        return AgentValid && Agent.velocity.magnitude > 0.05f;
+        return isMovingInput;
     }
-
 
     [ServerRpc]
     private void RequestEndAttackServerRpc()
@@ -84,16 +84,17 @@ public class Player : CharacterBase
 
     public override Vector3 GetMovementInput()
     {
+        if (isAttacking) return Vector3.zero;
         return new Vector3(joystick.Horizontal, 0f, joystick.Vertical);
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+
         if (IsOwner)
         {
             Local = this;
-
             GameManager.Instance.BindCameraToPlayer(transform);
             GameManager.Instance.BindJoystick(this);
             GameManager.Instance.BindKillScoreDisplay(scoreDisplay);
@@ -114,14 +115,17 @@ public class Player : CharacterBase
 
     protected override void Move(Vector3 direction)
     {
-        if (isDead) return;
+        if (isDead || isAttacking) return;
+
+        bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (isMultiplayer && !IsOwner) return;
 
         if (direction.magnitude > 0.01f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
 
-            transform.position += direction.normalized * MoveSpeed * Time.deltaTime;
+            transform.position += direction * (MoveSpeed * Time.deltaTime);
         }
     }
 
@@ -132,7 +136,9 @@ public class Player : CharacterBase
 
     private new void OnDisable()
     {
-        if (IsServer)
+        bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+
+        if (isMultiplayer && IsServer)
         {
             GameManager.Instance.UnregisterPlayerInGame(this.networkObject);
         }

@@ -6,20 +6,23 @@ using System.Collections.Generic;
 
 public class WeaponBase : NetworkBehaviour
 {
-    [Header("Weapon Settings")]
-    [SerializeField] private float speed = 12f;
+    [Header("Weapon Settings")] [SerializeField]
+    private float speed = 12f;
+
     [SerializeField] private int damage = 1;
     [SerializeField] private Vector3 handRotationOffset = Vector3.zero;
 
-    [Header("Rotation Settings")]
-    [SerializeField] private Vector3 rotateAxis = new Vector3(0, 1, 0);
+    [Header("Rotation Settings")] [SerializeField]
+    private Vector3 rotateAxis = new Vector3(0, 1, 0);
+
     [SerializeField] private float rotateSpeed = 360f;
     [SerializeField] private RotateMode rotateMode = RotateMode.FastBeyond360;
 
-    [Header("Cached References")]
-    [SerializeField] private Rigidbody rb;           
-    [SerializeField] private Collider col;            
-    [SerializeField] private NetworkObject netObj;    
+    [Header("Cached References")] [SerializeField]
+    private Rigidbody rb;
+
+    [SerializeField] private Collider col;
+    [SerializeField] private NetworkObject netObj;
 
     private CharacterBase owner;
     private Transform spawnPoint;
@@ -30,12 +33,12 @@ public class WeaponBase : NetworkBehaviour
     private Vector3 baseScale;
     private bool isFollowing;
     private bool isFlying;
-    
+
     private static readonly Dictionary<NetworkObject, WeaponBase> weaponCache = new();
 
     public float OriginalSpeed => originalSpeed;
     public bool IsFlying => isFlying;
-    
+
     public NetworkObject NetworkObj => netObj;
     public float BuffScaleMultiplier { get; set; } = 1f;
 
@@ -46,10 +49,11 @@ public class WeaponBase : NetworkBehaviour
     }
 
     #region INIT
+
     private void Awake()
     {
         ObjectPool.Instance.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
-        
+
         baseScale = transform.localScale;
         originalSpeed = speed;
     }
@@ -80,9 +84,11 @@ public class WeaponBase : NetworkBehaviour
             netObj.Spawn(true);
         }
     }
+
     #endregion
 
     #region FOLLOW HAND
+
     private void LateUpdate()
     {
         if (isFollowing && !isFlying && spawnPoint != null)
@@ -98,9 +104,11 @@ public class WeaponBase : NetworkBehaviour
 
         transform.localScale = baseScale * BuffScaleMultiplier;
     }
+
     #endregion
 
     #region Launch & Return
+
     public void Launch(Vector3 dir, GameObject shooter)
     {
         if (isFlying || rb == null) return;
@@ -108,20 +116,38 @@ public class WeaponBase : NetworkBehaviour
         isFlying = true;
         isFollowing = false;
         rb.isKinematic = false;
+        if (col != null && owner != null && owner.CharacterCollider != null)
+        {
+            Physics.IgnoreCollision(col, owner.CharacterCollider, true);
+            StartCoroutine(ReEnableCollisionWithOwner());
+        }
+
         if (col != null)
         {
             col.enabled = false;
             StartCoroutine(EnableColliderNextFrame());
         }
+
         transform.position = spawnPoint.position;
         rb.linearVelocity = dir * speed;
         launchPos = transform.position;
 
         StartRotation();
     }
+
+    private IEnumerator ReEnableCollisionWithOwner()
+    {
+        yield return new WaitForSeconds(0.1f);
+
+        if (col != null && owner != null && owner.CharacterCollider != null)
+        {
+            Physics.IgnoreCollision(col, owner.CharacterCollider, false);
+        }
+    }
+
     private IEnumerator EnableColliderNextFrame()
     {
-        yield return null; 
+        yield return null;
         if (col != null) col.enabled = true;
     }
 
@@ -147,9 +173,11 @@ public class WeaponBase : NetworkBehaviour
         owner.OnWeaponReturned();
         StartRotation();
     }
+
     #endregion
 
     #region Collision
+
     protected virtual void Update()
     {
         if (isFlying && owner != null)
@@ -174,9 +202,10 @@ public class WeaponBase : NetworkBehaviour
 
         HandleCharacterCollision(other);
     }
+
     private bool HandleWallCollision(Collider other)
     {
-        if (!other.CompareTag("Wall")) 
+        if (!other.CompareTag("Wall"))
             return false;
 
         ReturnToHand();
@@ -189,19 +218,20 @@ public class WeaponBase : NetworkBehaviour
 
         return true;
     }
-    
+
     private void HandleCharacterCollision(Collider other)
     {
-        if (!other.TryGetComponent<CharacterBase>(out var victim)) 
+        if (!other.TryGetComponent<CharacterBase>(out var victim))
             return;
 
-        if (victim == owner) 
+        if (victim == owner)
             return;
 
         ApplyDamageAndScore(victim);
         ReturnToHand();
         ReturnToHandClientRpc();
     }
+
     private IEnumerator ReenableColliderNextFrame()
     {
         col.enabled = false;
@@ -220,9 +250,11 @@ public class WeaponBase : NetworkBehaviour
         if (victim.CharacterCollider != null)
             victim.CharacterCollider.enabled = false;
     }
+
     #endregion
 
     #region ROTATION
+
     protected void StartRotation()
     {
         StopRotation();
@@ -240,10 +272,11 @@ public class WeaponBase : NetworkBehaviour
             rotateTween = null;
         }
     }
-    
+
     #endregion
 
     #region NETWORK
+
     [ServerRpc(RequireOwnership = false)]
     private void ReturnToHandServerRpc()
     {
@@ -257,10 +290,11 @@ public class WeaponBase : NetworkBehaviour
         if (!NetworkManager.Singleton.IsServer)
             ReturnToHand();
     }
-   
+
     #endregion
 
     #region UTILITY
+
     public void SetOwner(CharacterBase newOwner)
     {
         owner = newOwner;
@@ -282,7 +316,7 @@ public class WeaponBase : NetworkBehaviour
     {
         transform.localScale = baseScale * (BuffScaleMultiplier * ownerScale);
     }
-    
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();

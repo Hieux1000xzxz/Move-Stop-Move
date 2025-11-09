@@ -14,7 +14,7 @@ public partial class CharacterBase
             ChangeState(CharacterState.Attack);
         }
     }
-    
+
     protected Transform FindNearestTarget()
     {
         Collider[] targets = GetTargetsInRange();
@@ -24,11 +24,11 @@ public partial class CharacterBase
 
         foreach (Collider target in targets)
         {
-            if (!IsValidTarget(target)) 
+            if (!IsValidTarget(target))
                 continue;
 
             CharacterBase otherChar = GetCharacterBase(target);
-            if (otherChar == null || otherChar == this) 
+            if (otherChar == null || otherChar == this)
                 continue;
 
             float distance = GetDistanceToTarget(otherChar);
@@ -41,10 +41,11 @@ public partial class CharacterBase
 
         return nearest;
     }
-    
+
     private Collider[] GetTargetsInRange()
     {
-        return Physics.OverlapSphere(transform.position, attackRange);
+        overlapCount = Physics.OverlapSphereNonAlloc(transform.position, attackRange, overlapResults);
+        return overlapResults;
     }
 
     private bool IsValidTarget(Collider target)

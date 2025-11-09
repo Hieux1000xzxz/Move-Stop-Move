@@ -52,7 +52,6 @@ public partial class CharacterBase
         {
             agent.enabled = false;
             agent.velocity = Vector3.zero;
-            //agent.ResetPath();
         }
     }
 
@@ -61,26 +60,6 @@ public partial class CharacterBase
         TriggerDeathAnimation();
         if (IsServer)
             DisableColliderClientRpc();
-    }
-
-    private void ReleaseWeaponOnDeath()
-    {
-        if (currentWeapon == null) return;
-
-        HideOrReleaseWeapon();
-
-        if (IsServer)
-            ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
-        else
-            currentWeapon.gameObject.SetActive(false);
-
-        currentWeapon = null;
-    }
-
-    private IEnumerator DelayedDisable(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        gameObject.SetActive(false);
     }
 
     private void SpawnCoinUniversal()

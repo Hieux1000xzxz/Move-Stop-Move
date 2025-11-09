@@ -15,13 +15,15 @@ public partial class CharacterBase
         SetupInitialWeapon();
         SetupPlayerInfo();
         SetupScoreDisplay();
-
         SetupScoreSync();
 
-        NetState.OnValueChanged += (oldVal, newVal) =>
+        if (!IsOwner)
         {
-            currentState = newVal; // sync local state with server
-        };
+            NetState.OnValueChanged += (oldVal, newVal) =>
+            {
+                currentState = newVal;
+            };
+        }
 
         SessionCoin.OnValueChanged += (oldVal, newVal) =>
         {
@@ -110,17 +112,8 @@ public partial class CharacterBase
 
         while (t < timeout && currentWeapon == null)
         {
-            if (NetCurrentWeapon.Value.TryGet(out NetworkObject obj) && obj != null)
-            {
-                var weap = WeaponBase.GetByNetworkObject(obj);
-                if (weap != null)
-                {
-                    currentWeapon = weap;
-                    currentWeapon.SetOwner(this);
-                    AssignWeapon(currentWeapon);
-                    yield break;
-                }
-            }
+            if (TryResolveWeaponFromNetworkObject())
+                yield break;
 
             t += Time.unscaledDeltaTime;
             yield return null;
@@ -132,6 +125,22 @@ public partial class CharacterBase
         }
     }
 
+    private bool TryResolveWeaponFromNetworkObject()
+    {
+        if (NetCurrentWeapon.Value.TryGet(out NetworkObject obj) && obj != null)
+        {
+            var weap = WeaponBase.GetByNetworkObject(obj);
+            if (weap != null)
+            {
+                currentWeapon = weap;
+                currentWeapon.SetOwner(this);
+                AssignWeapon(currentWeapon);
+                return true;
+            }
+        }
+
+        return false;
+    }
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();

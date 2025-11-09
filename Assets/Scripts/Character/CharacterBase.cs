@@ -85,6 +85,8 @@ public abstract partial class CharacterBase : NetworkBehaviour
 
     public Collider CharacterCollider => characterCollider;
 
+    public NetworkAnimator NetworkAnimator => networkAnimator;
+
     public NetworkVariable<int> Score = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
@@ -108,6 +110,9 @@ public abstract partial class CharacterBase : NetworkBehaviour
     public NetworkVariable<int> SessionCoin = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
+
+    private static readonly Collider[] overlapResults = new Collider[32];
+    private int overlapCount;
 
     #region Unity Lifecycle
 

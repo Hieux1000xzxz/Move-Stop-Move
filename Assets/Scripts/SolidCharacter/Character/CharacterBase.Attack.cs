@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections;
+using Unity.Netcode;
+
 
 public partial class CharacterBase
 {
@@ -8,7 +10,11 @@ public partial class CharacterBase
     protected void ChangeState(CharacterState newState)
     {
         if (currentState == newState) return;
+
+        // Client prediction: Update local state ngay
         currentState = newState;
+
+        // Server: Sync qua network
         if (IsServer)
         {
             NetState.Value = newState;
@@ -84,20 +90,22 @@ public partial class CharacterBase
         isAttacking = false;
         hasWeapon = true;
 
-        if (IsOwner)
-            SetAttackAnimation(false);
-
         if (attackRoutine != null)
         {
             StopCoroutine(attackRoutine);
             attackRoutine = null;
         }
 
-        if (IsServer)
+        if (resetState)
         {
-            nextAttackTime = Time.time;
-            if (resetState)
-                ChangeState(IsMovingNow() ? CharacterState.Move : CharacterState.Idle);
+            CharacterState newState = IsMovingNow() ? CharacterState.Move : CharacterState.Idle;
+            currentState = newState; 
+
+            if (IsServer)
+            {
+                NetState.Value = newState;
+                nextAttackTime = Time.time;
+            }
         }
     }
 
@@ -197,10 +205,8 @@ public partial class CharacterBase
     {
         isAttacking = true;
         hasWeapon = false;
-        nextAttackTime = Time.time + attackDelay;
 
-        if (IsOwner)
-            SetAttackAnimation(true);
+        nextAttackTime = Time.time + attackDelay;
 
         if (attackRoutine != null)
             StopCoroutine(attackRoutine);
@@ -218,7 +224,6 @@ public partial class CharacterBase
     {
         yield return new WaitForSeconds(attackDelay);
 
-
         if (currentState != CharacterState.Attack || isDead || IsMovingNow())
         {
             EndAttack(true);
@@ -231,10 +236,33 @@ public partial class CharacterBase
             yield break;
         }
 
-        if (IsOwner)
-            RequestLaunchServerRpc();
+        bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+
+        if (isMultiplayer && IsOwner)
+        {
+            if (attackTarget != null)
+            {
+                RequestLaunchServerRpc(attackTarget.position);
+            }
+        }
+        else if (!isMultiplayer || IsServer)
+        {
+            LaunchWeaponLocal();
+        }
 
         EndAttack();
+    }
+
+    private void LaunchWeaponLocal()
+    {
+        if (isDead || currentWeapon == null || attackTarget == null) return;
+        if (currentState != CharacterState.Attack) return;
+
+        Vector3 dir = (attackTarget.position - weaponSpawnPoint.position).normalized;
+        Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(weaponRotationOffset);
+
+        currentWeapon.transform.rotation = rot;
+        currentWeapon.Launch(dir, this.gameObject);
     }
 
     public void OnWeaponReturned()

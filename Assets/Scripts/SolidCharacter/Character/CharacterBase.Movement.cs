@@ -8,17 +8,9 @@ public partial class CharacterBase
     {
         if (this is Player player)
         {
-            if (player.IsOwner)
-                return player.isMovingInput;
-
-            // Non-owner: dựa vào agent velocity
-            if (AgentValid)
-                return agent.velocity.magnitude > 0.05f;
-
-            return false;
+            return player.isMovingInput;
         }
 
-        // AI or non-player
         if (AgentValid)
             return agent.velocity.magnitude > 0.05f;
 
@@ -34,7 +26,7 @@ public partial class CharacterBase
         {
             Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
-            agent.Move(direction.normalized * moveSpeed * Time.deltaTime);
+            agent.Move(direction * (moveSpeed * Time.deltaTime));
         }
         else
         {
@@ -44,15 +36,12 @@ public partial class CharacterBase
 
     protected virtual void UpdateAnimator()
     {
-        if (animator == null) return;
+        if (networkAnimator == null || networkAnimator.Animator == null) return;
 
         float speed = CalculateAnimationSpeed();
 
-        if (IsOwner)
-        {
-            SetAnimationSpeed(speed);
-            SetAttackAnimation(isAttacking);
-        }
+        SetAnimationSpeed(speed);
+        SetAttackAnimation(isAttacking);
     }
 
     private float CalculateAnimationSpeed()
