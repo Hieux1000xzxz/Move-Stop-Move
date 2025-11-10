@@ -31,7 +31,7 @@ public class Coin : NetworkBehaviour
         if (meshRenderer != null) meshRenderer.enabled = true;
 
         CancelInvoke();
-        Invoke(nameof(DespawnSelf), despawnDelay); 
+        Invoke(nameof(DespawnSelf), despawnDelay);
     }
 
     private void OnTriggerEnter(Collider other)

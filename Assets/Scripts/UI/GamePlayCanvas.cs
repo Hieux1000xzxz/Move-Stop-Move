@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Video;
 using System.Collections;
+
 public class GamePlayCanvas : BaseCanvas
 {
     [SerializeField] private GameObject gameOverUI;
@@ -26,7 +27,7 @@ public class GamePlayCanvas : BaseCanvas
     private string playerName;
     private float winExitTimer = -1f;
     private float winExitDelay = 5f;
-    
+
     [SerializeField] private TMP_Text earnedCoinText;
 
     public void Init(ConnectionCanvas connection, string lobbyId, string playerName)
@@ -43,9 +44,10 @@ public class GamePlayCanvas : BaseCanvas
         menuUI.SetActive(false);
         viewUI.SetActive(false);
         countDown.gameObject.SetActive(false);
-        
+
         totalCoinText.gameObject.SetActive(false);
     }
+
     private void Update()
     {
         if (winExitTimer > 0)
@@ -80,7 +82,7 @@ public class GamePlayCanvas : BaseCanvas
         backToMenuButton.onClick.AddListener(() => OnExitConfirm());
         menuButton.onClick.AddListener(OnMenuOpen);
         exitGameButton.onClick.AddListener(() => OnExitConfirm());
-        continueGameButton.onClick.AddListener(() =>  OnContinueGame());
+        continueGameButton.onClick.AddListener(() => OnContinueGame());
         continueViewGameButton.onClick.AddListener(OnContinueView);
         previousButton.onClick.AddListener(() => GameManager.Instance.RequestPreviousSpectatorTargetServerRpc());
         nextButton.onClick.AddListener(() => GameManager.Instance.RequestNextSpectatorTargetServerRpc());
@@ -136,6 +138,7 @@ public class GamePlayCanvas : BaseCanvas
             OnExitGame(false);
         }
     }
+
     public void OnExitGame(bool showHostLeftMessage = false)
     {
         Debug.Log($"Exit Match - showHostLeftMessage: {showHostLeftMessage}");
@@ -179,7 +182,7 @@ public class GamePlayCanvas : BaseCanvas
         viewUI.SetActive(true);
         gameOverUI.SetActive(false);
         menuButton.gameObject.SetActive(true);
-    
+
         CoinManager.Instance.ShowCoinText();
 
         StartCoroutine(RequestCoinAfterFocus());
@@ -187,18 +190,21 @@ public class GamePlayCanvas : BaseCanvas
         UIManager.Instance.ShowCountText();
         totalCoinText.gameObject.SetActive(false);
     }
+
     private IEnumerator RequestCoinAfterFocus()
     {
-        yield return new WaitForSeconds(0.2f); 
+        yield return new WaitForSeconds(0.2f);
         ulong spectatedId = GameManager.Instance.CurrentSpectatedId;
         /*if (spectatedId != 0)
             GameManager.Instance.RequestSpectatedCoinUpdateServerRpc(spectatedId);*/
     }
+
     private void OnMenuOpen()
     {
         menuUI.SetActive(true);
         menuButton.gameObject.SetActive(false);
     }
+
     private void OnBackToMenu()
     {
         Debug.Log("Back to Main Menu");
@@ -215,7 +221,6 @@ public class GamePlayCanvas : BaseCanvas
             CoinManager.Instance.ShowEndMatchCoinText();
         else
             CoinManager.Instance.HideEndMatchCoinText();
-        CoinManager.Instance.CommitSessionCoins();
     }
 
     public void OnGameWin()
@@ -225,9 +230,11 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
         countDown.gameObject.SetActive(true);
-        
-        
+
+
         CoinManager.Instance.HideCoinText();
+        CoinManager.Instance.CommitSessionCoins();
+
         if (!GameManager.Instance.IsSpectatorMode && !viewUI.activeSelf)
             CoinManager.Instance.ShowEndMatchCoinText();
         else
@@ -242,7 +249,7 @@ public class GamePlayCanvas : BaseCanvas
         menuButton.gameObject.SetActive(false);
         winExitTimer = winExitDelay;
         countDown.gameObject.SetActive(true);
-        
+
 
         CoinManager.Instance.HideCoinText();
 
@@ -252,4 +259,3 @@ public class GamePlayCanvas : BaseCanvas
             CoinManager.Instance.HideEndMatchCoinText();
     }
 }
-

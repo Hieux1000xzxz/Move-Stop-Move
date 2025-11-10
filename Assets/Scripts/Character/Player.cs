@@ -92,6 +92,7 @@ public class Player : CharacterBase
     {
         base.OnNetworkSpawn();
 
+
         if (IsOwner)
         {
             Local = this;

@@ -111,7 +111,7 @@ public abstract partial class CharacterBase : NetworkBehaviour
         0, NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
-    private static readonly Collider[] overlapResults = new Collider[32];
+    private readonly Collider[] overlapResults = new Collider[32];
     private int overlapCount;
 
     #region Unity Lifecycle
