@@ -90,6 +90,9 @@ public partial class CharacterBase
         isAttacking = false;
         hasWeapon = true;
 
+        if (IsOwner)
+            netIsAttacking.Value = false;
+
         if (attackRoutine != null)
         {
             StopCoroutine(attackRoutine);
@@ -99,7 +102,7 @@ public partial class CharacterBase
         if (resetState)
         {
             CharacterState newState = IsMovingNow() ? CharacterState.Move : CharacterState.Idle;
-            currentState = newState; 
+            currentState = newState;
 
             if (IsServer)
             {
@@ -205,6 +208,9 @@ public partial class CharacterBase
     {
         isAttacking = true;
         hasWeapon = false;
+
+        if (IsOwner)
+            netIsAttacking.Value = true;
 
         nextAttackTime = Time.time + attackDelay;
 

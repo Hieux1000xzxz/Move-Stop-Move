@@ -6,27 +6,24 @@ public partial class CharacterBase
 
     protected void SetAnimationSpeed(float speed)
     {
-        if (networkAnimator != null && networkAnimator.Animator != null)
-        {
-            networkAnimator.Animator.SetFloat("Speed", speed);
-        }
+        if (IsOwner)
+            netSpeed.Value = speed; // sync speed tới tất cả client
     }
 
     protected void SetAttackAnimation(bool isAttacking)
     {
-        if (networkAnimator != null && networkAnimator.Animator != null)
-        {
-            networkAnimator.Animator.SetBool("IsAttacking", isAttacking);
-        }
+        if (IsOwner)
+            netIsAttacking.Value = isAttacking; // sync bool attackf
     }
 
     protected void TriggerDeathAnimation()
     {
-        if (networkAnimator != null && networkAnimator.Animator != null)
+        if (animator != null)
         {
-            networkAnimator.Animator.SetFloat("Speed", 0f);
-            networkAnimator.Animator.SetBool("IsAttacking", false);
-            networkAnimator.SetTrigger("Death");
+            animator.SetFloat("Speed", 0f);
+            animator.SetBool("IsAttacking", false);
+            if (networkAnimator != null)
+                networkAnimator.SetTrigger("Death");
         }
     }
 

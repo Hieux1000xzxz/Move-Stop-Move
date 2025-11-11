@@ -36,12 +36,26 @@ public partial class CharacterBase
 
     protected virtual void UpdateAnimator()
     {
-        if (networkAnimator == null || networkAnimator.Animator == null) return;
+        if (animator == null) return;
 
-        float speed = CalculateAnimationSpeed();
+        if (IsOwner)
+        {
+            float speed = CalculateAnimationSpeed();
 
-        SetAnimationSpeed(speed);
-        SetAttackAnimation(isAttacking);
+            if (Mathf.Abs(netSpeed.Value - speed) > 0.01f)
+                netSpeed.Value = speed;
+
+            if (netIsAttacking.Value != isAttacking)
+                netIsAttacking.Value = isAttacking;
+
+            animator.SetFloat("Speed", speed);
+            animator.SetBool("IsAttacking", isAttacking);
+        }
+        else
+        {
+            animator.SetFloat("Speed", netSpeed.Value);
+            animator.SetBool("IsAttacking", netIsAttacking.Value);
+        }
     }
 
     private float CalculateAnimationSpeed()

@@ -27,7 +27,10 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private Transform[] spawnPoints;
 
     [Header("UI / Preview")] [SerializeField]
-    private GameObject playerPreview;
+    private List<PlayerPreview> playerPreviews = new List<PlayerPreview>();
+
+    public List<PlayerPreview> PlayerPreviews => playerPreviews;
+
 
     [Header("Cache")] [SerializeField] private List<NetworkObject> activeAINetworkObjects = new List<NetworkObject>();
     [SerializeField] private List<NetworkObject> activePlayerNetworkObjects = new List<NetworkObject>();
@@ -541,14 +544,21 @@ public class GameManager : NetworkBehaviour
 
     public void HidePlayerPreview()
     {
-        if (playerPreview != null)
-            playerPreview.SetActive(false);
+        foreach (PlayerPreview preview in playerPreviews)
+        {
+            if (preview != null)
+                preview.gameObject.SetActive(false);
+        }
     }
 
     public void ShowPlayerPreview()
     {
-        if (playerPreview != null)
-            playerPreview.SetActive(true);
+        foreach (PlayerPreview preview in playerPreviews)
+        {
+            if (preview != null)
+                preview.gameObject.SetActive(true);
+        }
+
         zoomController.SetUpBaseZoom();
     }
 

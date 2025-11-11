@@ -21,6 +21,9 @@ public class Player : CharacterBase
     {
         base.Start();
 
+        animator.SetFloat("Speed", netSpeed.Value);
+        animator.SetBool("IsAttacking", netIsAttacking.Value);
+
         bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
 
         if (!isMultiplayer || IsOwner)
@@ -58,17 +61,21 @@ public class Player : CharacterBase
     {
         if (NetworkAnimator == null || NetworkAnimator.Animator == null) return;
 
-        bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
-        if (isMultiplayer && !IsOwner) return;
-
         float targetSpeed;
         bool effectiveMoving = isMovingInput || (Time.time - lastMoveInputTime < minIdleDelay);
         targetSpeed = effectiveMoving ? MoveSpeed : 0f;
 
         smoothSpeed = Mathf.Lerp(smoothSpeed, targetSpeed, Time.deltaTime * 25f);
 
-        SetAnimationSpeed(smoothSpeed);
-        SetAttackAnimation(isAttacking);
+        animator.SetFloat("Speed", smoothSpeed);
+        animator.SetBool("IsAttacking", isAttacking);
+
+        // Optional: update net variables if owner
+        if (IsOwner)
+        {
+            netSpeed.Value = smoothSpeed;
+            netIsAttacking.Value = isAttacking;
+        }
     }
 
     protected override bool IsMovingNow()

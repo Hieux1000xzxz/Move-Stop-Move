@@ -111,6 +111,12 @@ public abstract partial class CharacterBase : NetworkBehaviour
         0, NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
+    protected NetworkVariable<float> netSpeed = new NetworkVariable<float>(
+        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
+    protected NetworkVariable<bool> netIsAttacking = new NetworkVariable<bool>(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
     private readonly Collider[] overlapResults = new Collider[32];
     private int overlapCount;
 

@@ -95,6 +95,15 @@ public partial class ConnectionCanvas : BaseCanvas
         SaveAvatarIndex(selectedAvatarIndex);
         HidePlayerInfoPanel();
 
+        if (GameManager.Instance != null && GameManager.Instance.PlayerPreviews != null)
+        {
+            foreach (var preview in GameManager.Instance.PlayerPreviews)
+            {
+                if (preview != null)
+                    preview.SetPlayerName(localUserName);
+            }
+        }
+
         if (!string.IsNullOrEmpty(currentLobbyId) && networkManager.IsClient)
             StartCoroutine(UpdatePlayerInfoInLobby());
     }
