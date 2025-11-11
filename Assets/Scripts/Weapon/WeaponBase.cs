@@ -334,7 +334,7 @@ public class WeaponBase : NetworkBehaviour
     public static WeaponBase GetByNetworkObject(NetworkObject net)
     {
         if (net == null) return null;
-        weaponCache.TryGetValue(net, out var weapon);
+        weaponCache.TryGetValue(net, out WeaponBase weapon);
         return weapon;
     }
 

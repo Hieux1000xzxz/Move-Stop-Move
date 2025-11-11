@@ -4,8 +4,9 @@ using UnityEngine.UI;
 
 public class AvatarItem : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private Image avatarImage;
+    [Header("References")] [SerializeField]
+    private Image avatarImage;
+
     [SerializeField] private Button button;
     [SerializeField] private GameObject chooseHighlight;
 
@@ -35,22 +36,6 @@ public class AvatarItem : MonoBehaviour
     private void OnClick()
     {
         onAvatarSelected?.Invoke(avatarIndex);
-    }
-
-    public void UpdateAvatarSprite(Sprite newSprite)
-    {
-        if (avatarImage != null && newSprite != null)
-        {
-            avatarImage.sprite = newSprite;
-        }
-    }
-
-    public void SetInteractable(bool interactable)
-    {
-        if (button != null)
-        {
-            button.interactable = interactable;
-        }
     }
 
     public void SetHighlight(bool active)
