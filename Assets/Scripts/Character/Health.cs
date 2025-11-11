@@ -4,9 +4,11 @@ using UnityEngine;
 public class Health : NetworkBehaviour
 {
     [SerializeField] private Animator animator;
-    [SerializeField] public int maxHealth = 10;
+    [SerializeField] private int maxHealth = 10;
     [SerializeField] private string deadLayerName = "Dead";
     [SerializeField] private Player playerRef;
+    
+    public int MaxHealth => maxHealth;
     public NetworkVariable<int> CurrentHealth = new NetworkVariable<int>(
         0,
         NetworkVariableReadPermission.Everyone,
@@ -19,7 +21,7 @@ public class Health : NetworkBehaviour
         if (playerRef == null)
             TryGetComponent(out playerRef);
 
-        ObjectPool.Instance?.RegisterCharacter(gameObject, GetComponent<CharacterBase>());
+        ObjectPool.Instance.RegisterCharacter(gameObject, GetComponent<CharacterBase>());
     }
     public override void OnNetworkSpawn()
     {
@@ -49,44 +51,51 @@ public class Health : NetworkBehaviour
         }
     }
 
-    public void ApplyDamage(int amount)
+    private void HandleDeath()
     {
-        if (!IsServer) return;
-        if (IsDead) return;
 
-        CurrentHealth.Value = Mathf.Max(CurrentHealth.Value - amount, 0);
+        SetDeadLayer();
+        if (IsServer)
+        {
+            NotifyGameOverToOwner();
+            DieClientRpc();
+        }
+    }
+    
+    public void ApplyDamage(int dmg)
+    {
+        if (!IsServer || IsDead) return;
+
+        CurrentHealth.Value -= dmg;
+        if (CurrentHealth.Value <= 0)
+        {
+            CurrentHealth.Value = 0;
+            HandleDeath();
+        }
     }
 
-    private void HandleDeath()
+    private void SetDeadLayer()
     {
         int deadLayer = LayerMask.NameToLayer(deadLayerName);
         if (deadLayer >= 0)
             gameObject.layer = deadLayer;
-
-        if (IsServer)
-        {
-            Player player = GetComponent<Player>();
-            if (player != null)
-            {
-                var ownerClientId = player.OwnerClientId;
-
-                GameManager.Instance.GameOverTargetClientRpc(new ClientRpcParams
-                {
-                    Send = new ClientRpcSendParams
-                    {
-                        TargetClientIds = new ulong[] { ownerClientId }
-                    }
-                });
-            }
-            else
-            {
-            }
-
-            DieClientRpc();
-        }
     }
 
+    private void NotifyGameOverToOwner()
+    {
+        if (playerRef != null)
+        {
+            var ownerClientId = playerRef.OwnerClientId;
 
+            GameManager.Instance.GameOverTargetClientRpc(new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new ulong[] { ownerClientId }
+                }
+            });
+        }
+    }
     [ClientRpc]
     private void DieClientRpc()
     {

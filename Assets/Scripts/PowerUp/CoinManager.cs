@@ -1,19 +1,29 @@
 using UnityEngine;
 using TMPro;
-using UnityEngine.PlayerLoop;
 
 public class CoinManager : Singleton<CoinManager>
 {
-    [Header("Coin Settings")]
-    [SerializeField] private TMP_Text coinText;
+    [Header("Coin Settings")] [SerializeField]
+    private TMP_Text coinText;
+
     [SerializeField] private TMP_Text endMatchCoinText;
 
     private const string COIN_KEY = "ShopCoins";
 
-    private int sessionCoins = 0; 
+    private int sessionCoins = 0;
     private int shopCoins = 0;
-    private int lastSessionCoins = 0; 
-    
+    private int lastSessionCoins = 0;
+    private int earnedThisMatch = 0;
+    private int spectatorCoins = 0;
+
+    public int LastSessionCoins
+    {
+        get { return lastSessionCoins; }
+        set { lastSessionCoins = value; }
+    }
+
+    public int SessionCoins => sessionCoins;
+
     public int GetShopCoins() => shopCoins;
 
     private new void Awake()
@@ -32,10 +42,10 @@ public class CoinManager : Singleton<CoinManager>
     {
         UpdateCoinUI();
     }
-    
+
     public void CommitSessionCoins()
     {
-        lastSessionCoins = sessionCoins;
+        lastSessionCoins += sessionCoins;
         shopCoins += sessionCoins;
         sessionCoins = 0;
         SaveCoins();
@@ -52,6 +62,7 @@ public class CoinManager : Singleton<CoinManager>
             UpdateCoinUI();
             return true;
         }
+
         return false;
     }
 
@@ -66,10 +77,12 @@ public class CoinManager : Singleton<CoinManager>
         if (coinText != null)
             coinText.text = $"Coins: {sessionCoins}";
     }
+
     public void UpdateCoinUIFromSession(int newAmount)
     {
         sessionCoins = newAmount;
-        UpdateCoinUI();
+        if (coinText != null)
+            coinText.text = $"Coins: {sessionCoins}";
     }
 
     public void HideCoinText()
@@ -92,8 +105,6 @@ public class CoinManager : Singleton<CoinManager>
         endMatchCoinText.gameObject.SetActive(true);
         endMatchCoinText.text = $"+{earned} Coins earned!";
     }
-    
-    private int spectatorCoins = 0;
 
     public void UpdateSpectatorCoin(int amount)
     {
@@ -111,5 +122,4 @@ public class CoinManager : Singleton<CoinManager>
         if (endMatchCoinText != null)
             endMatchCoinText.gameObject.SetActive(false);
     }
-
 }

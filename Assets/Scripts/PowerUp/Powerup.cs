@@ -4,38 +4,29 @@ using UnityEngine;
 public class Powerup : NetworkBehaviour
 {
     [Header("Config")]
-    [SerializeField] public PowerupType type;
-    [SerializeField] public float duration = 5f;
+    [SerializeField] private PowerupType type;
+    [SerializeField] private float duration = 5f;
 
     [Header("Refs")]
-    [SerializeField] public Collider triggerCollider;
-    [SerializeField] public NetworkObject netObject;
+    [SerializeField] private NetworkObject netObject;
 
     public System.Action OnReleased;
     private void Awake()
     {
-        ObjectPool.Instance?.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
+        ObjectPool.Instance.RegisterNetworkObject(gameObject, GetComponent<NetworkObject>());
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        CharacterBase character = other.GetComponent<CharacterBase>();
-        if (character == null) return;
+        if (!other.TryGetComponent(out CharacterBase character)) return;
+        if (!character.IsOwner) return;
 
-        if (character.IsOwner)
-        {
-            ObjectPool.Instance.ReleasePowerup(gameObject, type);
+        ObjectPool.Instance.ReleasePowerup(gameObject, type);
 
-            if (netObject != null && netObject.IsSpawned) 
-            {
-                character.RequestPickupPowerupServerRpc(netObject, type, duration);
-            }
-            
-            else
-            {
-                character.ApplyPowerupLocal(type, duration);
-            }
-        }
+        if (netObject != null && netObject.IsSpawned)
+            character.RequestPickupPowerupServerRpc(netObject, type, duration);
+        else
+            character.ApplyPowerupLocal(type, duration);
     }
     public void SetType(PowerupType newType)
     {

@@ -539,12 +539,10 @@ MonoBehaviour:
   moveSpeed: 8
   agent: {fileID: 4550715733078292569}
   animator: {fileID: 888152990171484203}
+  networkAnimator: {fileID: 9087496472815790999}
   health: {fileID: -3577197991604517564}
   attackRange: 6
   attackDuration: 0.5
-  targetLayer:
-    serializedVersion: 2
-    m_Bits: 72
   characterCollider: {fileID: 7915159274365355493}
   networkObject: {fileID: 7923767263140444007}
   weaponSpawnPoint: {fileID: 7073988956984485799}
@@ -561,8 +559,6 @@ MonoBehaviour:
   detectAttackDelay: 0.5
   isDead: 0
   Score:
-    m_InternalValue: 0
-  NetIsMoving:
     m_InternalValue: 0
   PlayerName:
     m_InternalValue:
@@ -601,7 +597,7 @@ MonoBehaviour:
         byte0029: 0
   NetState:
     m_InternalValue: 0
-  NetIsAttacking:
+  SessionCoin:
     m_InternalValue: 0
   patrolRadius: 10
   observeMinTime: 1

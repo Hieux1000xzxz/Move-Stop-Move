@@ -192,6 +192,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6751911775233490694, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
       propertyPath: m_IsKinematic
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6751911775233490694, guid: 4c578daf99f37974c94039d7a1346c6a, type: 3}
+      propertyPath: m_CollisionDetection
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -270,7 +274,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  speed: 14
+  speed: 9
   damage: 10
   handRotationOffset: {x: 0, y: 0, z: 90}
   rotateAxis: {x: 0, y: -1, z: 0}

@@ -15,35 +15,32 @@ public class NotificationCanvas : BaseCanvas
     [SerializeField] private TextMeshProUGUI toastText;
     [SerializeField] private float toastDuration = 0.5f;
     [SerializeField] private float toastFadeTime = 0.25f;
-    [Header("Countdown Toast")]
-    [SerializeField] private TextMeshProUGUI countdownToastText;
+
+    [Header("Countdown Toast")] [SerializeField]
+    private TextMeshProUGUI countdownToastText;
 
     private Action<bool> onDecision;
     private Tween currentToastTween;
     private Vector3 originalToastPos;
 
-    void Start()
+    private void OnCloseClicked() => HandleDecision(false);
+    private void OnCancelClicked() => HandleDecision(false);
+    private void OnConfirmClicked() => HandleDecision(true);
+
+    private void Start()
     {
         if (toastText != null)
             originalToastPos = toastText.rectTransform.anchoredPosition;
 
-        closeButton.onClick.AddListener(() =>
-        {
-            onDecision?.Invoke(false);
-            CloseNotificationCanvas();
-        });
+        closeButton.onClick.AddListener(OnCloseClicked);
+        cancelButton.onClick.AddListener(OnCancelClicked);
+        confirmButton.onClick.AddListener(OnConfirmClicked);
+    }
 
-        cancelButton.onClick.AddListener(() =>
-        {
-            onDecision?.Invoke(false);
-            CloseNotificationCanvas();
-        });
-
-        confirmButton.onClick.AddListener(() =>
-        {
-            onDecision?.Invoke(true);
-            CloseNotificationCanvas();
-        });
+    private void HandleDecision(bool decision)
+    {
+        onDecision?.Invoke(decision);
+        CloseNotificationCanvas();
     }
 
     private void OnEnable()
@@ -55,38 +52,38 @@ public class NotificationCanvas : BaseCanvas
         }
     }
 
-    
+
     public void SetText(string message)
     {
         if (messageText != null)
             messageText.text = message;
     }
 
-    public void HideCloseButton() => closeButton?.gameObject.SetActive(false);
-    public void ShowCloseButton() => closeButton?.gameObject.SetActive(true);
+    public void HideCloseButton() => closeButton.gameObject.SetActive(false);
+    public void ShowCloseButton() => closeButton.gameObject.SetActive(true);
 
     public void ShowConfirmButton()
     {
-        confirmButton?.gameObject.SetActive(true);
-        cancelButton?.gameObject.SetActive(true);
+        confirmButton.gameObject.SetActive(true);
+        cancelButton.gameObject.SetActive(true);
     }
 
     public void HideConfirmButton()
     {
-        confirmButton?.gameObject.SetActive(false);
-        cancelButton?.gameObject.SetActive(false);
+        confirmButton.gameObject.SetActive(false);
+        cancelButton.gameObject.SetActive(false);
     }
 
     public void ShowMainPanel()
     {
-        mainPanel.gameObject.SetActive(true);
+        mainPanel.SetActive(true);
         toastText.gameObject.SetActive(false);
         panel.SetActive(true);
     }
 
     public void HideMainPanel()
     {
-        mainPanel.gameObject.SetActive(false);
+        mainPanel.SetActive(false);
     }
 
     public void SetCallback(Action<bool> decisionCallback)
@@ -101,12 +98,12 @@ public class NotificationCanvas : BaseCanvas
         if (toastText == null) return;
 
         panel.SetActive(false);
-        currentToastTween?.Kill();
+        currentToastTween.Kill();
 
-        toastText.rectTransform.anchorMin = new Vector2(0.5f, 0f);   
+        toastText.rectTransform.anchorMin = new Vector2(0.5f, 0f);
         toastText.rectTransform.anchorMax = new Vector2(0.5f, 0f);
         toastText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        toastText.rectTransform.anchoredPosition = new Vector2(0f, 150f); 
+        toastText.rectTransform.anchoredPosition = new Vector2(0f, 150f);
         toastText.gameObject.SetActive(true);
         toastText.text = message;
 
@@ -122,12 +119,8 @@ public class NotificationCanvas : BaseCanvas
         seq.AppendInterval(toastDuration);
         seq.Append(toastText.DOFade(0f, toastFadeTime));
         seq.Join(toastText.rectTransform.DOAnchorPosY(250f, toastFadeTime).SetEase(Ease.InBack));
-        seq.OnComplete(() =>
-        {
-            toastText.gameObject.SetActive(false);
-        });
+        seq.OnComplete(() => { toastText.gameObject.SetActive(false); });
 
         currentToastTween = seq;
     }
-
 }

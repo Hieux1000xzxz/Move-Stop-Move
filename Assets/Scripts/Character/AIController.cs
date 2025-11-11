@@ -29,7 +29,7 @@ public class AIController : CharacterBase
     protected override void Start()
     {
         base.Start();
-        agent.autoRepath = true;
+        Agent.autoRepath = true;
 
         StartCoroutine(DelayChangeWeapon());
     }
@@ -38,7 +38,7 @@ public class AIController : CharacterBase
         yield return new WaitUntil(() => IsSpawned && NetworkObject.IsSpawned);
 
         yield return null;
-        ChangeWeapon(weaponType);
+        ChangeWeapon(WeaponType);
     }
     protected override void Update()
     {
@@ -65,45 +65,6 @@ public class AIController : CharacterBase
         }
     }
 
-    protected override void OnTargetLost(Transform lostTarget)
-    {
-        base.OnTargetLost(lostTarget);
-
-        if (currentState == CharacterState.Attack)
-        {
-            isAttacking = false;
-            agent.isStopped = false;
-            ChangeState(CharacterState.Idle);
-        }
-
-        lastInterestPoint = transform.position;
-        Invoke(nameof(SetRandomPatrolPoint), 0.5f);
-    }
-
-    protected override void OnNewTargetFound(Transform newTarget)
-    {
-        base.OnNewTargetFound(newTarget);
-        targetFoundTime = Time.time;
-    }
-
-    protected override void OnTargetSwitched(Transform oldTarget, Transform newTarget)
-    {
-        base.OnTargetSwitched(oldTarget, newTarget);
-        targetFoundTime = Time.time;
-
-        if (currentState == CharacterState.Attack)
-        {
-            float distanceToNew = Vector3.Distance(transform.position, newTarget.position);
-            if (distanceToNew <= attackRange && Random.value < aggressionLevel)
-            {
-                attackTarget = newTarget;
-            }
-        }
-    }
-
-    protected override void CheckForAttack()
-    {
-    }
 
     private void MakeDecision()
     {
@@ -111,9 +72,9 @@ public class AIController : CharacterBase
 
         if (detectedTarget == null || !detectedTarget.gameObject.activeInHierarchy)
         {
-            if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+            if (Agent != null && Agent.isActiveAndEnabled && Agent.isOnNavMesh)
             {
-                if (!isObserving && (!agent.pathPending && agent.remainingDistance <= 0.5f))
+                if (!isObserving && (!Agent.pathPending && Agent.remainingDistance <= 0.5f))
                     DecideWhenIdle();
             }
             return;
@@ -164,7 +125,7 @@ public class AIController : CharacterBase
 
     private void DecideNearTarget()
     {
-        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+        if (Agent == null || !Agent.isActiveAndEnabled || !Agent.isOnNavMesh)
             return;
         float approachChance = aggressionLevel * (1f - fearLevel);
 
@@ -208,9 +169,9 @@ public class AIController : CharacterBase
 
     private void ObserveTarget()
     {
-        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+        if (Agent == null || !Agent.isActiveAndEnabled || !Agent.isOnNavMesh)
             return;
-        agent.isStopped = true;
+        Agent.isStopped = true;
         ChangeState(CharacterState.Idle);
         if (detectedTarget != null)
         {
@@ -229,8 +190,8 @@ public class AIController : CharacterBase
 
     private void MoveTo(Vector3 position)
     {
-        agent.isStopped = false;
-        agent.SetDestination(position);
+        Agent.isStopped = false;
+        Agent.SetDestination(position);
         ChangeState(CharacterState.Move);
     }
 
@@ -243,7 +204,7 @@ public class AIController : CharacterBase
     private IEnumerator ObserveRoutine()
     {
         isObserving = true;
-        agent.isStopped = true;
+        Agent.isStopped = true;
         ChangeState(CharacterState.Idle);
 
         yield return new WaitForSeconds(Random.Range(observeMinTime, observeMaxTime));
@@ -254,10 +215,10 @@ public class AIController : CharacterBase
     
     private void AvoidObstacle()
     {
-        if (rayOrigin == null || agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+        if (rayOrigin == null || Agent == null || !Agent.isActiveAndEnabled || !Agent.isOnNavMesh)
             return;
 
-        Vector3 dir = (agent.velocity.sqrMagnitude > 0.05f) ? agent.velocity.normalized : transform.forward;
+        Vector3 dir = (Agent.velocity.sqrMagnitude > 0.05f) ? Agent.velocity.normalized : transform.forward;
 
         if (Physics.SphereCast(rayOrigin.position, 0.5f, dir, out RaycastHit hit, rayDistance, obstacleLayer))
         {
@@ -268,57 +229,36 @@ public class AIController : CharacterBase
 
             if (NavMesh.SamplePosition(newTarget, out NavMeshHit navHit, 2f, NavMesh.AllAreas))
             {
-                agent.isStopped = false;
-                agent.ResetPath();
-                agent.SetDestination(navHit.position);
+                Agent.isStopped = false;
+                Agent.ResetPath();
+                Agent.SetDestination(navHit.position);
                 ChangeState(CharacterState.Move);
             }
         }
     }
-
-
-
+    
     private bool TrySetDestination(Vector3 targetPos, float sampleDistance)
     {
-        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+        if (Agent == null || !Agent.isActiveAndEnabled || !Agent.isOnNavMesh)
             return false;
 
         if (NavMesh.SamplePosition(targetPos, out NavMeshHit hit, sampleDistance, NavMesh.AllAreas))
         {
-            agent.isStopped = false;
-            agent.SetDestination(hit.position);
+            Agent.isStopped = false;
+            Agent.SetDestination(hit.position);
             ChangeState(CharacterState.Move);
             return true;
         }
         return false;
     }
 
-    protected override void EndAttack(bool cancelByMove = false)
-    {
-        base.EndAttack(cancelByMove);
-        lastInterestPoint = transform.position;
-        if (Random.value < 0.4f) detectedTarget = null;
-        agent.isStopped = false;
-    }
-
     public override Vector3 GetMovementInput() => Vector3.zero;
-
-    protected override void OnDrawGizmosSelected()
-    {
-        base.OnDrawGizmosSelected();
-        if (lastInterestPoint != Vector3.zero)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(lastInterestPoint, 1f);
-        }
-    }
 
     private void OnEnable()
     {
        GameManager.Instance.RegisterKillScore(this.networkObject, scoreDisplay);
     }
 
-    //SonarQueb
     protected override void OnDisable()
     {
         base.OnDisable();

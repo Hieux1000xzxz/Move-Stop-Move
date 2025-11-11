@@ -13,13 +13,15 @@ public class SpawnPointData
 
 public class AISpawner : NetworkBehaviour
 {
-    [Header("Spawn Settings")]
-    [SerializeField] private SpawnPointData[] spawnPoints;
+    [Header("Spawn Settings")] [SerializeField]
+    private SpawnPointData[] spawnPoints;
+
     [SerializeField] private float baseSpawnDelay = 1f;
     [SerializeField] private float delayIncrement = 0.5f;
     [SerializeField] private float maxSpawnDelay = 8f;
     [SerializeField] private int spawnPerWave = 2;
     [SerializeField] private float playerSafeDistance = 10f;
+    private readonly Collider[] safeCheckBuffer = new Collider[16];
 
     private Dictionary<Transform, GameObject> spawnPointAIs = new Dictionary<Transform, GameObject>();
     private Coroutine spawnCoroutine;
@@ -64,7 +66,8 @@ public class AISpawner : NetworkBehaviour
     private bool HasEmptyPoints()
     {
         foreach (var kvp in spawnPointAIs)
-            if (kvp.Value == null) return true;
+            if (kvp.Value == null)
+                return true;
         return false;
     }
 
@@ -113,15 +116,20 @@ public class AISpawner : NetworkBehaviour
         spawnCoroutine = null;
     }
 
- 
+
     private bool IsPlayerInSafeRange(SpawnPointData sp)
     {
-        Collider[] colliders = Physics.OverlapSphere(sp.point.position, playerSafeDistance);
-        foreach (var col in colliders)
+        int count = Physics.OverlapSphereNonAlloc(sp.point.position, playerSafeDistance, safeCheckBuffer);
+
+        for (int i = 0; i < count; i++)
         {
+            var col = safeCheckBuffer[i];
+            if (col == null) continue;
+
             if (col.CompareTag("Player"))
                 return true;
         }
+
         return false;
     }
 
@@ -148,7 +156,7 @@ public class AISpawner : NetworkBehaviour
             return;
 
         character.ResetState();
-        character.ChangeWeapon(character.weaponType);
+        character.ChangeWeapon(character.WeaponType);
     }
 
     private void PositionEnemy(GameObject enemy, Vector3 position, Quaternion rotation)
@@ -177,13 +185,5 @@ public class AISpawner : NetworkBehaviour
             netObj.Despawn(false);
             enemy.SetActive(false);
         }
-    }
-
-    public int GetActiveAICount()
-    {
-        int count = 0;
-        foreach (var ai in spawnPointAIs.Values)
-            if (ai != null) count++;
-        return count;
     }
 }
