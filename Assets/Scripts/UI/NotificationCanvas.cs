@@ -23,14 +23,18 @@ public class NotificationCanvas : BaseCanvas
     private Tween currentToastTween;
     private Vector3 originalToastPos;
 
+    private void OnCloseClicked() => HandleDecision(false);
+    private void OnCancelClicked() => HandleDecision(false);
+    private void OnConfirmClicked() => HandleDecision(true);
+
     private void Start()
     {
         if (toastText != null)
             originalToastPos = toastText.rectTransform.anchoredPosition;
 
-        closeButton.onClick.AddListener(() => HandleDecision(false));
-        cancelButton.onClick.AddListener(() => HandleDecision(false));
-        confirmButton.onClick.AddListener(() => HandleDecision(true));
+        closeButton.onClick.AddListener(OnCloseClicked);
+        cancelButton.onClick.AddListener(OnCancelClicked);
+        confirmButton.onClick.AddListener(OnConfirmClicked);
     }
 
     private void HandleDecision(bool decision)
