@@ -584,7 +584,7 @@ public class GameManager : NetworkBehaviour
         spectatorIndex--;
         if (spectatorIndex < 0) spectatorIndex = activeEntities.Count - 1;
 
-        var netObj = activeEntities[spectatorIndex];
+        NetworkObject netObj = activeEntities[spectatorIndex];
         if (netObj == null) return;
 
         var senderId = rpcParams.Receive.SenderClientId;
@@ -614,14 +614,10 @@ public class GameManager : NetworkBehaviour
                 mainCamera.LookAt = t;
 
                 if (killScoreMap.TryGetValue(netObj, out var killScore))
-                {
                     zoomController.SetUp(killScore);
-                }
 
                 if (netObj.TryGetComponent(out CharacterBase character))
-                {
                     TrackSpectatedCoin(character);
-                }
             }
         }
     }
@@ -645,14 +641,6 @@ public class GameManager : NetworkBehaviour
     {
         if (character == null) return;
 
-        //var netObj = character.GetComponent<NetworkObject>();
-        //if (netObj == null) return;
-
-        //if (character.ownerType == CharacterBase.OwnerType.AI)
-        //    UnregisterAI(netObj);
-        //else
-        //    UnregisterPlayerInGame(netObj);
-
         StartCoroutine(DelayedWeaponCleanup(character, 0.2f));
     }
 
@@ -663,7 +651,7 @@ public class GameManager : NetworkBehaviour
         if (character == null || ObjectPool.Instance == null)
             yield break;
 
-        var weapon = character.currentWeaponPublic;
+        WeaponBase weapon = character.currentWeaponPublic;
         if (weapon != null && weapon.NetworkObj != null && weapon.NetworkObj.IsSpawned)
         {
             ObjectPool.Instance.ReleaseWeapon(weapon.gameObject);
@@ -677,39 +665,4 @@ public class GameManager : NetworkBehaviour
     {
         CoinManager.Instance.CommitSessionCoins();
     }
-
-    /*[ServerRpc(RequireOwnership = false)]
-    public void RequestSpectatedCoinUpdateServerRpc(ulong targetId)
-    {
-        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(targetId, out var client))
-        {
-            CharacterBase targetCharacter = client.PlayerObject.GetComponent<CharacterBase>();
-            if (targetCharacter != null)
-            {
-                int coinValue = targetCharacter.SessionCoin.Value;
-                UpdateSpectatorCoinClientRpc(targetId, coinValue);
-            }
-        }
-    }*/
-
-    /*
-    [ClientRpc]
-    public void UpdateSpectatorCoinClientRpc(ulong targetId, int coinValue)
-    {
-        if (GameManager.Instance.CurrentSpectatedId == targetId)
-        {
-            CoinManager.Instance.UpdateSpectatorCoin(coinValue);
-        }
-    }*/
-
-    /*[ClientRpc]
-    public void UpdateSpectatorCoinForAllClientRpc(ulong playerId, int coinValue)
-    {
-        if (IsServer) return;
-
-        if (GameManager.Instance.CurrentSpectatedId == playerId)
-        {
-            CoinManager.Instance.UpdateSpectatorCoin(coinValue);
-        }
-    }*/
 }

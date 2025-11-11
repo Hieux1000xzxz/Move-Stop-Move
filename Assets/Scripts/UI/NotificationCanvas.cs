@@ -97,30 +97,52 @@ public class NotificationCanvas : BaseCanvas
     {
         if (toastText == null) return;
 
+        ResetToastState(message);
+        SetupToastTransform();
+
+        currentToastTween = CreateToastAnimation();
+    }
+
+    private void ResetToastState(string message)
+    {
         panel.SetActive(false);
         currentToastTween.Kill();
 
-        toastText.rectTransform.anchorMin = new Vector2(0.5f, 0f);
-        toastText.rectTransform.anchorMax = new Vector2(0.5f, 0f);
-        toastText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        toastText.rectTransform.anchoredPosition = new Vector2(0f, 150f);
         toastText.gameObject.SetActive(true);
         toastText.text = message;
 
-        var c = toastText.color;
-        c.a = 0f;
-        toastText.color = c;
+        var color = toastText.color;
+        color.a = 0f;
+        toastText.color = color;
+    }
 
-        toastText.rectTransform.anchoredPosition += new Vector2(0f, -50f);
+    private void SetupToastTransform()
+    {
+        RectTransform rect = toastText.rectTransform;
+
+        rect.anchorMin = new Vector2(0.5f, 0f);
+        rect.anchorMax = new Vector2(0.5f, 0f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(0f, 150f);
+
+        rect.anchoredPosition += new Vector2(0f, -50f);
+    }
+
+    private Tween CreateToastAnimation()
+    {
+        RectTransform rect = toastText.rectTransform;
 
         Sequence seq = DOTween.Sequence();
         seq.Append(toastText.DOFade(1f, toastFadeTime));
-        seq.Join(toastText.rectTransform.DOAnchorPosY(150f, toastFadeTime).SetEase(Ease.OutBack));
-        seq.AppendInterval(toastDuration);
-        seq.Append(toastText.DOFade(0f, toastFadeTime));
-        seq.Join(toastText.rectTransform.DOAnchorPosY(250f, toastFadeTime).SetEase(Ease.InBack));
-        seq.OnComplete(() => { toastText.gameObject.SetActive(false); });
+        seq.Join(rect.DOAnchorPosY(150f, toastFadeTime).SetEase(Ease.OutBack));
 
-        currentToastTween = seq;
+        seq.AppendInterval(toastDuration);
+
+        seq.Append(toastText.DOFade(0f, toastFadeTime));
+        seq.Join(rect.DOAnchorPosY(250f, toastFadeTime).SetEase(Ease.InBack));
+
+        seq.OnComplete(() => toastText.gameObject.SetActive(false));
+
+        return seq;
     }
 }

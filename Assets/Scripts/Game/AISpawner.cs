@@ -79,14 +79,46 @@ public class AISpawner : NetworkBehaviour
 
     private IEnumerator DelayedSpawn()
     {
-        if (!GameManager.Instance.CanSpawnAI())
+        if (!CanStartSpawning())
+            yield break;
+
+        float delay = CalculateSpawnDelay();
+        List<SpawnPointData> availablePoints = GetAvailableSpawnPoints();
+
+        if (availablePoints.Count == 0)
         {
-            spawnCoroutine = null;
+            StopSpawnCoroutine();
             yield break;
         }
 
-        float delay = Mathf.Min(baseSpawnDelay + (waveCount - 1) * delayIncrement, maxSpawnDelay);
+        yield return SpawnWaveWithDelay(availablePoints, delay);
 
+        StopSpawnCoroutine();
+    }
+
+    private void StopSpawnCoroutine()
+    {
+        spawnCoroutine = null;
+    }
+
+    private bool CanStartSpawning()
+    {
+        if (!GameManager.Instance.CanSpawnAI())
+        {
+            StopSpawnCoroutine();
+            return false;
+        }
+
+        return true;
+    }
+
+    private float CalculateSpawnDelay()
+    {
+        return Mathf.Min(baseSpawnDelay + (waveCount - 1) * delayIncrement, maxSpawnDelay);
+    }
+
+    private List<SpawnPointData> GetAvailableSpawnPoints()
+    {
         List<SpawnPointData> availablePoints = new List<SpawnPointData>();
         foreach (var sp in spawnPoints)
         {
@@ -96,12 +128,11 @@ public class AISpawner : NetworkBehaviour
             }
         }
 
-        if (availablePoints.Count == 0)
-        {
-            spawnCoroutine = null;
-            yield break;
-        }
+        return availablePoints;
+    }
 
+    private IEnumerator SpawnWaveWithDelay(List<SpawnPointData> availablePoints, float delay)
+    {
         for (int i = 0; i < spawnPerWave && availablePoints.Count > 0; i++)
         {
             if (!GameManager.Instance.CanSpawnAI()) break;
@@ -112,10 +143,7 @@ public class AISpawner : NetworkBehaviour
 
             yield return new WaitForSeconds(delay);
         }
-
-        spawnCoroutine = null;
     }
-
 
     private bool IsPlayerInSafeRange(SpawnPointData sp)
     {
@@ -123,7 +151,7 @@ public class AISpawner : NetworkBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            var col = safeCheckBuffer[i];
+            Collider col = safeCheckBuffer[i];
             if (col == null) continue;
 
             if (col.CompareTag("Player"))
@@ -152,7 +180,7 @@ public class AISpawner : NetworkBehaviour
 
     private void PrepareEnemy(GameObject enemy)
     {
-        if (!ObjectPool.Instance.TryGetCharacter(enemy, out var character))
+        if (!ObjectPool.Instance.TryGetCharacter(enemy, out CharacterBase character))
             return;
 
         character.ResetState();
@@ -167,7 +195,7 @@ public class AISpawner : NetworkBehaviour
 
     private void SyncNetworkObject(GameObject enemy, Transform spawnPoint)
     {
-        if (!ObjectPool.Instance.TryGetNetworkObject(enemy, out var netObj) || netObj == null)
+        if (!ObjectPool.Instance.TryGetNetworkObject(enemy, out NetworkObject netObj) || netObj == null)
             return;
 
         if (netObj.IsSpawned)

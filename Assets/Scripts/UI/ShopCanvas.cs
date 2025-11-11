@@ -5,21 +5,23 @@ using System.Collections.Generic;
 
 public class ShopCanvas : BaseCanvas
 {
-    [Header("UI References")]
-    [SerializeField] private Transform weaponsGrid;
+    [Header("UI References")] [SerializeField]
+    private Transform weaponsGrid;
+
     [SerializeField] private GameObject weaponItemPrefab;
     [SerializeField] private Button buyButton;
     [SerializeField] private Button selectButton;
     [SerializeField] private Button closeButton;
 
-    [Header("Weapons Data")]
-    [SerializeField] private WeaponData[] weapons;
+    [Header("Weapons Data")] [SerializeField]
+    private WeaponData[] weapons;
+
     [SerializeField] private Player player;
     [SerializeField] private PlayerPreview previewPlayer;
 
     private WeaponData selectedWeapon;
     private Dictionary<string, WeaponItem> weaponItems = new Dictionary<string, WeaponItem>();
-  
+
     [SerializeField] private TextMeshProUGUI coinText;
 
     private void Awake()
@@ -27,7 +29,7 @@ public class ShopCanvas : BaseCanvas
         if (coinText != null)
             coinText.gameObject.SetActive(false);
     }
-    
+
     private void Start()
     {
         buyButton.onClick.AddListener(OnBuyWeapon);
@@ -36,88 +38,143 @@ public class ShopCanvas : BaseCanvas
         InitializeWeaponsGrid();
         InitSelectedWeapon();
     }
-    
+
     public void InitSelectedWeapon()
     {
         string selectedWeaponName = PlayerPrefs.GetString("SelectedWeapon", "");
 
-        if (!string.IsNullOrEmpty(selectedWeaponName) && weaponItems.ContainsKey(selectedWeaponName))
+        if (HasValidSelectedWeapon(selectedWeaponName))
         {
-            WeaponItem selectedItem = weaponItems[selectedWeaponName];
-            selectedWeapon = selectedItem.WeaponData;
-
-            foreach (var item in weaponItems.Values)
-            {
-                bool isSelected = item == selectedItem;
-                item.SetChosen(isSelected);
-                item.SetSelected(isSelected);
-            }
-
-            if (previewPlayer != null)
-            {
-                previewPlayer.ShowWeapon(selectedWeapon);
-            }
-
-            UpdateButtons();
+            SetExistingWeapon(selectedWeaponName);
         }
         else
         {
-            if (weapons.Length > 0)
-            {
-                WeaponData defaultWeapon = weapons[0];
-                selectedWeapon = defaultWeapon;
-
-                PlayerPrefs.SetString("SelectedWeapon", defaultWeapon.weaponName);
-                PlayerPrefs.SetInt("WeaponBought_" + defaultWeapon.weaponName, 1); 
-                PlayerPrefs.Save();
-
-                foreach (var item in weaponItems.Values)
-                {
-                    bool isSelected = item.WeaponData.weaponName == defaultWeapon.weaponName;
-                    item.SetBought(isSelected);   
-                    item.SetSelected(isSelected); 
-                    item.SetChosen(isSelected);
-                }
-
-                if (previewPlayer != null)
-                {
-                    previewPlayer.ShowWeapon(defaultWeapon);
-                }
-
-                UpdateButtons();
-            }
+            SetDefaultWeapon();
         }
     }
 
+    private bool HasValidSelectedWeapon(string weaponName)
+    {
+        return !string.IsNullOrEmpty(weaponName) && weaponItems.ContainsKey(weaponName);
+    }
 
+    private void SetExistingWeapon(string weaponName)
+    {
+        WeaponItem selectedItem = weaponItems[weaponName];
+        selectedWeapon = selectedItem.WeaponData;
+
+        UpdateWeaponItems(selectedItem);
+        UpdatePreview(selectedWeapon);
+        UpdateButtons();
+    }
+
+    private void SetDefaultWeapon()
+    {
+        if (weapons == null || weapons.Length == 0)
+            return;
+
+        WeaponData defaultWeapon = weapons[0];
+        selectedWeapon = defaultWeapon;
+
+        SaveDefaultWeapon(defaultWeapon);
+        UpdateDefaultWeaponItems(defaultWeapon);
+        UpdatePreview(defaultWeapon);
+        UpdateButtons();
+    }
+
+    private void SaveDefaultWeapon(WeaponData defaultWeapon)
+    {
+        PlayerPrefs.SetString("SelectedWeapon", defaultWeapon.weaponName);
+        PlayerPrefs.SetInt("WeaponBought_" + defaultWeapon.weaponName, 1);
+        PlayerPrefs.Save();
+    }
+
+    private void UpdateWeaponItems(WeaponItem selectedItem)
+    {
+        foreach (var item in weaponItems.Values)
+        {
+            bool isSelected = item == selectedItem;
+            item.SetChosen(isSelected);
+            item.SetSelected(isSelected);
+        }
+    }
+
+    private void UpdateDefaultWeaponItems(WeaponData defaultWeapon)
+    {
+        foreach (var item in weaponItems.Values)
+        {
+            bool isSelected = item.WeaponData.weaponName == defaultWeapon.weaponName;
+            item.SetBought(isSelected);
+            item.SetSelected(isSelected);
+            item.SetChosen(isSelected);
+        }
+    }
+
+    private void UpdatePreview(WeaponData weapon)
+    {
+        if (previewPlayer != null)
+            previewPlayer.ShowWeapon(weapon);
+    }
 
     private void InitializeWeaponsGrid()
+    {
+        ClearWeaponGrid();
+        weaponItems.Clear();
+
+        foreach (WeaponData weapon in weapons)
+        {
+            CreateWeaponItem(weapon);
+        }
+    }
+
+    private void ClearWeaponGrid()
     {
         foreach (Transform child in weaponsGrid)
         {
             Destroy(child.gameObject);
         }
+    }
 
-        weaponItems.Clear();
+    private void CreateWeaponItem(WeaponData weapon)
+    {
+        GameObject weaponItemObj = Instantiate(weaponItemPrefab, weaponsGrid);
 
-        foreach (WeaponData weapon in weapons)
-        {
-            GameObject weaponItemObj = Instantiate(weaponItemPrefab, weaponsGrid);
-            if (weaponItemObj.TryGetComponent(out WeaponItem weaponItem))
+        if (!weaponItemObj.TryGetComponent(out WeaponItem weaponItem) || weaponItem == null)
+            return;
 
-            if (weaponItem != null)
-            {
-                bool isBought = PlayerPrefs.GetInt("WeaponBought_" + weapon.weaponName, 0) == 1;
-                bool isSelected = PlayerPrefs.GetString("SelectedWeapon", "") == weapon.weaponName;
-               
-                weaponItem.Initialize(weapon, isBought, isSelected);
-                weaponItem.OnWeaponSelected += OnWeaponSelected;
+        bool isBought = IsWeaponBought(weapon.weaponName);
+        bool isSelected = IsWeaponSelected(weapon.weaponName);
 
-                weaponItems.Add(weapon.weaponName, weaponItem);
-                buyButton.interactable = !isBought;
-                selectButton.interactable = isBought && isSelected;
-            }
-        }
+        InitializeWeaponItem(weaponItem, weapon, isBought, isSelected);
+    }
+
+    private bool IsWeaponBought(string weaponName)
+    {
+        return PlayerPrefs.GetInt("WeaponBought_" + weaponName, 0) == 1;
+    }
+
+    private bool IsWeaponSelected(string weaponName)
+    {
+        return PlayerPrefs.GetString("SelectedWeapon", "") == weaponName;
+    }
+
+    private void InitializeWeaponItem(WeaponItem item, WeaponData data, bool isBought, bool isSelected)
+    {
+        item.Initialize(data, isBought, isSelected);
+        item.OnWeaponSelected += OnWeaponSelected;
+
+        weaponItems.Add(data.weaponName, item);
+
+        UpdateButtonState(isBought, isSelected);
+    }
+
+    private void UpdateButtonState(bool isBought, bool isSelected)
+    {
+        if (buyButton != null)
+            buyButton.interactable = !isBought;
+
+        if (selectButton != null)
+            selectButton.interactable = isBought && isSelected;
     }
 
     private void OnEnable()
@@ -134,7 +191,6 @@ public class ShopCanvas : BaseCanvas
         }
     }
 
-    
     private void OnWeaponSelected(WeaponData weapon)
     {
         selectedWeapon = weapon;
@@ -186,7 +242,6 @@ public class ShopCanvas : BaseCanvas
     }
 
 
-
     private void OnSelectWeapon()
     {
         if (selectedWeapon == null) return;
@@ -198,7 +253,6 @@ public class ShopCanvas : BaseCanvas
         {
             bool isSelected = item.WeaponData.weaponName == selectedWeapon.weaponName;
             item.SetSelected(isSelected);
-            
         }
 
         if (player != null)
@@ -208,10 +262,6 @@ public class ShopCanvas : BaseCanvas
             {
                 netChar.RequestChangeWeaponServerRpc(selectedWeapon.weaponType);
             }
-        }
-        else
-        {
-            Debug.LogWarning("Player not found in scene!");
         }
 
         UpdateButtons();
@@ -228,15 +278,9 @@ public class ShopCanvas : BaseCanvas
                 if (weapon.weaponName == selectedWeaponName)
                 {
                     player.ChangeWeapon(weapon.weaponType);
-                    Debug.Log("Loaded selected weapon: " + weapon.weaponName);
                     return;
                 }
             }
-            Debug.LogWarning("Selected weapon not found: " + selectedWeaponName);
-        }
-        else if (player == null)
-        {
-            Debug.LogWarning("Player not found, cannot load selected weapon");
         }
     }
 
@@ -253,9 +297,7 @@ public class ShopCanvas : BaseCanvas
         foreach (var item in weaponItems.Values)
         {
             if (item != null)
-            {
                 item.OnWeaponSelected -= OnWeaponSelected;
-            }
         }
     }
 }

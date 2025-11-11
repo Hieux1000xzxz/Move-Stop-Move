@@ -11,10 +11,8 @@ public partial class CharacterBase
     {
         if (currentState == newState) return;
 
-        // Client prediction: Update local state ngay
         currentState = newState;
 
-        // Server: Sync qua network
         if (IsServer)
         {
             NetState.Value = newState;
@@ -47,6 +45,13 @@ public partial class CharacterBase
         Vector3 input = GetMovementInput();
         if (input.magnitude > 0.01f)
         {
+            if (isAttacking)
+            {
+                EndAttack(true);
+                ChangeState(CharacterState.Move);
+                return;
+            }
+
             Move(input);
         }
         else
@@ -99,7 +104,7 @@ public partial class CharacterBase
         if (resetState)
         {
             CharacterState newState = IsMovingNow() ? CharacterState.Move : CharacterState.Idle;
-            currentState = newState; 
+            currentState = newState;
 
             if (IsServer)
             {
@@ -207,7 +212,7 @@ public partial class CharacterBase
         hasWeapon = false;
 
         nextAttackTime = Time.time + attackDelay;
-
+        TriggerAttackAnimation();
         if (attackRoutine != null)
             StopCoroutine(attackRoutine);
 
@@ -223,7 +228,7 @@ public partial class CharacterBase
     private IEnumerator AttackRoutine()
     {
         yield return new WaitForSeconds(attackDelay);
-
+        StartCoroutine(CancelAttack());
         if (currentState != CharacterState.Attack || isDead || IsMovingNow())
         {
             EndAttack(true);
@@ -251,6 +256,24 @@ public partial class CharacterBase
         }
 
         EndAttack();
+    }
+
+    private IEnumerator CancelAttack()
+    {
+        float timer = 0f;
+
+        while (timer < attackDelay)
+        {
+            // 🚫 Nếu đang di chuyển, đổi state hoặc chết → hủy tấn công ngay lập tức
+            if (IsMovingNow() || currentState != CharacterState.Attack || isDead)
+            {
+                EndAttack(true);
+                yield break;
+            }
+
+            timer += Time.deltaTime;
+            yield return null;
+        }
     }
 
     private void LaunchWeaponLocal()

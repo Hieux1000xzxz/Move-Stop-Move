@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 public class SoundManager : Singleton<SoundManager>
 {
+    [Header("Background Music")] [SerializeField]
+    private AudioSource bgmSource;
 
-    [Header("Background Music")]
-    [SerializeField] private AudioSource bgmSource;
     [SerializeField] private AudioClip bgmClip;
 
     private new void Awake()
@@ -16,6 +16,7 @@ public class SoundManager : Singleton<SoundManager>
             Destroy(gameObject);
             return;
         }
+
         DontDestroyOnLoad(gameObject);
     }
 
@@ -31,9 +32,6 @@ public class SoundManager : Singleton<SoundManager>
             bgmSource.clip = bgmClip;
             bgmSource.loop = true;
             bgmSource.Play();
-        }
-        else
-        {
         }
     }
 

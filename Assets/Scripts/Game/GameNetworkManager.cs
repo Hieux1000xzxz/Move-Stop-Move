@@ -10,29 +10,11 @@ public class GameNetworkManager : MonoBehaviour
         networkManager.ConnectionApprovalCallback += ApprovalCheck;
     }
 
-    public void StartHost()
-    {
-        networkManager.StartHost();
-        Debug.Log("Host started");
-    }
-
-    public void StartClient()
-    {
-        networkManager.StartClient();
-        Debug.Log("Client started");
-    }
-
-    public void StartServer()
-    {
-        networkManager.StartServer();
-        Debug.Log("Server started");
-    }
-
     private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request,
         NetworkManager.ConnectionApprovalResponse response)
     {
         response.Approved = true;
-        response.CreatePlayerObject = false;  
+        response.CreatePlayerObject = false;
     }
 
     private void OnEnable()
@@ -49,12 +31,12 @@ public class GameNetworkManager : MonoBehaviour
     private void HandleClientConnected(ulong clientId)
     {
         if (!NetworkManager.Singleton.IsServer) return;
-        
+
         Vector3 spawnPos = SpawnPlayerManager.Instance.GetSpawnPosition(clientId);
 
         GameObject playerPrefab = NetworkManager.Singleton.NetworkConfig.PlayerPrefab;
         GameObject playerObj = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-        
+
         playerObj.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, true);
     }
 }

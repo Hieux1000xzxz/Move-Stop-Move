@@ -4,12 +4,12 @@ using UnityEngine;
 [RequireComponent(typeof(LineRenderer))]
 public class PlayerAttackRange : NetworkBehaviour
 {
-    [Header("References")]
-    [SerializeField] private LineRenderer line;
+    [Header("References")] [SerializeField]
+    private LineRenderer line;
+
     [SerializeField] private CharacterBase character;
 
-    [Header("Settings")]
-    [SerializeField] private int circleResolution = 50;
+    [Header("Settings")] [SerializeField] private int circleResolution = 50;
     [SerializeField] private float lineWidth = 0.05f;
 
     private float lastAttackRange = -1f;
@@ -29,10 +29,18 @@ public class PlayerAttackRange : NetworkBehaviour
 
     private void Update()
     {
+        if (ShouldHideLine())
+            return;
+
+        UpdateAttackRangeCircle();
+    }
+
+    private bool ShouldHideLine()
+    {
         if (!IsOwner)
         {
             if (line.enabled) line.enabled = false;
-            return;
+            return true;
         }
 
         float currentRange = character.currentAttackRange;
@@ -40,12 +48,20 @@ public class PlayerAttackRange : NetworkBehaviour
         if (currentRange <= 0f)
         {
             if (line.enabled) line.enabled = false;
-            return;
+            return true;
         }
-        else if (!line.enabled)
+
+        if (!line.enabled)
         {
             line.enabled = true;
         }
+
+        return false;
+    }
+
+    private void UpdateAttackRangeCircle()
+    {
+        float currentRange = character.currentAttackRange;
 
         if (!Mathf.Approximately(currentRange, lastAttackRange))
         {
@@ -68,6 +84,7 @@ public class PlayerAttackRange : NetworkBehaviour
             float angle = i * Mathf.PI * 2f / circleResolution;
             unitCirclePoints[i] = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
         }
+
         line.positionCount = circleResolution;
     }
 
