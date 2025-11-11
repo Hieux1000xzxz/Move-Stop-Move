@@ -104,9 +104,12 @@ public partial class CharacterBase
 
     private void ResetAnimator()
     {
-        if (networkAnimator != null && networkAnimator.Animator != null)
+        if (animator != null)
         {
-            networkAnimator.Animator.SetFloat("Speed", 0f);
+            animator.SetBool("IsMoving", false);
+
+            if (IsOwner)
+                SetAttackAnimation(false);
         }
 
         if (attackRoutine != null)

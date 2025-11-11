@@ -68,7 +68,7 @@ public class Player : CharacterBase
         smoothSpeed = Mathf.Lerp(smoothSpeed, targetSpeed, Time.deltaTime * 25f);
 
         SetAnimationSpeed(smoothSpeed);
-        //TriggerAttackAnimation();
+        SetAttackAnimation(isAttacking);
     }
 
     protected override bool IsMovingNow()

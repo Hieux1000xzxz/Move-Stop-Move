@@ -1,65 +1,32 @@
 using UnityEngine;
-using Unity.Netcode;
 
 public partial class CharacterBase
 {
     #region Animation Handling
 
-    // ✅ Speed (Float) - Cần RPC để sync
     protected void SetAnimationSpeed(float speed)
     {
-        if (networkAnimator == null || networkAnimator.Animator == null) return;
-
-        // Set local ngay (responsive)
-        networkAnimator.Animator.SetFloat("Speed", speed);
-
-        // Owner gửi lên Server để sync
-        if (IsOwner && !IsServer)
+        if (networkAnimator != null && networkAnimator.Animator != null)
         {
-            RequestSetSpeedServerRpc(speed);
-        }
-        else if (IsServer)
-        {
-            SyncSpeedClientRpc(speed);
+            networkAnimator.Animator.SetFloat("Speed", speed);
         }
     }
 
-    protected void TriggerAttackAnimation()
+    protected void SetAttackAnimation(bool isAttacking)
     {
-        if (networkAnimator == null) return;
-
-        networkAnimator.SetTrigger("IsAttacking");
+        if (networkAnimator != null && networkAnimator.Animator != null)
+        {
+            networkAnimator.Animator.SetBool("IsAttacking", isAttacking);
+        }
     }
 
     protected void TriggerDeathAnimation()
     {
-        if (networkAnimator == null || networkAnimator.Animator == null) return;
-
-        networkAnimator.Animator.SetFloat("Speed", 0f);
-        networkAnimator.SetTrigger("Death");
-    }
-
-    #endregion
-
-    #region Network RPCs
-
-    [ServerRpc]
-    private void RequestSetSpeedServerRpc(float speed)
-    {
-        if (networkAnimator == null || networkAnimator.Animator == null) return;
-
-        networkAnimator.Animator.SetFloat("Speed", speed);
-        SyncSpeedClientRpc(speed);
-    }
-
-    [ClientRpc]
-    private void SyncSpeedClientRpc(float speed)
-    {
-        // Chỉ set cho clients khác (Owner đã set local rồi)
-        if (!IsOwner)
+        if (networkAnimator != null && networkAnimator.Animator != null)
         {
-            if (networkAnimator != null && networkAnimator.Animator != null)
-                networkAnimator.Animator.SetFloat("Speed", speed);
+            networkAnimator.Animator.SetFloat("Speed", 0f);
+            networkAnimator.Animator.SetBool("IsAttacking", false);
+            networkAnimator.SetTrigger("Death");
         }
     }
 
