@@ -41,7 +41,7 @@ public partial class CharacterBase
         float speed = CalculateAnimationSpeed();
 
         SetAnimationSpeed(speed);
-        SetAttackAnimation(isAttacking);
+        //SetAttackAnimation(isAttacking);
     }
 
     private float CalculateAnimationSpeed()

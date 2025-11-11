@@ -14,7 +14,6 @@ public partial class CharacterBase
         // Client prediction: Update local state ngay
         currentState = newState;
 
-        // Server: Sync qua network
         if (IsServer)
         {
             NetState.Value = newState;
@@ -99,7 +98,7 @@ public partial class CharacterBase
         if (resetState)
         {
             CharacterState newState = IsMovingNow() ? CharacterState.Move : CharacterState.Idle;
-            currentState = newState; 
+            currentState = newState;
 
             if (IsServer)
             {
@@ -207,7 +206,7 @@ public partial class CharacterBase
         hasWeapon = false;
 
         nextAttackTime = Time.time + attackDelay;
-
+        TriggerAttackAnimation();
         if (attackRoutine != null)
             StopCoroutine(attackRoutine);
 
