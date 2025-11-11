@@ -5,15 +5,12 @@ public partial class CharacterBase
 {
     #region Animation Handling
 
-    // ✅ Speed (Float) - Cần RPC để sync
     protected void SetAnimationSpeed(float speed)
     {
         if (networkAnimator == null || networkAnimator.Animator == null) return;
 
-        // Set local ngay (responsive)
         networkAnimator.Animator.SetFloat("Speed", speed);
 
-        // Owner gửi lên Server để sync
         if (IsOwner && !IsServer)
         {
             RequestSetSpeedServerRpc(speed);
@@ -55,7 +52,6 @@ public partial class CharacterBase
     [ClientRpc]
     private void SyncSpeedClientRpc(float speed)
     {
-        // Chỉ set cho clients khác (Owner đã set local rồi)
         if (!IsOwner)
         {
             if (networkAnimator != null && networkAnimator.Animator != null)
