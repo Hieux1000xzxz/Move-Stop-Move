@@ -1,18 +1,19 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections;
+
 public partial class CharacterBase
 {
     [ServerRpc]
     public void RequestPickupPowerupServerRpc(NetworkObjectReference powerupRef, PowerupType type, float duration)
     {
         if (!powerupRef.TryGet(out NetworkObject powerupObj)) return;
-        
+
         ApplyPowerupClientRpc(type, duration);
-        
+
         powerupObj.Despawn();
     }
-    
+
     [ClientRpc]
     public void ApplyPowerupClientRpc(PowerupType type, float duration)
     {
@@ -50,18 +51,17 @@ public partial class CharacterBase
     private IEnumerator SpeedBoostTimer(float duration)
     {
         yield return new WaitForSeconds(duration);
-        
+
         moveSpeed = baseMoveSpeed;
         if (agent != null) agent.speed = moveSpeed;
 
         isSpeedBoostActive = false;
         speedBoostRoutine = null;
     }
-    
-    private IEnumerator ApplyWeaponGrowLocal(float duration, float scaleMultiplier = 1.5f, float speedMultiplier = 1.5f)
+
+    private IEnumerator ApplyWeaponGrowLocal(float duration, float scaleMultiplier = 1.5f, float speedMultiplier = 1.3f)
     {
         if (currentWeaponPublic == null) yield break;
-        WeaponBase weapon = currentWeaponPublic;
 
         if (isWeaponGrowActive)
         {
@@ -69,17 +69,23 @@ public partial class CharacterBase
         }
         else
         {
-            isWeaponGrowActive = true;
-
-            weapon.BuffScaleMultiplier = scaleMultiplier;
-            weapon.Speed = weapon.OriginalSpeed * speedMultiplier;
-            
-            weapon.ApplyScale();
+            ApplyWeaponState(currentWeaponPublic, scaleMultiplier, speedMultiplier);
         }
 
         weaponGrowRoutine = StartCoroutine(WeaponGrowTimer(duration));
     }
 
+    private void ApplyWeaponState(WeaponBase weapon, float scaleMultiplier = 1f, float speedMultiplier = 1f)
+    {
+        if (weapon == null) return;
+
+        isWeaponGrowActive = (scaleMultiplier != 1f || speedMultiplier != 1f);
+
+        weapon.BuffScaleMultiplier = scaleMultiplier;
+        weapon.Speed = weapon.OriginalSpeed * speedMultiplier;
+
+        weapon.ApplyScale();
+    }
 
     private IEnumerator WeaponGrowTimer(float duration)
     {
@@ -87,17 +93,13 @@ public partial class CharacterBase
 
         if (currentWeaponPublic != null)
         {
-            WeaponBase weapon = currentWeaponPublic;
-            weapon.BuffScaleMultiplier = 1f;
-            weapon.Speed = weapon.OriginalSpeed;
-            
-            weapon.ApplyScale();
+            ApplyWeaponState(currentWeaponPublic);
         }
 
         isWeaponGrowActive = false;
         weaponGrowRoutine = null;
     }
-    
+
     public void ApplyPowerupLocal(PowerupType type, float duration)
     {
         switch (type)

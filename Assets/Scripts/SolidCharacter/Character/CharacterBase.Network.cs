@@ -19,12 +19,40 @@ public partial class CharacterBase
 
         if (!IsOwner)
         {
-            NetState.OnValueChanged += (oldVal, newVal) =>
-            {
-                currentState = newVal;
-            };
+            SetupAnimationSyc();
         }
 
+        SetupCoinSync();
+    }
+
+    private void SetupAnimationSyc()
+    {
+        netSpeed.OnValueChanged += (oldVal, newVal) =>
+        {
+            if (animator != null && !(this is Player))
+            {
+                animator.SetFloat("Speed", newVal);
+            }
+        };
+
+        netIsAttacking.OnValueChanged += (oldVal, newVal) =>
+        {
+            if (animator != null && !(this is Player))
+            {
+                animator.SetBool("IsAttacking", newVal);
+            }
+        };
+
+        if (animator != null && !(this is Player))
+        {
+            SetAnimatorParameters(netSpeed.Value, netIsAttacking.Value);
+        }
+
+        NetState.OnValueChanged += (oldVal, newVal) => { currentState = newVal; };
+    }
+
+    private void SetupCoinSync()
+    {
         SessionCoin.OnValueChanged += (oldVal, newVal) =>
         {
             if (IsOwner && CoinManager.Instance != null)
@@ -141,30 +169,43 @@ public partial class CharacterBase
 
         return false;
     }
+
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
 
+        CleanupScoreEvents();
+        CleanupWeaponReferences();
+        CleanupPlayerNameSync();
+    }
+
+    private void CleanupScoreEvents()
+    {
         Score.OnValueChanged -= OnScoreChanged;
 
+        Score.OnValueChanged -= (oldValue, newValue) =>
+        {
+            scoreDisplay.SetScore(newValue);
+            UpdateCharacterStats();
+        };
+    }
+
+    private void CleanupWeaponReferences()
+    {
         if (IsServer && currentWeapon != null)
         {
             ObjectPool.Instance.ReleaseWeapon(currentWeapon.gameObject);
             currentWeapon.ClearOwner();
         }
+    }
 
+    private void CleanupPlayerNameSync()
+    {
         if (IsOwner && ownerType == OwnerType.Player)
         {
             string localName = PlayerPrefs.GetString("PlayerName", "Player");
             SubmitPlayerNameServerRpc(localName);
         }
-
-        Score.OnValueChanged -= (oldValue, newValue) =>
-        {
-            Debug.Log($"[CLIENT] {gameObject.name} Score synced {oldValue} -> {newValue}");
-            scoreDisplay.SetScore(newValue);
-            UpdateCharacterStats();
-        };
     }
 
     [ServerRpc]
@@ -172,7 +213,6 @@ public partial class CharacterBase
     {
         PlayerName.Value = new FixedString32Bytes(newName);
     }
-    //Anim Attack
 
     [ServerRpc]
     public void RequestSetWeaponServerRpc(WeaponType selectedWeapon)
@@ -183,19 +223,38 @@ public partial class CharacterBase
     [ClientRpc]
     private void SetWeaponClientRpc(NetworkObjectReference weaponRef, NetworkObjectReference ownerRef)
     {
-        if (weaponRef.TryGet(out NetworkObject weaponObj) &&
-            ownerRef.TryGet(out NetworkObject ownerObj))
+        if (TryGetNetworkObjects(weaponRef, ownerRef, out NetworkObject weaponObj, out NetworkObject ownerObj))
         {
-            var weapon = WeaponBase.GetByNetworkObject(weaponObj);
-            var ownerChar = ownerObj.TryGetComponent(out CharacterBase ch) ? ch : null;
+            WeaponBase weapon = WeaponBase.GetByNetworkObject(weaponObj);
+            CharacterBase ownerChar = ownerObj.TryGetComponent(out CharacterBase ch) ? ch : null;
 
-            if (weapon != null && ownerChar != null)
-            {
-                ownerChar.AssignWeapon(weapon);
-                weapon.SetOwner(ownerChar);
-            }
+            HandleWeaponAssignment(weapon, ownerChar);
         }
     }
+
+    private void HandleWeaponAssignment(WeaponBase weapon, CharacterBase ownerChar)
+    {
+        if (weapon != null && ownerChar != null)
+        {
+            ownerChar.AssignWeapon(weapon);
+            weapon.SetOwner(ownerChar);
+        }
+    }
+
+    private bool TryGetNetworkObjects(NetworkObjectReference weaponRef,
+        NetworkObjectReference ownerRef,
+        out NetworkObject weaponObj,
+        out NetworkObject ownerObj)
+    {
+        weaponObj = null;
+        ownerObj = null;
+
+        bool hasWeapon = weaponRef.TryGet(out weaponObj);
+        bool hasOwner = ownerRef.TryGet(out ownerObj);
+
+        return hasWeapon && hasOwner;
+    }
+
 
     [ClientRpc]
     private void DisableColliderClientRpc()

@@ -21,12 +21,9 @@ public class Player : CharacterBase
     {
         base.Start();
 
-        animator.SetFloat("Speed", netSpeed.Value);
-        animator.SetBool("IsAttacking", netIsAttacking.Value);
+        SetAnimatorParameters(netSpeed.Value, netIsAttacking.Value);
 
-        bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
-
-        if (!isMultiplayer || IsOwner)
+        if (ShouldProcessInput)
         {
             GameManager.Instance.BindCameraToPlayer(transform);
         }
@@ -34,9 +31,15 @@ public class Player : CharacterBase
 
     protected override void Update()
     {
-        bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
-        if (isMultiplayer && !IsOwner) return;
+        if (!ShouldProcessInput) return;
 
+        HandleMovementInput();
+
+        base.Update();
+    }
+
+    private void HandleMovementInput()
+    {
         Vector3 input = GetMovementInput();
         isMovingInput = input.magnitude > 0.01f;
 
@@ -44,38 +47,44 @@ public class Player : CharacterBase
         {
             detectedTarget = null;
             attackTarget = null;
-
             lastMoveInputTime = Time.time;
 
-            if (currentState == CharacterState.Attack || isAttacking)
+            if (ShouldCancelAttack())
             {
                 EndAttack(true);
-                if (isMultiplayer) RequestEndAttackServerRpc();
+                if (IsMultiplayer) RequestEndAttackServerRpc();
             }
         }
+    }
 
-        base.Update();
+    private bool ShouldCancelAttack()
+    {
+        return currentState == CharacterState.Attack || isAttacking;
     }
 
     protected override void UpdateAnimator()
     {
-        if (NetworkAnimator == null || NetworkAnimator.Animator == null) return;
+        if (NetworkAnimator == null || animator == null) return;
 
-        float targetSpeed;
-        bool effectiveMoving = isMovingInput || (Time.time - lastMoveInputTime < minIdleDelay);
-        targetSpeed = effectiveMoving ? MoveSpeed : 0f;
+        if (ShouldProcessInput)
+        {
+            CalculateAndApplyAnimation();
+        }
+    }
 
+    private void CalculateAndApplyAnimation()
+    {
+        float targetSpeed = CalculateTargetSpeed();
         smoothSpeed = Mathf.Lerp(smoothSpeed, targetSpeed, Time.deltaTime * 25f);
 
-        animator.SetFloat("Speed", smoothSpeed);
-        animator.SetBool("IsAttacking", isAttacking);
+        SetAnimatorParameters(smoothSpeed, isAttacking);
+        SyncAnimationToNetwork(smoothSpeed, isAttacking);
+    }
 
-        // Optional: update net variables if owner
-        if (IsOwner)
-        {
-            netSpeed.Value = smoothSpeed;
-            netIsAttacking.Value = isAttacking;
-        }
+    private float CalculateTargetSpeed()
+    {
+        bool effectiveMoving = isMovingInput || (Time.time - lastMoveInputTime < minIdleDelay);
+        return effectiveMoving ? MoveSpeed : 0f;
     }
 
     protected override bool IsMovingNow()
@@ -99,13 +108,27 @@ public class Player : CharacterBase
     {
         base.OnNetworkSpawn();
 
-
         if (IsOwner)
         {
             Local = this;
             GameManager.Instance.BindCameraToPlayer(transform);
             GameManager.Instance.BindJoystick(this);
             GameManager.Instance.BindKillScoreDisplay(scoreDisplay);
+
+            smoothSpeed = 0f;
+            netSpeed.Value = 0f;
+            netIsAttacking.Value = false;
+        }
+        else
+        {
+            netSpeed.OnValueChanged += OnNetSpeedChanged;
+            netIsAttacking.OnValueChanged += OnNetIsAttackingChanged;
+
+            if (animator != null)
+            {
+                animator.SetFloat("Speed", netSpeed.Value);
+                animator.SetBool("IsAttacking", netIsAttacking.Value);
+            }
         }
 
         if (IsServer)
@@ -123,18 +146,18 @@ public class Player : CharacterBase
 
     protected override void Move(Vector3 direction)
     {
-        if (isDead || isAttacking) return;
-
-        bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
-        if (isMultiplayer && !IsOwner) return;
+        if (isDead || isAttacking || !ShouldProcessInput) return;
 
         if (direction.magnitude > 0.01f)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
-
-            transform.position += direction * (MoveSpeed * Time.deltaTime);
+            RotateTowards(direction);
+            MoveForward(direction);
         }
+    }
+
+    private void MoveForward(Vector3 direction)
+    {
+        transform.position += direction * (MoveSpeed * Time.deltaTime);
     }
 
     public void SetJoystick(FloatingJoystick js)
@@ -149,6 +172,33 @@ public class Player : CharacterBase
         if (isMultiplayer && IsServer)
         {
             GameManager.Instance.UnregisterPlayerInGame(this.networkObject);
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+
+        if (!IsOwner)
+        {
+            netSpeed.OnValueChanged -= OnNetSpeedChanged;
+            netIsAttacking.OnValueChanged -= OnNetIsAttackingChanged;
+        }
+    }
+
+    private void OnNetSpeedChanged(float oldValue, float newValue)
+    {
+        if (!IsOwner && animator != null)
+        {
+            animator.SetFloat("Speed", newValue);
+        }
+    }
+
+    private void OnNetIsAttackingChanged(bool oldValue, bool newValue)
+    {
+        if (!IsOwner && animator != null)
+        {
+            animator.SetBool("IsAttacking", newValue);
         }
     }
 }

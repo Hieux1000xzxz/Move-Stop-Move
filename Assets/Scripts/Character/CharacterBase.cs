@@ -87,6 +87,9 @@ public abstract partial class CharacterBase : NetworkBehaviour
 
     public NetworkAnimator NetworkAnimator => networkAnimator;
 
+    protected bool IsMultiplayer => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+    protected bool ShouldProcessInput => !IsMultiplayer || IsOwner;
+
     public NetworkVariable<int> Score = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
@@ -147,27 +150,55 @@ public abstract partial class CharacterBase : NetworkBehaviour
 
     protected virtual void Update()
     {
-        if (!GameManager.Instance || !GameManager.Instance.IsGameStarted)
+        if (ShouldSkipUpdate())
             return;
+        ProcessInput();
+        ProcessRadar();
+        ProcessCurrentState();
+        UpdateAnimator();
+    }
 
+    private bool ShouldSkipUpdate()
+    {
         CheckForDead();
+        return !IsValidForUpdate();
+    }
 
-        if (isDead || health.IsDead)
-            return;
+    private bool IsValidForUpdate()
+    {
+        return GameManager.Instance &&
+               GameManager.Instance.IsGameStarted &&
+               !isDead &&
+               !health.IsDead &&
+               agent != null &&
+               agent.isActiveAndEnabled;
+    }
 
+    private void ProcessInput()
+    {
         Vector3 input = GetMovementInput();
 
-        if (currentState == CharacterState.Attack && isAttacking && input.magnitude > 0.01f)
+        if (ShouldCancelAttack(input))
             EndAttack(true);
+    }
 
-        if (agent == null || !agent.isActiveAndEnabled)
-            return;
+    private bool ShouldCancelAttack(Vector3 input)
+    {
+        return currentState == CharacterState.Attack &&
+               isAttacking &&
+               input.magnitude > 0.01f;
+    }
 
+    private void ProcessRadar()
+    {
         if (!IsMovingNow())
             UpdateRadar();
         else
             detectedTarget = null;
+    }
 
+    private void ProcessCurrentState()
+    {
         switch (currentState)
         {
             case CharacterState.Idle:
@@ -180,8 +211,6 @@ public abstract partial class CharacterBase : NetworkBehaviour
                 HandleAttack();
                 break;
         }
-
-        UpdateAnimator();
     }
 
     protected virtual void OnDisable()

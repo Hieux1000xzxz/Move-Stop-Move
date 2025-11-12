@@ -24,8 +24,7 @@ public partial class CharacterBase
 
         if (direction.magnitude > 0.01f)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+            RotateTowards(direction);
             agent.Move(direction * (moveSpeed * Time.deltaTime));
         }
         else
@@ -34,27 +33,33 @@ public partial class CharacterBase
         }
     }
 
+    protected void RotateTowards(Vector3 direction)
+    {
+        Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+    }
+
     protected virtual void UpdateAnimator()
     {
         if (animator == null) return;
 
-        if (IsOwner)
+        if (this is Player)
+            return;
+
+        ViewAnim();
+    }
+
+    private void ViewAnim()
+    {
+        if (ShouldProcessInput)
         {
             float speed = CalculateAnimationSpeed();
+            SetAnimatorParameters(speed, isAttacking);
 
-            if (Mathf.Abs(netSpeed.Value - speed) > 0.01f)
-                netSpeed.Value = speed;
-
-            if (netIsAttacking.Value != isAttacking)
-                netIsAttacking.Value = isAttacking;
-
-            animator.SetFloat("Speed", speed);
-            animator.SetBool("IsAttacking", isAttacking);
-        }
-        else
-        {
-            animator.SetFloat("Speed", netSpeed.Value);
-            animator.SetBool("IsAttacking", netIsAttacking.Value);
+            if (IsServer)
+            {
+                SyncAnimationToNetwork(speed, isAttacking);
+            }
         }
     }
 

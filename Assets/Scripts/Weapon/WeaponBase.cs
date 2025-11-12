@@ -211,12 +211,26 @@ public class WeaponBase : NetworkBehaviour
         ReturnToHand();
         ReturnToHandClientRpc();
 
-        if (other.TryGetComponent<NavMeshSafeObstacle>(out var safe))
-            safe.DisableAndHide();
-        else
-            other.gameObject.SetActive(false);
+        DisableObstacleOnServer(other);
+        SyncObstacleDisableToClients(other);
 
         return true;
+    }
+
+    private void DisableObstacleOnServer(Collider obstacleCollider)
+    {
+        if (obstacleCollider.TryGetComponent<NavMeshSafeObstacle>(out var safe))
+            safe.DisableAndHide();
+        else
+            obstacleCollider.gameObject.SetActive(false);
+    }
+
+    private void SyncObstacleDisableToClients(Collider obstacleCollider)
+    {
+        if (obstacleCollider.TryGetComponent<NetworkObject>(out var netObj))
+        {
+            DisableObstacleClientRpc(new NetworkObjectReference(netObj));
+        }
     }
 
     private void HandleCharacterCollision(Collider other)
@@ -336,6 +350,23 @@ public class WeaponBase : NetworkBehaviour
         if (net == null) return null;
         weaponCache.TryGetValue(net, out WeaponBase weapon);
         return weapon;
+    }
+
+    [ClientRpc]
+    private void DisableObstacleClientRpc(NetworkObjectReference obstacleRef)
+    {
+        if (obstacleRef.TryGet(out NetworkObject obstacleNetObj))
+        {
+            var obstacle = obstacleNetObj.GetComponent<NavMeshSafeObstacle>();
+            if (obstacle != null)
+                obstacle.DisableAndHide();
+            else
+                obstacleNetObj.gameObject.SetActive(false);
+        }
+    }
+
+    public void TryNetworkObject()
+    {
     }
 
     #endregion

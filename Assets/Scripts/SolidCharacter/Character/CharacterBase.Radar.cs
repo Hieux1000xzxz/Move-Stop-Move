@@ -24,22 +24,47 @@ public partial class CharacterBase
 
         foreach (Collider target in targets)
         {
-            if (!IsValidTarget(target))
+            if (!IsPotentialTarget(target))
                 continue;
 
-            CharacterBase otherChar = GetCharacterBase(target);
-            if (otherChar == null || otherChar == this)
+            CharacterBase otherChar = GetCharacterFromCollider(target);
+            if (!IsValidCharacterTarget(otherChar))
                 continue;
 
             float distance = GetDistanceToTarget(otherChar);
-            if (distance < minDistance)
+            if (IsCloserTarget(distance, ref minDistance))
             {
-                minDistance = distance;
                 nearest = otherChar.transform;
             }
         }
 
         return nearest;
+    }
+
+    private bool IsPotentialTarget(Collider target)
+    {
+        return target != null && target.gameObject.activeInHierarchy && IsValidTarget(target);
+    }
+
+    private CharacterBase GetCharacterFromCollider(Collider target)
+    {
+        return GetCharacterBase(target);
+    }
+
+    private bool IsValidCharacterTarget(CharacterBase otherChar)
+    {
+        return otherChar != null && otherChar != this;
+    }
+
+    private bool IsCloserTarget(float distance, ref float minDistance)
+    {
+        if (distance < minDistance)
+        {
+            minDistance = distance;
+            return true;
+        }
+
+        return false;
     }
 
     private Collider[] GetTargetsInRange()

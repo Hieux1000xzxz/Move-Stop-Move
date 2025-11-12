@@ -7,13 +7,13 @@ public partial class CharacterBase
     protected void SetAnimationSpeed(float speed)
     {
         if (IsOwner)
-            netSpeed.Value = speed; // sync speed tới tất cả client
+            netSpeed.Value = speed;
     }
 
     protected void SetAttackAnimation(bool isAttacking)
     {
         if (IsOwner)
-            netIsAttacking.Value = isAttacking; // sync bool attackf
+            netIsAttacking.Value = isAttacking;
     }
 
     protected void TriggerDeathAnimation()
@@ -24,6 +24,24 @@ public partial class CharacterBase
             animator.SetBool("IsAttacking", false);
             if (networkAnimator != null)
                 networkAnimator.SetTrigger("Death");
+        }
+    }
+
+    protected void SetAnimatorParameters(float speed, bool attacking)
+    {
+        if (animator == null) return;
+        animator.SetFloat("Speed", speed);
+        animator.SetBool("IsAttacking", attacking);
+    }
+
+    protected void SyncAnimationToNetwork(float speed, bool attacking)
+    {
+        if (!IsMultiplayer) return;
+
+        if (IsOwner || IsServer)
+        {
+            netSpeed.Value = speed;
+            netIsAttacking.Value = attacking;
         }
     }
 
