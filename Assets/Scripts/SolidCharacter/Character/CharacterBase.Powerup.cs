@@ -17,7 +17,7 @@ public partial class CharacterBase
     [ClientRpc]
     public void ApplyPowerupClientRpc(PowerupType type, float duration)
     {
-        if (!IsOwner && !IsHost) return;
+        if (IsOwner) return;
 
         switch (type)
         {
@@ -42,6 +42,7 @@ public partial class CharacterBase
             isSpeedBoostActive = true;
             moveSpeed = baseMoveSpeed * multiplier;
             if (agent != null) agent.speed = moveSpeed;
+            SetSuperSpeedAnimation(true);
         }
 
         speedBoostRoutine = StartCoroutine(SpeedBoostTimer(duration));
@@ -54,6 +55,8 @@ public partial class CharacterBase
 
         moveSpeed = baseMoveSpeed;
         if (agent != null) agent.speed = moveSpeed;
+
+        SetSuperSpeedAnimation(false);
 
         isSpeedBoostActive = false;
         speedBoostRoutine = null;

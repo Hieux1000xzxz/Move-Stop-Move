@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 
 public partial class CharacterBase
 {
@@ -34,6 +35,7 @@ public partial class CharacterBase
         animator.SetBool("IsAttacking", attacking);
     }
 
+
     protected void SyncAnimationToNetwork(float speed, bool attacking)
     {
         if (!IsMultiplayer) return;
@@ -42,6 +44,34 @@ public partial class CharacterBase
         {
             netSpeed.Value = speed;
             netIsAttacking.Value = attacking;
+        }
+    }
+
+    protected void SetSuperSpeedAnimation(bool isActive)
+    {
+        if (animator != null)
+        {
+            animator.SetBool("SuperSpeed", isActive);
+        }
+
+        if (IsMultiplayer && IsOwner)
+        {
+            SetSuperSpeedServerRpc(isActive);
+        }
+    }
+
+    [ServerRpc]
+    private void SetSuperSpeedServerRpc(bool isActive)
+    {
+        SetSuperSpeedClientRpc(isActive);
+    }
+
+    [ClientRpc]
+    private void SetSuperSpeedClientRpc(bool isActive)
+    {
+        if (!IsOwner && animator != null)
+        {
+            animator.SetBool("SuperSpeed", isActive);
         }
     }
 

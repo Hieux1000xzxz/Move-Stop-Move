@@ -13,8 +13,9 @@ public class Player : CharacterBase
     private float lastMoveInputTime = 0f;
     private float smoothSpeed = 0f;
 
-    [SerializeField] private float minIdleDelay = 0.08f;
-
+    [SerializeField] private float minIdleDelay = 0.15f;
+    [SerializeField] private float speedSmoothTime = 0.1f;
+    private float speedVelocity = 0f;
     public static Player Local { get; private set; }
 
     protected override void Start()
@@ -75,7 +76,7 @@ public class Player : CharacterBase
     private void CalculateAndApplyAnimation()
     {
         float targetSpeed = CalculateTargetSpeed();
-        smoothSpeed = Mathf.Lerp(smoothSpeed, targetSpeed, Time.deltaTime * 25f);
+        smoothSpeed = Mathf.SmoothDamp(smoothSpeed, targetSpeed, ref speedVelocity, speedSmoothTime);
 
         SetAnimatorParameters(smoothSpeed, isAttacking);
         SyncAnimationToNetwork(smoothSpeed, isAttacking);
