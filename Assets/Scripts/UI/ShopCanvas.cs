@@ -187,7 +187,7 @@ public class ShopCanvas : BaseCanvas
         if (coinText != null)
         {
             coinText.gameObject.SetActive(true);
-            coinText.text = $"Coins: {CoinManager.Instance.GetShopCoins()}";
+            coinText.text = $"{CoinManager.Instance.GetShopCoins()}";
         }
     }
 
@@ -290,7 +290,9 @@ public class ShopCanvas : BaseCanvas
         coinText.gameObject.SetActive(false);
         InitSelectedWeapon();
         UIManager.Instance.OpenMainMenu();
+        UIManager.Instance.ShowAllPlayerPreviewsFromMainMenu();
     }
+
 
     private void OnDestroy()
     {

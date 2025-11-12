@@ -170,7 +170,6 @@ MonoBehaviour:
   value: 1
   col: {fileID: 2469434912461025924}
   meshRenderer: {fileID: 4250194136104250639}
-  autoPickupRadius: 0.8
   despawnDelay: 3
 --- !u!1 &5962864950205277537
 GameObject:

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Unity.Netcode;
 
 public partial class CharacterBase
 {
@@ -15,7 +16,11 @@ public partial class CharacterBase
             HandleDeathCleanup();
             HandleDeathAnimation();
             scoreDisplay.gameObject.SetActive(false);
-            if (IsServer)
+            if (!IsServer)
+            {
+                NotifyServerOfDeathServerRpc();
+            }
+            else
             {
                 StartCoroutine(DeathSequenceCoroutine());
             }
@@ -53,6 +58,11 @@ public partial class CharacterBase
             agent.enabled = false;
             agent.velocity = Vector3.zero;
         }
+
+        if (currentWeapon != null)
+        {
+            HideOrReleaseWeapon();
+        }
     }
 
     private void HandleDeathAnimation()
@@ -66,6 +76,12 @@ public partial class CharacterBase
     {
         GameObject coin = ObjectPool.Instance.SpawnCoin(transform.position + Vector3.up, Quaternion.identity);
         coin.GetComponent<Coin>().SetOwner(this);
+    }
+
+    [ServerRpc]
+    private void NotifyServerOfDeathServerRpc()
+    {
+        StartCoroutine(DeathSequenceCoroutine());
     }
 
     #endregion

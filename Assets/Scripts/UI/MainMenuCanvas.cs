@@ -1,11 +1,16 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class MainMenuCanvas : BaseCanvas
 {
     [SerializeField] private Button playButton;
     [SerializeField] private Button shopButton;
     [SerializeField] private Button MultiplayerButton;
+
+    [Header("Player Preview List")] [SerializeField]
+    private List<PlayerPreview> playerPreviews = new List<PlayerPreview>();
+
     private void Awake()
     {
         playButton.onClick.AddListener(OnPlayClicked);
@@ -23,6 +28,7 @@ public class MainMenuCanvas : BaseCanvas
     {
         Debug.Log("Open Shop!");
         UIManager.Instance.OpenShop();
+        HideAllPlayerPreviews();
     }
 
     private void OnMultiplayerClicked()
@@ -30,5 +36,23 @@ public class MainMenuCanvas : BaseCanvas
         Debug.Log("Open Multi!");
         GameManager.Instance.HidePlayerPreview();
         UIManager.Instance.OpenConnection();
+    }
+
+    private void HideAllPlayerPreviews()
+    {
+        foreach (var preview in playerPreviews)
+        {
+            if (preview != null)
+                preview.gameObject.SetActive(false);
+        }
+    }
+
+    public void ShowAllPlayerPreviews()
+    {
+        foreach (var preview in playerPreviews)
+        {
+            if (preview != null)
+                preview.gameObject.SetActive(true);
+        }
     }
 }

@@ -4,16 +4,17 @@ using Unity.Netcode;
 
 public class UIManager : Singleton<UIManager>
 {
-    [Header("AI Counter")]
-    [SerializeField] private TextMeshProUGUI enemyCountText;
+    [Header("AI Counter")] [SerializeField]
+    private TextMeshProUGUI enemyCountText;
+
     [SerializeField] private string displayFormat = "ALive player: {0}";
 
-    [Header("Canvases")]
-    [SerializeField] private MainMenuCanvas mainMenuCanvas;
+    [Header("Canvases")] [SerializeField] private MainMenuCanvas mainMenuCanvas;
     [SerializeField] private ShopCanvas shopCanvas;
     [SerializeField] private ConnectionCanvas connectionCanvas;
     [SerializeField] private LoadingCanvas loadingCanvas;
     [SerializeField] private NotificationCanvas notificationCanvas;
+
     public void UpdateEnemyCount(int count)
     {
         if (count <= 0)
@@ -28,10 +29,11 @@ public class UIManager : Singleton<UIManager>
         }
     }
 
-    public void HideCountText() 
-    { 
+    public void HideCountText()
+    {
         enemyCountText.gameObject.SetActive(false);
     }
+
     public void ShowCountText()
     {
         enemyCountText.gameObject.SetActive(true);
@@ -102,8 +104,8 @@ public class UIManager : Singleton<UIManager>
                 notificationCanvas.HideMainPanel();
                 notificationCanvas.ShowToast(message);
             }
-            notificationCanvas.Show();
 
+            notificationCanvas.Show();
         }
     }
 
@@ -113,7 +115,7 @@ public class UIManager : Singleton<UIManager>
         return notificationCanvas;
     }
 
-    public void HideClosreNotifiButton() 
+    public void HideClosreNotifiButton()
     {
         if (notificationCanvas != null)
         {
@@ -123,13 +125,20 @@ public class UIManager : Singleton<UIManager>
 
     public void OpenLoadingCanvas() => OpenUI(loadingCanvas);
     public void OpenMainMenu() => OpenUI(mainMenuCanvas);
-    public void OpenShop()  
+
+    public void OpenShop()
     {
         OpenUI(shopCanvas);
         shopCanvas.UpdateCoinUI();
     }
 
-    public void OpenConnection() =>OpenUI(connectionCanvas);
+    public void ShowAllPlayerPreviewsFromMainMenu()
+    {
+        if (mainMenuCanvas != null)
+            mainMenuCanvas.ShowAllPlayerPreviews();
+    }
+
+    public void OpenConnection() => OpenUI(connectionCanvas);
     public void OpenNotification() => OpenNoti(notificationCanvas);
 
     public void CloseMainMenu() => CloseUI(mainMenuCanvas);

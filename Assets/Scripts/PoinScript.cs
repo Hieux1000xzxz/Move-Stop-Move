@@ -4,7 +4,7 @@ using DG.Tweening;
 public class AttentionPulse : MonoBehaviour
 {
     [Header("Pulse Settings")] [SerializeField]
-    private float scaleAmount = 1.2f;
+    private float scaleAmount = 1.5f;
 
     [SerializeField] private float duration = 0.6f;
     [SerializeField] private bool playOnStart = true;
