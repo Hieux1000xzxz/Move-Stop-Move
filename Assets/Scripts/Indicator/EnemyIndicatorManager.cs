@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
+using DG.Tweening;
 
 public class EnemyIndicatorManager : MonoBehaviour
 {
@@ -14,9 +16,37 @@ public class EnemyIndicatorManager : MonoBehaviour
 
     public static EnemyIndicatorManager Instance;
 
+    private Tween updateTween;
+    private const float UPDATE_INTERVAL = 0.01f;
+
     private void Awake()
     {
         Instance = this;
+    }
+
+    private void OnEnable()
+    {
+        StartUpdatingIndicators();
+    }
+
+    private void OnDisable()
+    {
+        StopUpdatingIndicators();
+    }
+
+    private void StartUpdatingIndicators()
+    {
+        updateTween = DOVirtual.DelayedCall(UPDATE_INTERVAL, () =>
+        {
+            UpdateEnemyIndicators();
+            StartUpdatingIndicators();
+        });
+    }
+
+    private void StopUpdatingIndicators()
+    {
+        if (updateTween != null && updateTween.IsActive())
+            updateTween.Kill();
     }
 
     public void RegisterEnemy(Transform enemy)
@@ -28,12 +58,12 @@ public class EnemyIndicatorManager : MonoBehaviour
             if (!indicators.ContainsKey(enemy))
             {
                 RectTransform indicator = Instantiate(indicatorPrefab, canvasRect);
-                indicator.gameObject.SetActive(true);
+                indicator.gameObject.SetActive(false);
                 indicators[enemy] = indicator;
             }
             else
             {
-                indicators[enemy].gameObject.SetActive(true);
+                indicators[enemy].gameObject.SetActive(false);
             }
         }
     }
@@ -52,11 +82,6 @@ public class EnemyIndicatorManager : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        UpdateEnemyIndicators();
-    }
-
     #region Indicator Update Logic
 
     private void UpdateEnemyIndicators()
@@ -70,6 +95,7 @@ public class EnemyIndicatorManager : MonoBehaviour
 
             if (!indicators.TryGetValue(enemy, out RectTransform indicator) || indicator == null)
                 continue;
+
 
             UpdateIndicatorForEnemy(enemy, indicator);
         }
