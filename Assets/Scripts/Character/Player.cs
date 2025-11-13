@@ -127,8 +127,7 @@ public class Player : CharacterBase
 
             if (animator != null)
             {
-                animator.SetFloat("Speed", netSpeed.Value);
-                animator.SetBool("IsAttacking", netIsAttacking.Value);
+                SetAnimatorParameters(netSpeed.Value, netIsAttacking.Value);
             }
         }
 

@@ -5,12 +5,6 @@ public partial class CharacterBase
 {
     #region Animation Handling
 
-    protected void SetAnimationSpeed(float speed)
-    {
-        if (IsOwner)
-            netSpeed.Value = speed;
-    }
-
     protected void SetAttackAnimation(bool isAttacking)
     {
         if (IsOwner)

@@ -141,13 +141,18 @@ public class GameManager : NetworkBehaviour
         activeAINetworkObjects.Add(aiNetworkObject);
         ActiveAICount.Value = activeAINetworkObjects.Count;
 
-        if (!activeEntities.Contains(aiNetworkObject))
-        {
-            activeEntities.Add(aiNetworkObject);
-        }
+        AddToActiveEntities(aiNetworkObject);
 
         totalSpawned++;
         return true;
+    }
+
+    private void AddToActiveEntities(NetworkObject networkObject)
+    {
+        if (!activeEntities.Contains(networkObject))
+        {
+            activeEntities.Add(networkObject);
+        }
     }
 
     public void CaculateTotalQuota()
@@ -171,12 +176,17 @@ public class GameManager : NetworkBehaviour
             currentAIQuota--;
             ActiveAICount.Value = activeAINetworkObjects.Count;
             RemainingAIQuota.Value = currentAIQuota;
-            activeEntities.Remove(aiNetworkObject);
-            UnregisterKillScore(aiNetworkObject);
+            RemoveFromActiveEntities(aiNetworkObject);
             UpdateEnemyCount();
         }
 
         Invoke(nameof(CheckLastSurvivor), 1f);
+    }
+
+    private void RemoveFromActiveEntities(NetworkObject networkObject)
+    {
+        activeEntities.Remove(networkObject);
+        UnregisterKillScore(networkObject);
     }
 
     public void RegisterPlayerInGame(NetworkObject playerNetworkObject)
@@ -186,10 +196,7 @@ public class GameManager : NetworkBehaviour
         activePlayerNetworkObjects.Add(playerNetworkObject);
         ActivePlayerCount.Value = activePlayerNetworkObjects.Count;
 
-        if (!activeEntities.Contains(playerNetworkObject))
-        {
-            activeEntities.Add(playerNetworkObject);
-        }
+        AddToActiveEntities(playerNetworkObject);
 
         UpdateEnemyCount();
     }
@@ -201,9 +208,8 @@ public class GameManager : NetworkBehaviour
         if (activePlayerNetworkObjects.Remove(playerNetworkObject))
         {
             ActivePlayerCount.Value = activePlayerNetworkObjects.Count;
-            activeEntities.Remove(playerNetworkObject);
+            RemoveFromActiveEntities(playerNetworkObject);
             UpdateEnemyCount();
-            UnregisterKillScore(playerNetworkObject);
             Invoke(nameof(CheckLastSurvivor), 1.5f);
         }
     }
@@ -226,41 +232,93 @@ public class GameManager : NetworkBehaviour
 
     private void CheckLastSurvivor()
     {
-        if (!IsServer) return;
-        if (!isGameStarted) return;
+        if (!ShouldCheckLastSurvivor()) return;
 
-        if (EnemyCount.Value > 1) return;
+        if (!IsOnlyOneSurvivor()) return;
 
-        if (totalSpawned < 2) return;
+        HandleLastSurvivor();
+    }
 
-        if (activeEntities.Count == 1)
+    private bool ShouldCheckLastSurvivor()
+    {
+        return IsServer && isGameStarted && EnemyCount.Value <= 1 && totalSpawned >= 2;
+    }
+
+    private bool IsOnlyOneSurvivor()
+    {
+        return activeEntities.Count == 1;
+    }
+
+    private void HandleLastSurvivor()
+    {
+        var lastNetObj = GetLastSurvivor();
+        if (lastNetObj == null) return;
+
+        FocusCameraOnSurvivor(lastNetObj);
+
+        if (HasActivePlayers())
         {
-            var lastNetObj = activeEntities[0];
-            if (lastNetObj != null)
-            {
-                FocusCameraOnTargetClientRpc(lastNetObj);
-
-                if (ActivePlayerCount.Value > 0)
-                {
-                    GameWinClientRpc();
-
-                    var winnerId = lastNetObj.OwnerClientId;
-                    var clientRpcParams = new ClientRpcParams
-                    {
-                        Send = new ClientRpcSendParams { TargetClientIds = new[] { winnerId } }
-                    };
-                    NotifyClientCommitCoinClientRpc(clientRpcParams);
-                    WinnerClientRpc(clientRpcParams);
-                }
-                else
-                {
-                    CoinManager.Instance.CommitSessionCoins();
-                    GameWinClientRpc();
-                }
-            }
+            HandleMultiplayerWin(lastNetObj);
+        }
+        else
+        {
+            HandleSinglePlayerWin();
         }
     }
 
+    private NetworkObject GetLastSurvivor()
+    {
+        return activeEntities[0];
+    }
+
+    private void FocusCameraOnSurvivor(NetworkObject survivor)
+    {
+        FocusCameraOnTargetClientRpc(survivor);
+    }
+
+    private bool HasActivePlayers()
+    {
+        return ActivePlayerCount.Value > 0;
+    }
+
+    private void HandleMultiplayerWin(NetworkObject winner)
+    {
+        GameWinClientRpc();
+        NotifyWinner(winner);
+    }
+
+    private void NotifyWinner(NetworkObject winner)
+    {
+        var winnerId = winner.OwnerClientId;
+        var clientRpcParams = CreateTargetClientRpcParams(winnerId);
+
+        NotifyClientCommitCoinClientRpc(clientRpcParams);
+        WinnerClientRpc(clientRpcParams);
+    }
+
+    private ClientRpcParams CreateTargetClientRpcParams(ulong targetClientId)
+    {
+        return new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { targetClientId }
+            }
+        };
+    }
+
+    private void HandleSinglePlayerWin()
+    {
+        CoinManager.Instance.CommitSessionCoins();
+        GameWinClientRpc();
+    }
+
+    private void SetupWinCamera()
+    {
+        UIManager.Instance.HideCountText();
+        zoomController.baseFOV = 35f;
+        zoomController.baseFollowY = 5f;
+    }
 
     [ClientRpc]
     private void GameWinClientRpc(ClientRpcParams clientRpcParams = default)
@@ -268,12 +326,9 @@ public class GameManager : NetworkBehaviour
         if (gamePlayCanvas != null)
         {
             gamePlayCanvas.OnGameWin();
-            UIManager.Instance.HideCountText();
-            zoomController.baseFOV = 35f;
-            zoomController.baseFollowY = 5f;
+            SetupWinCamera();
         }
     }
-
 
     [ClientRpc]
     private void FocusCameraOnTargetClientRpc(NetworkObjectReference targetRef)
@@ -293,13 +348,8 @@ public class GameManager : NetworkBehaviour
         CaculateTotalQuota();
         currentAIQuota = totalAIQuota;
         totalSpawned = 0;
-        //totalKilled = 0;
 
-        foreach (var aiNetObj in activeAINetworkObjects)
-        {
-            if (aiNetObj != null && aiNetObj.gameObject != null)
-                aiNetObj.gameObject.SetActive(false);
-        }
+        DeactivateAllAI();
 
         activeAINetworkObjects.Clear();
 
@@ -307,6 +357,22 @@ public class GameManager : NetworkBehaviour
         ActivePlayerCount.Value = activePlayerNetworkObjects.Count;
         RemainingAIQuota.Value = currentAIQuota;
         UpdateEnemyCount();
+    }
+
+    private bool IsValidActiveObject(NetworkObject netObj)
+    {
+        return netObj != null && netObj.gameObject != null;
+    }
+
+    private void DeactivateAllAI()
+    {
+        foreach (var aiNetObj in activeAINetworkObjects)
+        {
+            if (IsValidActiveObject(aiNetObj))
+            {
+                aiNetObj.gameObject.SetActive(false);
+            }
+        }
     }
 
     public void StartGame()
@@ -357,22 +423,6 @@ public class GameManager : NetworkBehaviour
     public void BindKillScoreDisplay(KillScoreDisplay killScore)
     {
         zoomController.SetUp(killScore);
-    }
-
-    public void ShowMainMenu()
-    {
-        if (mainMenuCanvas != null)
-        {
-            mainMenuCanvas.Show();
-        }
-    }
-
-    public void HideMainMenu()
-    {
-        if (mainMenuCanvas != null)
-        {
-            mainMenuCanvas.Hide();
-        }
     }
 
     public void BindJoystick(Player player)
@@ -453,63 +503,11 @@ public class GameManager : NetworkBehaviour
         FocusCameraOnTarget(alive[spectatorIndex]);
     }
 
-    public void NextSpectatorTarget()
-    {
-        var alive = GetAliveSpectatorTargets();
-        if (alive.Count == 0)
-        {
-            return;
-        }
-
-        spectatorIndex = (spectatorIndex + 1) % alive.Count;
-        FocusCameraOnTarget(alive[spectatorIndex]);
-    }
-
-    public void PreviousSpectatorTarget()
-    {
-        var alive = GetAliveSpectatorTargets();
-        if (alive.Count == 0)
-        {
-            return;
-        }
-
-        spectatorIndex--;
-        if (spectatorIndex < 0) spectatorIndex = alive.Count - 1;
-        FocusCameraOnTarget(alive[spectatorIndex]);
-    }
-
-    public void SwitchSpectatorTarget()
-    {
-        var alive = GetAliveSpectatorTargets();
-        if (alive.Count == 0)
-        {
-            return;
-        }
-
-        int index = Random.Range(0, alive.Count);
-        FocusCameraOnTarget(alive[index]);
-    }
-
     private void FocusCameraOnTarget(NetworkObject netObj)
     {
-        if (mainCamera != null && netObj != null)
-        {
-            mainCamera.Follow = netObj.transform;
-            mainCamera.LookAt = netObj.transform;
-
-            if (killScoreMap.TryGetValue(netObj, out var killScore))
-            {
-                zoomController.SetUp(killScore);
-            }
-
-            if (netObj.TryGetComponent(out CharacterBase character))
-            {
-                TrackSpectatedCoin(character);
-                CurrentSpectatedId = netObj.OwnerClientId;
-            }
-        }
+        if (netObj == null) return;
+        UpdateCameraAndTracking(netObj.transform, netObj);
     }
-
 
     private void TrackSpectatedCoin(CharacterBase character)
     {
@@ -542,24 +540,48 @@ public class GameManager : NetworkBehaviour
         obj.GetComponent<Powerup>().SetType(type);
     }
 
-    public void HidePlayerPreview()
+    private void SetPlayerPreviewsActive(bool isActive)
     {
         foreach (PlayerPreview preview in playerPreviews)
         {
             if (preview != null)
-                preview.gameObject.SetActive(false);
+            {
+                preview.gameObject.SetActive(isActive);
+            }
         }
+    }
+
+    public void HidePlayerPreview()
+    {
+        SetPlayerPreviewsActive(false);
     }
 
     public void ShowPlayerPreview()
     {
-        foreach (PlayerPreview preview in playerPreviews)
+        SetPlayerPreviewsActive(true);
+        zoomController.SetUpBaseZoom();
+    }
+
+    private void ChangeSpectatorTarget(int direction, ulong clientId)
+    {
+        if (activeEntities.Count <= 1) return;
+
+        // Update index
+        if (direction > 0)
         {
-            if (preview != null)
-                preview.gameObject.SetActive(true);
+            spectatorIndex = (spectatorIndex + 1) % activeEntities.Count;
+        }
+        else
+        {
+            spectatorIndex--;
+            if (spectatorIndex < 0) spectatorIndex = activeEntities.Count - 1;
         }
 
-        zoomController.SetUpBaseZoom();
+        NetworkObject netObj = activeEntities[spectatorIndex];
+        if (netObj == null) return;
+
+        var clientRpcParams = CreateTargetClientRpcParams(clientId);
+        FocusCameraOnTargetClientRpc(netObj, clientRpcParams);
     }
 
     [ClientRpc]
@@ -571,41 +593,14 @@ public class GameManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void RequestNextSpectatorTargetServerRpc(ServerRpcParams rpcParams = default)
     {
-        if (activeEntities.Count <= 1) return;
-
-        spectatorIndex = (spectatorIndex + 1) % activeEntities.Count;
-        var netObj = activeEntities[spectatorIndex];
-        if (netObj == null) return;
-
-        var senderId = rpcParams.Receive.SenderClientId;
-        var clientRpcParams = new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams { TargetClientIds = new[] { senderId } }
-        };
-
-        FocusCameraOnTargetClientRpc(netObj, clientRpcParams);
+        ChangeSpectatorTarget(1, rpcParams.Receive.SenderClientId);
     }
 
     [ServerRpc(RequireOwnership = false)]
     public void RequestPreviousSpectatorTargetServerRpc(ServerRpcParams rpcParams = default)
     {
-        if (activeEntities.Count == 0) return;
-
-        spectatorIndex--;
-        if (spectatorIndex < 0) spectatorIndex = activeEntities.Count - 1;
-
-        NetworkObject netObj = activeEntities[spectatorIndex];
-        if (netObj == null) return;
-
-        var senderId = rpcParams.Receive.SenderClientId;
-        var clientRpcParams = new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams { TargetClientIds = new[] { senderId } }
-        };
-
-        FocusCameraOnTargetClientRpc(netObj, clientRpcParams);
+        ChangeSpectatorTarget(-1, rpcParams.Receive.SenderClientId);
     }
-
 
     [ClientRpc]
     private void FocusCameraOnTargetClientRpc(NetworkObjectReference targetRef, ClientRpcParams rpcParams = default)
@@ -617,21 +612,29 @@ public class GameManager : NetworkBehaviour
 
         if (targetRef.TryGet(out NetworkObject netObj))
         {
-            Transform t = netObj.transform;
-            if (t != null)
-            {
-                mainCamera.Follow = t;
-                mainCamera.LookAt = t;
-
-                if (killScoreMap.TryGetValue(netObj, out var killScore))
-                    zoomController.SetUp(killScore);
-
-                if (netObj.TryGetComponent(out CharacterBase character))
-                    TrackSpectatedCoin(character);
-            }
+            UpdateCameraAndTracking(netObj.transform, netObj);
         }
     }
 
+    private void UpdateCameraAndTracking(Transform target, NetworkObject netObj)
+    {
+        if (mainCamera != null && target != null)
+        {
+            mainCamera.Follow = target;
+            mainCamera.LookAt = target;
+        }
+
+        if (killScoreMap.TryGetValue(netObj, out var killScore))
+        {
+            zoomController.SetUp(killScore);
+        }
+
+        if (netObj.TryGetComponent(out CharacterBase character))
+        {
+            TrackSpectatedCoin(character);
+            CurrentSpectatedId = netObj.OwnerClientId;
+        }
+    }
 
     [ClientRpc]
     private void WinnerClientRpc(ClientRpcParams clientRpcParams = default)
@@ -639,9 +642,7 @@ public class GameManager : NetworkBehaviour
         if (gamePlayCanvas != null)
         {
             gamePlayCanvas.OnWinner();
-            UIManager.Instance.HideCountText();
-            zoomController.baseFOV = 35f;
-            zoomController.baseFollowY = 5f;
+            SetupWinCamera();
         }
     }
 

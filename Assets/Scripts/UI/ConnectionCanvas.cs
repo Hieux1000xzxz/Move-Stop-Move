@@ -123,78 +123,134 @@ public partial class ConnectionCanvas : BaseCanvas
 
     private void OnDestroy()
     {
-        StopAllCoroutines();
-        if (clientHeartbeatRoutine != null)
-        {
-            clientHeartbeatRoutine = null;
-        }
-
-        if (networkManager != null)
-        {
-            networkManager.OnClientConnectedCallback -= OnClientConnected;
-            networkManager.OnClientDisconnectCallback -= OnClientDisconnected;
-        }
+        StopAllRunningCoroutines();
+        CleanupNetworkCallbacks();
     }
 
     private void OnApplicationQuit()
     {
-        Debug.Log("Application quitting - cleaning up network...");
+        Debug.Log("[QUIT] Application quitting - cleaning up...");
 
         try
         {
-            if (heartbeatRoutine != null)
-            {
-                StopCoroutine(heartbeatRoutine);
-                heartbeatRoutine = null;
-            }
+            StopAllRunningCoroutines();
+            CleanupNetworkCallbacks();
+            HandleNetworkQuit();
+            StopPowerupSystem();
 
-            if (pollLobbyRoutine != null)
-            {
-                StopCoroutine(pollLobbyRoutine);
-                pollLobbyRoutine = null;
-            }
-
-            if (clientHeartbeatRoutine != null)
-            {
-                clientHeartbeatRoutine = null;
-            }
-
-            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
-            {
-                if (NetworkManager.Singleton.IsHost)
-                {
-                    if (!string.IsNullOrEmpty(currentLobbyId))
-                    {
-                        SendDeleteLobbySync(currentLobbyId);
-                    }
-                }
-                else if (NetworkManager.Singleton.IsClient)
-                {
-                    if (!string.IsNullOrEmpty(currentLobbyId) && !string.IsNullOrEmpty(localUserName))
-                    {
-                        //string playerId = PlayerPrefs.GetString("PlayerId", "");
-                        string playerId = GetOrCreatePlayerId();
-
-                        if (!string.IsNullOrEmpty(playerId))
-                        {
-                            var user = new UserInfo { userId = playerId, userName = localUserName };
-                            SendLeaveLobbySync(currentLobbyId, user);
-                        }
-                    }
-                }
-
-                NetworkManager.Singleton.Shutdown();
-            }
-
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.StopPowerupSpawning();
-            }
+            Debug.Log("[QUIT] Cleanup completed successfully.");
         }
         catch (Exception e)
         {
-            Debug.LogWarning($"Error during OnApplicationQuit cleanup: {e.Message}");
+            Debug.LogError($"[QUIT] Error during cleanup: {e.Message}");
         }
+    }
+
+    #endregion
+
+    #region Coroutine Management
+
+    private void StopAllRunningCoroutines()
+    {
+        StopAllCoroutines();
+
+        // Reset all coroutine references
+        heartbeatRoutine = null;
+        pollLobbyRoutine = null;
+        clientHeartbeatRoutine = null;
+        autoRefreshLobbyRoutine = null;
+        joinLobbyCoroutine = null;
+    }
+
+    #endregion
+
+    #region Network Cleanup
+
+    private void CleanupNetworkCallbacks()
+    {
+        if (networkManager == null) return;
+
+        networkManager.OnClientConnectedCallback -= OnClientConnected;
+        networkManager.OnClientDisconnectCallback -= OnClientDisconnected;
+    }
+
+    private void HandleNetworkQuit()
+    {
+        if (!IsNetworkActive()) return;
+
+        if (IsHost())
+        {
+            HandleHostQuit();
+        }
+        else
+        {
+            HandleClientQuit();
+        }
+
+        ShutdownNetworkManager();
+    }
+
+    private void HandleHostQuit()
+    {
+        if (string.IsNullOrEmpty(currentLobbyId)) return;
+
+        SendDeleteLobbySync(currentLobbyId);
+        Debug.Log($"[QUIT] Host deleted lobby: {currentLobbyId}");
+    }
+
+    private void HandleClientQuit()
+    {
+        if (string.IsNullOrEmpty(currentLobbyId)) return;
+
+        string playerId = GetOrCreatePlayerId();
+        if (string.IsNullOrEmpty(playerId)) return;
+
+        var user = new UserInfo
+        {
+            userId = playerId,
+            userName = localUserName
+        };
+
+        SendLeaveLobbySync(currentLobbyId, user);
+        Debug.Log($"[QUIT] Client left lobby: {currentLobbyId}");
+    }
+
+    private void ShutdownNetworkManager()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+            Debug.Log("[QUIT] Network shutdown completed.");
+        }
+    }
+
+    #endregion
+
+    #region Game Systems Cleanup
+
+    private void StopPowerupSystem()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.StopPowerupSpawning();
+            Debug.Log("[QUIT] Powerup system stopped.");
+        }
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private bool IsNetworkActive()
+    {
+        return NetworkManager.Singleton != null &&
+               NetworkManager.Singleton.IsListening;
+    }
+
+    private bool IsHost()
+    {
+        return NetworkManager.Singleton != null &&
+               NetworkManager.Singleton.IsHost;
     }
 
     #endregion
